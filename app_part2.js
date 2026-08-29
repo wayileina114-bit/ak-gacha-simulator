@@ -365,7 +365,7 @@ function selBoxHtml(b,rar){
   var max=selMax(b,rar);
   var h=['<div class="selbox"><div class="seltitle">选择UP干员（'+(rar===6?'6★':'5★')+' · 最多'+max+'位 · 已选'+Math.min(sel.length,max)+'/'+max+'）</div><div class="selgrid">'];
   var i,o;
-  for(i=0;i<list.length;i++){
+  for(i=0;i<showN;i++){
     o=opOf(list[i]); if(!o)continue;
     var on=sel.indexOf(list[i])>=0;
     h.push('<div class="selop'+(on?' on':' off')+'" data-op="'+esc(list[i])+'" data-rar="'+rar+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/><div class="sn">'+esc(o.name)+'</div></div>');
@@ -497,7 +497,7 @@ function sparkExchange(cost){
   if(!list.length){ toast('无可兑换干员'); return; }
   var h=['<h4 class="sect" style="margin-top:0">选择要兑换的干员（消耗 <b>'+cost+'</b> 契约 · 现有 '+tok+'）</h4><div class="rateup">'];
   var i,o;
-  for(i=0;i<list.length;i++){
+  for(i=0;i<showN;i++){
     o=opOf(list[i]); if(!o)continue;
     var owned=state.collection.indexOf(list[i])>=0;
     h.push('<div class="rup-card r'+o.rarity+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/>');
@@ -665,7 +665,7 @@ function renderHistory(){
   var h=[],r,o;
   for(i=0;i<show.length;i++){
     r=show[i]; o=opOf(r.op);
-    h.push('<div class="hitem r'+r.rar+'"><span class="star">'+stars(r.rar)+'</span><span>'+esc(o?o.name:r.op)+'</span>'+(r.bn?'<span class="hbn">'+esc(r.bn)+'</span>':'')+'<span class="ht">'+relTime(r.t)+'</span></div>');
+    h.push('<div class="hitem r'+r.rar+'"><span class="star">'+stars(r.rar)+'</span><span>'+esc(o?o.name:r.op)+'</span>'+(r.bid?'<span class="hbn jump" data-bid="'+esc(r.bid)+'">'+esc(r.bn||'')+'</span>':'')+'<span class="ht">'+relTime(r.t)+'</span></div>');
   }
   var fc6=0,fc5=0;
   for(var fi2=0;fi2<list.length;fi2++){ if(list[fi2].rar===6)fc6++; else if(list[fi2].rar===5)fc5++; }
@@ -677,6 +677,7 @@ function renderHistory(){
   $('history').innerHTML=h.join('');
   var hm=$('histMore');
   if(hm)hm.onclick=function(){ histN+=60; renderHistory(); };
+  var hc=$('history'); if(hc)hc.onclick=function(e){ var t=e.target; if(t&&t.classList&&t.classList.contains('jump')){ jumpBanner(t.getAttribute('data-bid')); } };
 }
 var colF='all', colP='all', colSort='rarity', colSearch='';
 function renderCollection(){
@@ -1219,7 +1220,7 @@ function importSave(){
   if(!s)return;
   try{
     var ns=JSON.parse(s);
-    if(ns&&typeof ns==='object'&&ns.jade!=null&&ns.history&&ns.collection){ state=ns; save(); location.reload(); }
+    if(ns&&typeof ns==='object'&&ns.jade!=null&&ns.history&&ns.collection){ state=normalizeState(ns); save(); location.reload(); }
     else toast('存档格式无效');
   }catch(e){ toast('存档格式无效'); }
 }
@@ -1240,6 +1241,7 @@ function openOpStats(){
   renderOpStatsTable();
   $('modal').classList.add('show');
 }
+var OP_N=200;
 function renderOpStatsTable(){
   var names=Object.keys(opByName), i, o, cnt, list=[], maxN=1;
   var total=0, had=0;
@@ -1262,15 +1264,18 @@ function renderOpStatsTable(){
   });
   var h=[];
   h.push('<div class="ophead">干员</div><div class="ophead">出数</div>');
-  for(i=0;i<list.length;i++){
+  var showN=Math.min(list.length,OP_N);
+  for(i=0;i<showN;i++){
     var it=list[i];
     h.push('<div class="optable-row'+(it.c===0?' zero':'')+'" data-op="'+esc(it.n)+'"><img loading="lazy" src="'+esc(avUrl(it.o))+'" alt=""/><span class="on">'+esc(it.o.name)+'</span><span class="ost">'+stars(it.o.rarity)+'</span><div class="obar"><i style="width:'+Math.max(1,Math.round(it.c/maxN*100))+'%"></i></div><span class="ocnt">'+it.c+(total?' · '+(it.c/total*100).toFixed(1)+'%':'')+'</span></div>');
   }
+  if(list.length>showN)h.push('<button class="mini-btn" id="opMore" style="margin:6px auto;display:block">加载更多（'+(list.length-showN)+' 名）</button>');
   if(!list.length)h.push('<div class="hitem" style="color:#5a6c8e">没有符合条件的干员</div>');
   $('opTable').innerHTML=h.join('');
   $('opSum').innerHTML='统计范围：全部抽卡记录（含历史）· 共出 <b>'+total+'</b> 次 · 出过 <b>'+had+'</b> 名干员';
   var rows=$('opTable').querySelectorAll('.optable-row');
   for(i=0;i<rows.length;i++){ rows[i].onclick=function(){ openModal(this.getAttribute('data-op')); }; }
+  var om=$('opMore'); if(om)om.onclick=function(){ OP_N+=200; renderOpStatsTable(); };
 }
 function relTime(t){
   if(!t)return '';
