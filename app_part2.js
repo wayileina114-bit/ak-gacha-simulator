@@ -850,11 +850,13 @@ function jumpBanner(id){
 }
 function copyBatch(){
   var res=lastBatch||[], NL=String.fromCharCode(10), cnt={}, i, nm;
-  for(i=0;i<res.length;i++){ var oo=opOf(res[i].op); nm=oo?oo.name:res[i].op; cnt[nm]=(cnt[nm]||0)+1; }
+  var c6=0,c5=0;
+  for(i=0;i<res.length;i++){ var oo=opOf(res[i].op); nm=oo?oo.name:res[i].op; cnt[nm]=(cnt[nm]||0)+1; if(res[i].rar===6)c6++; else if(res[i].rar===5)c5++; }
   var names=Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a];});
   var lines=[];
   for(i=0;i<names.length;i++){ lines.push(names[i]+' ×'+cnt[names[i]]); }
-  var text='本次抽卡 '+res.length+' 抽：'+NL+lines.join(NL);
+  var head='本次抽卡 '+res.length+' 抽（6★×'+c6+' · 5★×'+c5+' · 6★率 '+(res.length?(c6/res.length*100).toFixed(1):0)+'%）：';
+  var text=head+NL+lines.join(NL);
   var ta=document.createElement('textarea');
   ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
   document.body.appendChild(ta); ta.select();
