@@ -620,6 +620,7 @@ function doPull(n){
   if(names6.length)msg='<b>★ 六星干员：'+names6.join('、')+' ★</b>';
   msg=enhancePullMsg(results,hadSet,msg);
   msg+='<br/>本次 '+n+' 抽：6★×'+c6+' · 5★×'+c5+' · 4★×'+c4+' · 3★×'+c3;
+  if(n>=50){ var batchRate=c6/n*100; var expRate=2.89; var diff=((batchRate-expRate)/expRate*100).toFixed(0); msg+='<br/><span class="batchrate">本批6★率 <b>'+(batchRate).toFixed(1)+'%</b>（期望 '+expRate+'% · '+(diff>=0?'+':'')+diff+'%）</span>'; }
   if(n>10&&!names6.length)msg+='（本次未出高星，展示最后10张）';
   lastBatch=results;
   renderCards(shown,msg,c6>0,names6,c5>0);
@@ -923,10 +924,10 @@ function randomBanner(){
 function openDrawer(){ var s=$('sidebar'); if(s)s.classList.add('open'); var b=$('mBackdrop'); if(b)b.classList.add('show'); if(isMobile()){ try{ document.body.style.overflow='hidden'; }catch(e){} var sb=$('searchBox'); if(sb&&sb.focus)sb.focus(); } }
 function closeDrawer(){ var s=$('sidebar'); if(s)s.classList.remove('open'); var b=$('mBackdrop'); if(b)b.classList.remove('show'); if(isMobile()){ try{ document.body.style.overflow=''; }catch(e){} } }
 function enhancePullMsg(results, hadSet, msg){
-  var newNames=[], wishHit=[], i2, nx2;
-  for(i2=0;i2<results.length;i2++){ nx2=results[i2]; if(!hadSet[nx2.op]&&state.collection.indexOf(nx2.op)>=0)newNames.push(opOf(nx2.op).name); if(state.wish&&state.wish.indexOf(nx2.op)>=0)wishHit.push(opOf(nx2.op).name); }
+  var newNames=[], wishHit=[], i2, nx2, o2;
+  for(i2=0;i2<results.length;i2++){ nx2=results[i2]; o2=opOf(nx2.op); if(!hadSet[nx2.op]&&state.collection.indexOf(nx2.op)>=0)newNames.push(o2?o2.name:nx2.op); if(state.wish&&state.wish.indexOf(nx2.op)>=0)wishHit.push(o2?o2.name:nx2.op); }
   if(newNames.length)msg+='<br/><span class="newline">🆕 新干员：'+newNames.join('、')+'</span>';
-  if(wishHit.length){ msg+='<br/><span class="wishhit">💝 心愿达成：'+wishHit.join('、')+'</span>'; state.wish=state.wish.filter(function(w){return wishHit.indexOf(opOf(w)?opOf(w).name:w)<0;}); save(); }
+  if(wishHit.length){ msg+='<br/><span class="wishhit">💝 心愿达成：'+wishHit.join('、')+'</span>'; var wishSet={}, wi6; for(wi6=0;wi6<wishHit.length;wi6++)wishSet[wishHit[wi6]]=1; state.wish=state.wish.filter(function(w){ var wn=opOf(w); var wname=wn?wn.name:w; return wishSet[wname]?false:true; }); save(); }
   return msg;
 }
 function doUntil6(){

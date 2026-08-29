@@ -1,6 +1,6 @@
 # 明日方舟抽卡模拟器（Arknights Gacha Simulator）
 
-![version](https://img.shields.io/badge/version-v7.5-blue) ![banners](https://img.shields.io/badge/卡池-442-orange) ![ops](https://img.shields.io/badge/干员-409-brightgreen) ![license](https://img.shields.io/badge/license-MIT-lightgrey)
+![version](https://img.shields.io/badge/version-v8.2-blue) ![banners](https://img.shields.io/badge/卡池-442-orange) ![ops](https://img.shields.io/badge/干员-409-brightgreen) ![license](https://img.shields.io/badge/license-MIT-lightgrey)
 
 > 单文件 HTML 的明日方舟抽卡模拟器 · 自选历史卡池 · 干员立绘 · 抽卡统计 · 皮肤图鉴
 
@@ -12,12 +12,12 @@
 | 🧑🚀 干员 | 409 名干员，精二/初始立绘在线加载，皮肤图鉴实时查询 bilibili Wiki |
 | 🎯 概率 | 6★ 2% 基础 · 50 抽后递增 · 100 抽必出 · 10 连保底 5★+ · 官方 UP 规则 |
 | ⭐ 自选 UP | 定向甄选 / 中坚甄选卡池可自选 UP 干员（最少保留规则） |
-| 📊 统计 | 欧气评分 · 六星间隔 · UP 命中率 · 每日出货 · 热力图 · 时段 · 保底总览 · 等价合成玉 |
+| 📊 统计 | 欧气评分（等级徽章）· 六星间隔 · UP 命中率 · 每月统计 · 每日出货 · 热力图 · 时段 · 保底总览 · 等价合成玉 · 限定图鉴完成度 · 限定/6★缺卡清单 |
 | 💝 心愿单 | 标记想要干员，抽到自动提醒并移除 |
-| 🏆 成就 | 10 项成就（限定收藏家 / 全图鉴）+ 进度条 |
+| 🏆 成就 | 12 项成就（限定收藏家 / 全图鉴 / 五星常客 / 深度博士）+ 进度条 |
 | 📱 移动端 | 抽屉式卡池选择 · 底部操作栏 · iOS 安全区适配 |
-| 💾 数据 | 抽卡记录 CSV（含卡池列）· 卡池清单 · 存档导入/导出 |
-| ⌨️ 快捷键 | 1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 |
+| 💾 数据 | 抽卡记录 CSV（含卡池列）· 卡池清单 · 存档导入/导出 · 卡池6★率统计 |
+| ⌨️ 快捷键 | 1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · 🎲 随机干员 |
 
 ## 🚀 使用方法
 
