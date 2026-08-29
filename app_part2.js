@@ -660,7 +660,7 @@ function renderStats(){
   var g=[];
   g.push(['距上次6★',st.fails+' 抽','red']);
   g.push(['下次6★概率',(p6*100).toFixed(1)+'%','gold']);
-  g.push(['本服总抽数',hist.length,'']);
+  g.push(['本服总抽数',hist.length>=1000?hist.length.toLocaleString():hist.length,'']);
   g.push(['本次会话抽数',sessPulls,'']);
   g.push(['6★总数',c6,'orange']);
   g.push(['6★出率',rate6,'']);
@@ -670,7 +670,7 @@ function renderStats(){
   var today0=new Date(), dayStart=new Date(today0.getFullYear(),today0.getMonth(),today0.getDate()).getTime();
   var tToday=0,t6Today=0;
   for(i=0;i<hist.length;i++){ if(hist[i].t>=dayStart){ tToday++; if(hist[i].rar===6)t6Today++; } }
-  g.push(['今日抽数',tToday,'']);
+  g.push(['今日抽数',tToday>=1000?tToday.toLocaleString():tToday,'']);
   g.push(['今日6★',t6Today,'orange']);
   var wk=Date.now()-7*86400000, w6=0;
   for(i=0;i<hist.length;i++){ if(hist[i].t>=wk&&hist[i].rar===6)w6++; }
