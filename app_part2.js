@@ -1378,11 +1378,15 @@ function clearHistory(){
   toast('已清空记录');
 }
 function toggleSpeed(){
-  SPEED=SPEED>100?30:160;
-  $('cards').classList.toggle('fast',SPEED<=100);
-  var btn=$('btnSpeed');
-  btn.textContent=SPEED>100?'动画: 慢速':'动画: 快速';
-  btn.classList.toggle('on',SPEED<=100);
+  if(SPEED>100)SPEED=30;
+  else if(SPEED>0)SPEED=0;
+  else SPEED=160;
+  var cardsEl=$('cards'); if(cardsEl)cardsEl.classList.toggle('fast',SPEED<=100);
+  var btn=$('btnSpeed'); if(!btn)return;
+  btn.textContent=SPEED>100?'动画: 慢速':(SPEED===0?'动画: 关闭':'动画: 快速');
+  btn.classList.toggle('on',SPEED!==160);
+  btn.classList.toggle('off',SPEED===0);
+  if(SPEED===0&&cardsEl){ cardsEl.querySelectorAll('.card').forEach(function(c){ if(c.classList&&!c.classList.contains('flip'))c.classList.add('flip'); }); }
 }
 function init(){
   var bs=DATA.banners, i;
