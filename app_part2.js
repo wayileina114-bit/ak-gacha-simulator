@@ -773,7 +773,10 @@ function openModal(opName){
   if(gotIdx>=0)h.push('<div class="kv"><b>获得顺序</b>第 '+(gotIdx+1)+' 个</div>');
   var firstT=null;
   for(var fi=state.history.length-1;fi>=0;fi--){ if(state.history[fi].op===opName){ firstT=state.history[fi].t; break; } }
-  if(firstT){ var fdt=new Date(firstT); h.push('<div class="kv"><b>首次获得</b>'+(fdt.getMonth()+1)+'月'+fdt.getDate()+'日</div>'); }
+  var lastT=null;
+  for(var fl=0;fl<state.history.length;fl++){ if(state.history[fl].op===opName){ lastT=state.history[fl].t; break; } }
+  if(firstT){ var fdt=new Date(firstT); h.push('<div class="kv"><b>首次获得</b>'+fdt.getFullYear()+'年'+(fdt.getMonth()+1)+'月'+fdt.getDate()+'日</div>'); }
+  if(lastT&&lastT!==firstT){ var ldt=new Date(lastT); h.push('<div class="kv"><b>最近获得</b>'+ldt.getFullYear()+'年'+(ldt.getMonth()+1)+'月'+ldt.getDate()+'日</div>'); }
   var srcs=opBanners[opName];
   if(srcs&&srcs.length){
     var sl=[];
