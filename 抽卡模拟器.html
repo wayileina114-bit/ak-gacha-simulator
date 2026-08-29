@@ -422,7 +422,7 @@ header{
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v5.2（历史池名+成就进度条）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v5.3（UP命中率统计）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -523,6 +523,7 @@ function rnd(a){ return a[Math.floor(Math.random()*a.length)]; }
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function stars(n){ var s=''; for(var i=0;i<n;i++)s+='★'; return s; }
 function bannerById(id){ var bs=DATA.banners,i; for(i=0;i<bs.length;i++){ if(bs[i].id===id)return bs[i]; } return bs[0]; }
+function bannerByFull(full){ var bs=DATA.banners,i; for(i=0;i<bs.length;i++){ if(bs[i].full===full)return bs[i]; } return null; }
 function opOf(name){ return opByName[name]; }
 function thumbOf(art,name,variant,w){
   var m=art?art.match(/images\/arknights\/([0-9a-f])\/([0-9a-f]{2})\/([^/]+)$/):null;
@@ -979,7 +980,7 @@ function doPull(n){
     r=pullOne(b);
     results.push(r);
     if(isNew(r.op))addCol(r.op);
-    state.history.unshift({op:r.op,rar:r.rar,t:Date.now(),type:b.type,bn:b.full});
+    state.history.unshift({op:r.op,rar:r.rar,t:Date.now(),type:b.type,bn:b.full,bid:b.id});
   }
   if(state.history.length>2000)state.history.length=2000;
   sessPulls+=n;
@@ -1273,7 +1274,7 @@ function doUntil6(){
     var r=pullOne(b);
     results.push(r);
     if(isNew(r.op))addCol(r.op);
-    state.history.unshift({op:r.op,rar:r.rar,t:Date.now(),type:b.type,bn:b.full});
+    state.history.unshift({op:r.op,rar:r.rar,t:Date.now(),type:b.type,bn:b.full,bid:b.id});
     if(r.rar===6)break;
   }
   if(state.history.length>2000)state.history.length=2000;
@@ -1503,6 +1504,33 @@ function openStats(){
   h.push('<h4 class="sect">按卡池类型分布</h4><div class="chart">');
   var tkeys=Object.keys(typeCnt);
   for(i=0;i<tkeys.length;i++){ var t2=tkeys[i]; var rate6=typeCnt[t2]?((type6[t2]||0)/typeCnt[t2]*100).toFixed(1)+'%':'0%'; h.push('<div class="crow"><span class="cl">'+(TCN[t2]||t2)+'</span><div class="cbar"><i style="width:'+Math.max(2,Math.round(typeCnt[t2]/total*100))+'%"></i></div><span class="cv">'+typeCnt[t2]+'抽 · 6★率 '+rate6+'</span></div>'); }
+  h.push('</div>');
+  h.push('<h4 class="sect">UP命中率（6★出货中当期UP占比）</h4><div class="chart">');
+  var upHit=0, upTot=0, upRows={};
+  for(i=0;i<hist.length;i++){
+    var hr=hist[i]; if(hr.rar!==6)continue;
+    if(hr.type==='standard'||hr.type==='zhongjian'||hr.type==='joint')continue;
+    var hbb=hr.bid?bannerById(hr.bid):(hr.bn?bannerByFull(hr.bn):null);
+    if(!hbb||hbb.type==='standard'||hbb.type==='zhongjian')continue;
+    upTot++;
+    var isUp=hbb.six.indexOf(hr.op)>=0;
+    if(isUp)upHit++;
+    var ukey=(hbb.full||'').slice(0,10);
+    if(!upRows[ukey])upRows[ukey]={hit:0,tot:0,full:hbb.full};
+    upRows[ukey].tot++; if(isUp)upRows[ukey].hit++;
+  }
+  if(upTot){
+    var upPct=Math.round(upHit/upTot*100);
+    h.push('<div class="crow"><span class="cl">合计</span><div class="cbar"><i style="width:'+Math.max(2,upPct)+'%"></i></div><span class="cv'+(upPct>=60?' luck-hi':'')+'">'+upHit+'/'+upTot+'（'+upPct+'%）</span></div>');
+    var ukeys=Object.keys(upRows);
+    for(i=0;i<Math.min(6,ukeys.length);i++){
+      var ur=upRows[ukeys[i]], up2=Math.round(ur.hit/ur.tot*100);
+      h.push('<div class="crow"><span class="cl">'+esc(ur.full.slice(0,8))+'</span><div class="cbar"><i style="width:'+Math.max(2,up2)+'%"></i></div><span class="cv">'+ur.hit+'/'+ur.tot+'</span></div>');
+    }
+    if(ukeys.length>6)h.push('<div class="notice">……等共 '+ukeys.length+' 个卡池</div>');
+  } else {
+    h.push('<div class="notice">暂无UP池（限定/活动/定向）6★记录</div>');
+  }
   h.push('</div>');
   h.push('<h4 class="sect">最近六星</h4>');
   var sixList=[];
