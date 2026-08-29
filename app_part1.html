@@ -21,6 +21,10 @@ body.theme-amber{
   --line:#5c4528; --txt:#f3e6d2; --dim:#c0a888; --acc:#ffb45e; --acc2:#ff9a2e;
 }
 body.theme-amber header{background:linear-gradient(90deg,#2c1a08 0%,#36220c 55%,#402d14 100%)}
+body.theme-blue header::after{background:radial-gradient(circle, rgba(120,200,255,.16), transparent 70%)}
+body.theme-blue .bcard.active{border-color:var(--acc); background:linear-gradient(90deg, rgba(74,179,255,.16), var(--bg2))}
+body.theme-amber header::after{background:radial-gradient(circle, rgba(255,180,94,.16), transparent 70%)}
+body.theme-amber .bcard.active{border-color:var(--acc); background:linear-gradient(90deg, rgba(255,154,46,.16), var(--bg2))}
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%}
 body{
@@ -219,6 +223,16 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 }
 #resultMsg{text-align:center; font-size:14px; color:var(--dim); margin-top:10px; min-height:20px}
 .notice b{color:var(--acc)}
+.pitymap{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:8px; max-height:56vh; overflow-y:auto}
+.pitymap-card{background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:10px; cursor:pointer; transition:transform .15s, border-color .15s}
+.pitymap-card:hover{border-color:var(--acc2); transform:translateY(-2px)}
+.pitymap-card.on{border-color:var(--acc)}
+.pitymap-card .pm-name{font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.pitymap-card .pm-bar{height:6px; background:var(--bg); border-radius:3px; overflow:hidden; margin:6px 0 4px}
+.pitymap-card .pm-bar i{display:block; height:100%; background:linear-gradient(90deg,var(--acc),var(--acc2)); border-radius:3px}
+.pitymap-card .pm-sub{font-size:11px; color:var(--dim); line-height:1.6}
+.pitymap-card .pm-hot{color:var(--red); font-weight:700}
+.rup-card.owned{opacity:.45; filter:grayscale(.6); cursor:not-allowed}
 #fortune.busy{color:var(--gold); font-weight:700; animation:urgentpulse 1s infinite}
 .sixstrip{display:flex; justify-content:center; gap:10px; margin:6px 0 10px; flex-wrap:wrap}
 .sixcard{width:110px; border-radius:10px; overflow:hidden; border:2px solid var(--r6); box-shadow:0 0 16px rgba(255,93,58,.4); cursor:pointer; transition:transform .15s; position:relative}
@@ -509,7 +523,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
       <div id="resultMsg"></div>
     </section>
     <section class="panel">
-      <div class="sectbar"><h4>抽卡统计</h4><button class="mini-btn" id="btnAch">🏆 成就</button><button class="mini-btn" id="btnStats">详细统计</button><button class="mini-btn" id="btnOpStats">干员统计</button><button class="mini-btn" id="btnCopyStats">复制总结</button><button class="mini-btn" id="btnRules">规则说明</button><button class="mini-btn" id="btnReset2">清空记录</button></div>
+      <div class="sectbar"><h4>抽卡统计</h4><button class="mini-btn" id="btnAch">🏆 成就</button><button class="mini-btn" id="btnStats">详细统计</button><button class="mini-btn" id="btnPityMap">🛡 保底一览</button><button class="mini-btn" id="btnOpStats">干员统计</button><button class="mini-btn" id="btnCopyStats">复制总结</button><button class="mini-btn" id="btnRules">规则说明</button><button class="mini-btn" id="btnReset2">清空记录</button></div>
       <div class="stats-grid" id="statsGrid"></div>
       <div class="sectbar"><h4>寻访记录</h4><button class="mini-btn" id="btnExportHist">导出记录</button></div>
       <div class="histsearch"><input id="histSearch" placeholder="搜索干员/卡池..."/><button class="mini-btn" id="histClearSearch">✕</button></div>
@@ -534,7 +548,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.8（主题切换·卡池搜索修复）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.9（保底一览·Wiki缓存·再来N抽）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>

@@ -15,6 +15,7 @@ var R6=0.02,R5=0.08,R4=0.50;
 var SPEED=160;
 var BUSY=false;
 var lastBatch=[];
+var lastPullN=10;
 var sessPulls=0;
 var FORTUNES=['罗德岛今日运势：大吉，宜抽卡','博士，稳住心态，保底总会来的','今日出货率 +1%（心理作用加成）','非酋之光保佑你','好运正在路上，再抽亿发','罗德岛随时欢迎你回家','听说凌晨3点玄学出货率高','你的第六感在发光，抽吧'];
 var FORTUNE_DETAILS=['今天适合十连：据罗德岛统计，十连出5★以上的概率更高（其实都一样，开心就好）','玄学提示：先单抽垫2发再十连，据说能提高出货率（信则有）','今日宜抽卡：博士的运势曲线正处于上升期，抓住机会','避坑提醒：抽卡前先去基建收个菜，转换一下运气','占卜结果：你与六星干员的缘分正在接近，保持耐心','幸运色：金色。建议把界面调成金色主题再抽','今日不宜：凌晨抽卡。早点睡，明天保底见','神秘信号：抽卡前心里默念想要的名字，会有奇效'];
@@ -530,8 +531,8 @@ function sparkExchange(cost){
   for(i=0;i<showAll;i++){
     o=opOf(list[i]); if(!o)continue;
     var owned=state.collection.indexOf(list[i])>=0;
-    h.push('<div class="rup-card r'+o.rarity+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/>');
-    h.push('<div class="rn">'+esc(o.name)+(owned?'（已有）':'')+'</div>');
+    h.push('<div class="rup-card r'+o.rarity+(owned?' owned':'')+'"'+(owned?' title="已拥有，兑换浪费契约，已禁用"':'')+'><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/>');
+    h.push('<div class="rn">'+esc(o.name)+(owned?'（已有·不可换）':'')+'</div>');
     h.push('<div class="rb">'+(b.limitedSix.indexOf(list[i])>=0?'限定':'当期')+'</div>');
     h.push('<div class="rr">'+stars(o.rarity)+'</div></div>');
   }
@@ -542,6 +543,7 @@ function sparkExchange(cost){
   var cards=$('mBody').querySelectorAll('.rup-card');
   for(i=0;i<cards.length;i++){
     (function(card,opName){
+      if(state.collection.indexOf(opName)>=0)return;
       card.onclick=function(){
         state.spark[b.id]=tok-cost;
         addCol(opName);
@@ -593,7 +595,7 @@ function renderCards(results,msg,has6,names6,has5){
     $('resultMsg').innerHTML=msg||'';
     if(has6&&names6&&names6.length){ toast('恭喜！获得六星干员：'+names6.join('、')); sixBurst(names6); var first6=wrap.querySelector('.card.r6'); if(first6&&first6.scrollIntoView){ try{ first6.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){ first6.scrollIntoView(); } } }
     if(has5&&!has6){ var f5=$('flash'); if(f5){ f5.style.background='radial-gradient(ellipse at center, rgba(245,185,74,.32), transparent 70%)'; f5.style.transition='opacity .8s'; f5.style.opacity='1'; setTimeout(function(){ f5.style.opacity='0'; f5.style.background=''; }, 750); } try{ if(typeof navigator!=='undefined'&&navigator.vibrate)navigator.vibrate(50); }catch(e){} }
-    if(lastBatch.length>10){ var ab=$('btnAllRes'); if(ab)ab.onclick=openAllResults; msg+='<br/><button class="mini-btn" id="btnAgain">🔁 再来十连</button>'; $('resultMsg').innerHTML=msg; var ab2=$('btnAgain'); if(ab2)ab2.onclick=function(){ doPull(10); }; }
+    if(lastBatch.length>10){ var ab=$('btnAllRes'); if(ab)ab.onclick=openAllResults; msg+='<br/><button class="mini-btn" id="btnAgain">🔁 再来'+(lastPullN||10)+'抽</button>'; $('resultMsg').innerHTML=msg; var ab2=$('btnAgain'); if(ab2)ab2.onclick=function(){ doPull(lastPullN||10); }; }
     var sal=$('sixAllLink'); if(sal)sal.onclick=function(){ openAllResults(); };
     var sixcards=$('resultMsg').querySelectorAll('.sixcard');
     for(var si6=0;si6<sixcards.length;si6++){ (function(sc){ sc.onclick=function(){ openModal(sc.getAttribute('data-op')); }; })(sixcards[si6]); }
@@ -613,6 +615,7 @@ function doPull(n){
   var b=bannerById(state.cur);
   if(!b)return;
   if(n<1)n=1; if(n>500)n=500;
+  lastPullN=n;
   BUSY=true;
   setBusyUI(true);
   var results=[], i, r;
@@ -655,6 +658,48 @@ function doPull(n){
   renderBannerInfo();
   checkNewAch(achBefore);
   setFortune();
+}
+function findTypeBanner(type){ var best=null, i3; for(i3=0;i3<DATA.banners.length;i3++){ var bb3=DATA.banners[i3]; if(bb3.type===type&&(!best||(bb3.start||'')>(best.start||'')))best=bb3; } return best; }
+function openPityMap(){
+  var h=['<h4 class="sect" style="margin-top:0">🛡 保底一览</h4><div class="notice">所有卡池的 6★ 保底进度总览，点击卡片切换到对应卡池</div>'];
+  var seen={}, arr=[], pk2, b3;
+  for(pk2 in state.pity){
+    var stt=state.pity[pk2];
+    if(!stt||!stt.fails||stt.fails<=0)continue;
+    if(pk2==='std')b3=findTypeBanner('standard');
+    else if(pk2==='zj')b3=findTypeBanner('zhongjian');
+    else b3=bannerById(pk2);
+    if(!b3||seen[pk2])continue; seen[pk2]=1;
+    arr.push({b:b3,fails:stt.fails,cnt:(state.cnt||{})[b3.id]||0});
+  }
+  var bsi, bk2;
+  for(bsi=0;bsi<DATA.banners.length;bsi++){
+    bk2=DATA.banners[bsi];
+    var c2=(state.cnt||{})[bk2.id]||0;
+    var pkx=pityKey(bk2);
+    if(c2>0&&!seen[pkx]&&!seen[bk2.id]){ seen[pkx]=1; arr.push({b:bk2,fails:(state.pity[pkx]||{}).fails||0,cnt:c2}); }
+  }
+  if(!arr.length){ h.push('<div class="notice">还没有抽过任何卡池，先去抽一发吧！</div>'); $('mBody').innerHTML=h.join(''); openModalBox(); return; }
+  arr.sort(function(x,y){ return (y.fails*1000+y.cnt)-(x.fails*1000+x.cnt); });
+  h.push('<div class="pitymap">');
+  for(var ai=0;ai<arr.length;ai++){
+    var bb=arr[ai].b, ff=arr[ai].fails, cc=arr[ai].cnt;
+    var p6n=Math.min(0.02+Math.max(0,ff-49)*0.02,1)*100;
+    h.push('<div class="pitymap-card'+(state.cur===bb.id?' on':'')+'" data-bid="'+bb.id+'">');
+    h.push('<div class="pm-name">'+esc(bb.name)+'</div>');
+    h.push('<div class="pm-bar"><i style="width:'+Math.min(100,ff)+'%"></i></div>');
+    h.push('<div class="pm-sub">本池已抽 <b>'+cc+'</b> 抽 · 距上次6★ <b>'+(ff>0?ff+' 抽':'—')+'</b>');
+    if(ff>=90)h.push('<br/><span class="pm-hot">🚨 已接近保底！最多再 '+(100-ff)+' 抽必出</span>');
+    else h.push('<br/>当前6★概率 <b>'+(p6n).toFixed(1)+'%</b> · 距保底 '+(100-ff)+' 抽');
+    h.push('</div></div>');
+  }
+  h.push('</div>');
+  $('mBody').innerHTML=h.join('');
+  openModalBox();
+  var pcs=$('mBody').querySelectorAll('.pitymap-card');
+  for(var pi2=0;pi2<pcs.length;pi2++){
+    (function(pc){ pc.onclick=function(){ state.cur=pc.getAttribute('data-bid'); save(); renderBannerList(); renderBannerInfo(); renderStats(); closeModal(); }; })(pcs[pi2]);
+  }
 }
 function renderStats(){
   var b=bannerById(state.cur), st=state.pity[pityKey(b)]||{fails:0}, p6=Math.min(0.02+Math.max(0,st.fails-49)*0.02,1);
@@ -878,6 +923,14 @@ function prtsApiUrl(page, section){
 function stripWiki(t){ return String(t||'').replace(/\{\{[^{}]*\}\}/g,'').replace(/\[\[[^\]]*\|?([^\]|]*)\]\]/g,'$1').replace(/'''/g,'').replace(/<br\/>/g,' ').trim(); }
 function wikiColor(t){ return String(t||'').replace(/\{\{color\|#[0-9A-Fa-f]{6}\|([^}]*)\}\}/g,'$1').replace(/\{\{术语\|[^|]*\|([^}]*)\}\}/g,'$1'); }
 var wikiCache={};
+(function(){ try{ var wRaw=localStorage.getItem('akgacha_wiki_v1'); if(wRaw){ var wObj=JSON.parse(wRaw); var wK; for(wK in wObj){ if(wObj[wK]&&Date.now()-wObj[wK].t<7*86400000)wikiCache[wK]=wObj[wK]; } } }catch(e){} })();
+function persistWikiCache(){
+  try{
+    var wObj={}, wK2, wN=0;
+    for(wK2 in wikiCache){ if(wN++>=60)break; wObj[wK2]=wikiCache[wK2]; }
+    localStorage.setItem('akgacha_wiki_v1', JSON.stringify(wObj));
+  }catch(e){}
+}
 function openWiki(opName){
   var o=opOf(opName); if(!o)return;
   var name=o.name;
@@ -889,8 +942,9 @@ function openWiki(opName){
   var pending=secs.length;
   function done(){
     if(--pending>0)return;
-    if(!got[3]&&!got[7]){ $('mBody').innerHTML='<h4 class="sect" style="margin-top:0">📊 '+esc(name)+' · Wiki数据</h4><div class="notice">同步失败：无法连接 PRTS Wiki（需联网）</div>'; return; }
+    if(!got[3]&&!got[7]){ $('mBody').innerHTML='<h4 class="sect" style="margin-top:0">📊 '+esc(name)+' · Wiki数据</h4><div class="notice">同步失败：无法连接 PRTS Wiki（需联网）</div><div style="text-align:center;margin-top:8px"><button class="mini-btn" id="wikiRetry">🔄 重试同步</button></div>'; var wr=$('wikiRetry'); if(wr)wr.onclick=function(){ openWiki(name); }; return; }
     wikiCache[ck]={t:Date.now(),acquire:got[2]||'',attr:got[3]||'',talents:got[5]||'',skills:got[7]||'',mats:got[9]||'',skillMats:got[10]||''};
+    persistWikiCache();
     renderWikiData(name,wikiCache[ck]);
   }
   for(var si=0;si<secs.length;si++){
@@ -1215,8 +1269,10 @@ function openGallery(){
   openModalBox();
 }
 var GAL_N=120;
+var GAL_NAMES=null;
 function renderGallery(){
-  var names=Object.keys(opByName).sort(function(a,b){return opByName[b].rarity-opByName[a].rarity||a.localeCompare(b,'zh');});
+  if(!GAL_NAMES)GAL_NAMES=Object.keys(opByName).sort(function(a,b){return opByName[b].rarity-opByName[a].rarity||a.localeCompare(b,'zh');});
+  var names=GAL_NAMES;
   var h=[],i,o;
   var shown=0,totalMatch=0;
   for(i=0;i<names.length;i++){
@@ -1729,6 +1785,7 @@ function init(){
   wire('btn100',function(){ doPull(100); });
   wire('btn200',function(){ doPull(200); });
   wire('btnStats',openStats);
+  wire('btnPityMap',openPityMap);
   wire('btnOpStats',openOpStats);
   wire('btnCopyStats',copyStats);
   wire('btnRules',openRules);
@@ -1765,6 +1822,9 @@ function init(){
     else if(e.key==='ArrowLeft')navBanner(-1);
     else if(e.key==='ArrowRight')navBanner(1);
     else if(e.key==='f'||e.key==='F'){ var cb=bannerById(state.cur); if(cb){ if(state.fav[cb.id])delete state.fav[cb.id]; else state.fav[cb.id]=true; save(); renderBannerList(); toast(state.fav[cb.id]?'⭐ 已收藏当前卡池':'已取消收藏'); } }
+    else if(e.key==='g'||e.key==='G')openGallery();
+    else if(e.key==='s'||e.key==='S')openStats();
+    else if(e.key==='h'||e.key==='H'){ var hp=$('history'); if(hp&&hp.scrollIntoView)hp.scrollIntoView({behavior:'smooth',block:'start'}); }
   });
   var bl=$('bannerList');
   if(bl)bl.onclick=function(e){
