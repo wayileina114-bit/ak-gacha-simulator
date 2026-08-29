@@ -220,6 +220,8 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .cop.wished{border-color:rgba(255,110,199,.55); box-shadow:0 0 10px rgba(255,110,199,.22)}
 #resultMsg b{color:var(--gold); font-size:16px}
 #btnAgain{margin-top:10px; background:linear-gradient(90deg,rgba(255,154,46,.25),rgba(255,93,58,.2)); border-color:var(--gold); color:var(--gold); font-weight:800}
+.allreslink{color:var(--acc); cursor:pointer; text-decoration:underline}
+.allreslink:hover{color:#fff}
 #btnRandOp{transition:transform .2s}
 #btnRandOp:active{transform:rotate(20deg) scale(.95)}
 .stats-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:10px}
@@ -471,7 +473,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v8.7（池内搜索+卡池分页）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v8.8（六星展示优化）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -1050,17 +1052,20 @@ function renderCards(results,msg,has6,names6,has5){
     if(has6&&names6&&names6.length){
       var big6=[], bi2;
       for(bi2=0;bi2<results.length;bi2++){ if(results[bi2].rar===6)big6.push(results[bi2]); }
-      if(big6.length&&big6.length<=3){
+      if(big6.length){
         var bh=['<div class="sixstrip">'];
-        for(bi2=0;bi2<big6.length;bi2++){ var bo6=opOf(big6[bi2].op); if(bo6)bh.push('<div class="sixcard" data-op="'+esc(big6[bi2].op)+'"><img loading="lazy" src="'+esc(opArtT(bo6))+'"/><div class="sn6">'+esc(bo6.name)+'</div></div>'); }
+        var show6=Math.min(big6.length,3);
+        for(bi2=0;bi2<show6;bi2++){ var bo6=opOf(big6[bi2].op); if(bo6)bh.push('<div class="sixcard" data-op="'+esc(big6[bi2].op)+'"><img loading="lazy" src="'+esc(opArtT(bo6))+'"/><div class="sn6">'+esc(bo6.name)+'</div></div>'); }
         bh.push('</div>');
         msg=bh.join('')+msg;
+        if(big6.length>3)msg+='<br/><span class="notice">……共 '+big6.length+' 只六星 · <a class="allreslink" id="sixAllLink">查看全部结果</a></span>';
       }
     }
     $('resultMsg').innerHTML=msg||'';
     if(has6&&names6&&names6.length){ toast('恭喜！获得六星干员：'+names6.join('、')); sixBurst(names6); var first6=wrap.querySelector('.card.r6'); if(first6&&first6.scrollIntoView){ try{ first6.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){ first6.scrollIntoView(); } } }
     if(has5&&!has6){ var f5=$('flash'); if(f5){ f5.style.background='radial-gradient(ellipse at center, rgba(245,185,74,.32), transparent 70%)'; f5.style.transition='opacity .8s'; f5.style.opacity='1'; setTimeout(function(){ f5.style.opacity='0'; f5.style.background=''; }, 750); } try{ if(typeof navigator!=='undefined'&&navigator.vibrate)navigator.vibrate(50); }catch(e){} }
     if(lastBatch.length>10){ var ab=$('btnAllRes'); if(ab)ab.onclick=openAllResults; msg+='<br/><button class="mini-btn" id="btnAgain">🔁 再来十连</button>'; $('resultMsg').innerHTML=msg; var ab2=$('btnAgain'); if(ab2)ab2.onclick=function(){ doPull(10); }; }
+    var sal=$('sixAllLink'); if(sal)sal.onclick=function(){ openAllResults(); };
     var sixcards=$('resultMsg').querySelectorAll('.sixcard');
     for(var si6=0;si6<sixcards.length;si6++){ (function(sc){ sc.onclick=function(){ openModal(sc.getAttribute('data-op')); }; })(sixcards[si6]); }
     playResult(has6||false,has5||false);
