@@ -461,7 +461,7 @@ header{
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v7.8（限定缺卡清单）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v7.9（卡池6星率显示）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -782,10 +782,13 @@ document.addEventListener('error', function(e){
 
 var MAX_START=null;
 function getMaxStart(){ if(MAX_START===null){ var ms='', i2; for(i2=0;i2<DATA.banners.length;i2++){ if(DATA.banners[i2].start>ms)ms=DATA.banners[i2].start; } MAX_START=ms; } return MAX_START; }
-var B_SEARCH=null;
+var B_SEARCH=null, B_STAT=null;
 function bannerHay(b){ return b.name+' '+b.six.join(' ')+' '+b.five.join(' ')+' '+(b.limitedSix||[]).join(' ')+' '+(b.four||[]).join(' '); }
+function buildBStat(){ B_STAT={}; var hi5; for(hi5=0;hi5<state.history.length;hi5++){ var hh5=state.history[hi5]; if(!hh5||!hh5.bid)continue; if(!B_STAT[hh5.bid])B_STAT[hh5.bid]={n:0,s6:0}; B_STAT[hh5.bid].n++; if(hh5.rar===6)B_STAT[hh5.bid].s6++; } }
+var B_STAT_VER=-1;
 function renderBannerList(){
   var list=$('bannerList'), bs=DATA.banners, html=[], i, b;
+  if(B_STAT_VER!==state.history.length){ B_STAT_VER=state.history.length; buildBStat(); }
   var yf=$('yearChips')._v, tf=$('typeChips')._v, q=($('searchBox').value||'').trim();
   var maxStart=getMaxStart();
   var matched=[];
@@ -810,7 +813,8 @@ function renderBannerList(){
      }html.push('</div>');
     html.push('<div class="meta"><div class="name">'+esc(b.name)+(b.start===maxStart?'<span class="now-badge">当前</span>':'')+'<span class="badge" style="background:'+b.color+'">'+esc(b.label)+'</span><span class="favbtn'+(state.fav[b.id]?' on':'')+'" data-id="'+b.id+'" title="收藏/取消收藏">★</span></div>');
     var cnt=(state.cnt||{})[b.id]||0;
-    html.push('<div class="sub">'+esc(b.start)+' ~ '+esc(b.end)+(cnt>0?' · 已抽 <b style="color:var(--gold)">'+cnt+'</b> 抽':'')+'</div></div>');
+    var bs2=B_STAT&&B_STAT[b.id];
+    html.push('<div class="sub">'+esc(b.start)+' ~ '+esc(b.end)+(cnt>0?' · 已抽 <b style="color:var(--gold)">'+cnt+'</b> 抽':'')+(bs2&&bs2.n>0&&bs2.s6>0?' · 6★率 <b style="color:#ff6e6e">'+(bs2.s6/bs2.n*100).toFixed(1)+'%</b>':'')+'</div></div>');
     html.push('</div>');
   }
   list.innerHTML=html.join('');
