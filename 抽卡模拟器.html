@@ -458,7 +458,7 @@ header{
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v7.4（再来十连按钮）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v7.5（欧气徽章+画廊缓存）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -1441,7 +1441,8 @@ function openPoolModal(){
   for(i=0;i<cards.length;i++){ cards[i].onclick=function(){ openModal(this.getAttribute('data-op')); }; }
 }
 var galF='all', galV=2;
-function galArt(o){ return thumbOf(o.art,o.name,'skin 0 '+(galV===0?0:2)+'.png',480)||o.art||avUrl(o); }
+var GAL_ART_CACHE={};
+function galArt(o){ if(!o||!o.name)return ''; var ck=o.name+':'+galV; if(GAL_ART_CACHE[ck])return GAL_ART_CACHE[ck]; return GAL_ART_CACHE[ck]=thumbOf(o.art,o.name,'skin 0 '+(galV===0?0:2)+'.png',480)||o.art||avUrl(o); }
 function openGallery(){
   var h=['<h4 class="sect" style="margin-top:0">立绘画廊</h4><div class="filters" id="galChips"></div><div class="galbar"><button class="mini-btn" id="galV2"'+(galV===2?' style="border-color:var(--acc)"':'')+'>精二立绘</button><button class="mini-btn" id="galV0"'+(galV===0?' style="border-color:var(--acc)"':'')+'>初始立绘</button></div><div class="gallery" id="galGrid"></div>'];
   $('mBody').innerHTML=h.join('');
@@ -1568,7 +1569,8 @@ function openStats(){
   h.push('<div class="stat"><div class="v gold">'+c5+'</div><div class="k">5★（'+(total?(c5/total*100).toFixed(2):0)+'%）</div></div>');
   h.push('<div class="stat"><div class="v">'+c4+'</div><div class="k">4★（'+(total?(c4/total*100).toFixed(2):0)+'%）</div></div>');
   h.push('<div class="stat"><div class="v">'+c3+'</div><div class="k">3★（'+(total?(c3/total*100).toFixed(2):0)+'%）</div></div>');
-  h.push('<div class="stat"><div class="v gold">'+score+'</div><div class="k">欧气评分：'+label+'</div></div>');
+  var badge=score>=150?'👑':score>=110?'🔥':score>=85?'⭐':score>=60?'🌧️':'☔';
+  h.push('<div class="stat"><div class="v gold">'+score+'</div><div class="k">欧气评分：'+label+' '+badge+'</div></div>');
   h.push('<div class="stat"><div class="v" style="color:var(--acc2)">'+(total*600).toLocaleString()+'</div><div class="k">等价合成玉（600/抽）</div></div>');
   var limGotN=0, lk3;
   for(lk3 in limitedOps){ if(state.collection.indexOf(lk3)>=0)limGotN++; }
