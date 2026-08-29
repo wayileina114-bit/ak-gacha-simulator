@@ -211,6 +211,8 @@ header{
 .cop.wished{border-color:rgba(255,110,199,.55); box-shadow:0 0 10px rgba(255,110,199,.22)}
 #resultMsg b{color:var(--gold); font-size:16px}
 #btnAgain{margin-top:10px; background:linear-gradient(90deg,rgba(255,154,46,.25),rgba(255,93,58,.2)); border-color:var(--gold); color:var(--gold); font-weight:800}
+#btnRandOp{transition:transform .2s}
+#btnRandOp:active{transform:rotate(20deg) scale(.95)}
 .stats-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:10px}
 .statbar{height:5px; background:var(--bg); border-radius:3px; overflow:hidden; margin-top:6px}
 .statbar i{display:block; height:100%; background:linear-gradient(90deg,#ff6ec7,#c96ab6); border-radius:3px}
@@ -447,7 +449,7 @@ header{
       <div class="filters" id="histTypeChips"></div>
       <div class="filters" id="histTimeChips"></div>
       <div id="history"></div>
-      <div class="sectbar"><h4>干员图鉴</h4><span class="notice" id="colCount" style="margin-left:4px"></span><select id="colSortSel"><option value="fav">收藏置顶</option><option value="rarity">按稀有度</option><option value="name">按名称</option><option value="prof">按职业</option></select><button class="mini-btn" id="btnGallery">立绘画廊</button></div>
+      <div class="sectbar"><h4>干员图鉴</h4><span class="notice" id="colCount" style="margin-left:4px"></span><select id="colSortSel"><option value="fav">收藏置顶</option><option value="rarity">按稀有度</option><option value="name">按名称</option><option value="prof">按职业</option></select><button class="mini-btn" id="btnGallery">立绘画廊</button><button class="mini-btn" id="btnRandOp">🎲 随机干员</button></div>
       <div class="colbar" id="colBar"></div>
       <div id="colRarity"></div>
       <div class="filters" id="colChips"></div>
@@ -458,7 +460,7 @@ header{
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v7.5（欧气徽章+画廊缓存）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v7.6（随机干员+搜索索引）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>

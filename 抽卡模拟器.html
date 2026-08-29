@@ -211,6 +211,8 @@ header{
 .cop.wished{border-color:rgba(255,110,199,.55); box-shadow:0 0 10px rgba(255,110,199,.22)}
 #resultMsg b{color:var(--gold); font-size:16px}
 #btnAgain{margin-top:10px; background:linear-gradient(90deg,rgba(255,154,46,.25),rgba(255,93,58,.2)); border-color:var(--gold); color:var(--gold); font-weight:800}
+#btnRandOp{transition:transform .2s}
+#btnRandOp:active{transform:rotate(20deg) scale(.95)}
 .stats-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:10px}
 .statbar{height:5px; background:var(--bg); border-radius:3px; overflow:hidden; margin-top:6px}
 .statbar i{display:block; height:100%; background:linear-gradient(90deg,#ff6ec7,#c96ab6); border-radius:3px}
@@ -447,7 +449,7 @@ header{
       <div class="filters" id="histTypeChips"></div>
       <div class="filters" id="histTimeChips"></div>
       <div id="history"></div>
-      <div class="sectbar"><h4>干员图鉴</h4><span class="notice" id="colCount" style="margin-left:4px"></span><select id="colSortSel"><option value="fav">收藏置顶</option><option value="rarity">按稀有度</option><option value="name">按名称</option><option value="prof">按职业</option></select><button class="mini-btn" id="btnGallery">立绘画廊</button></div>
+      <div class="sectbar"><h4>干员图鉴</h4><span class="notice" id="colCount" style="margin-left:4px"></span><select id="colSortSel"><option value="fav">收藏置顶</option><option value="rarity">按稀有度</option><option value="name">按名称</option><option value="prof">按职业</option></select><button class="mini-btn" id="btnGallery">立绘画廊</button><button class="mini-btn" id="btnRandOp">🎲 随机干员</button></div>
       <div class="colbar" id="colBar"></div>
       <div id="colRarity"></div>
       <div class="filters" id="colChips"></div>
@@ -458,7 +460,7 @@ header{
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v7.5（欧气徽章+画廊缓存）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v7.6（随机干员+搜索索引）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -779,6 +781,8 @@ document.addEventListener('error', function(e){
 
 var MAX_START=null;
 function getMaxStart(){ if(MAX_START===null){ var ms='', i2; for(i2=0;i2<DATA.banners.length;i2++){ if(DATA.banners[i2].start>ms)ms=DATA.banners[i2].start; } MAX_START=ms; } return MAX_START; }
+var B_SEARCH=null;
+function bannerHay(b){ return b.name+' '+b.six.join(' ')+' '+b.five.join(' ')+' '+(b.limitedSix||[]).join(' ')+' '+(b.four||[]).join(' '); }
 function renderBannerList(){
   var list=$('bannerList'), bs=DATA.banners, html=[], i, b;
   var yf=$('yearChips')._v, tf=$('typeChips')._v, q=($('searchBox').value||'').trim();
@@ -790,8 +794,8 @@ function renderBannerList(){
     if(tf==='fav'){ if(!state.fav[b.id])continue; }
     else if(tf!=='all'&&b.type!==tf)continue;
     if(q){
-      var hay=b.name+' '+b.six.join(' ')+' '+b.five.join(' ')+' '+(b.limitedSix||[]).join(' ')+' '+(b.four||[]).join(' ');
-      if(hay.indexOf(q)<0)continue;
+      if(B_SEARCH===null){ B_SEARCH=[]; var bi3; for(bi3=0;bi3<DATA.banners.length;bi3++)B_SEARCH.push(bannerHay(DATA.banners[bi3])); }
+      if(B_SEARCH[i].indexOf(q)<0)continue;
     }
     matched.push(b);
   }
@@ -868,7 +872,7 @@ function bannerInfoHtml(b){
     h.push('<div class="rup-card r'+o.rarity+'" data-op="'+esc(ups5[j])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/>');
     h.push('<div class="rn">'+esc(o.name)+'</div><div class="rb">UP</div><div class="rr">'+stars(o.rarity)+'</div></div>');
   }
-  var ups4=b.four.slice(0,3);
+  var ups4=(b.four||[]).slice(0,3);
   for(j=0;j<ups4.length;j++){
     o=opOf(ups4[j]); if(!o)continue;
     h.push('<div class="rup-card r'+o.rarity+'" data-op="'+esc(ups4[j])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/>');
@@ -1928,6 +1932,7 @@ function init(){
   wire('btnCopyStats',copyStats);
   wire('btnRules',openRules);
   wire('btnGallery',openGallery);
+  wire('btnRandOp',function(){ var keys=Object.keys(opByName); if(!keys.length)return; openModal(keys[Math.floor(Math.random()*keys.length)]); });
   wire('btnAch',openAch);
   wire('btnExportHist',exportHistory);
   wire('btnRandom',randomBanner);

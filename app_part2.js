@@ -309,6 +309,8 @@ document.addEventListener('error', function(e){
 
 var MAX_START=null;
 function getMaxStart(){ if(MAX_START===null){ var ms='', i2; for(i2=0;i2<DATA.banners.length;i2++){ if(DATA.banners[i2].start>ms)ms=DATA.banners[i2].start; } MAX_START=ms; } return MAX_START; }
+var B_SEARCH=null;
+function bannerHay(b){ return b.name+' '+b.six.join(' ')+' '+b.five.join(' ')+' '+(b.limitedSix||[]).join(' ')+' '+(b.four||[]).join(' '); }
 function renderBannerList(){
   var list=$('bannerList'), bs=DATA.banners, html=[], i, b;
   var yf=$('yearChips')._v, tf=$('typeChips')._v, q=($('searchBox').value||'').trim();
@@ -320,8 +322,8 @@ function renderBannerList(){
     if(tf==='fav'){ if(!state.fav[b.id])continue; }
     else if(tf!=='all'&&b.type!==tf)continue;
     if(q){
-      var hay=b.name+' '+b.six.join(' ')+' '+b.five.join(' ')+' '+(b.limitedSix||[]).join(' ')+' '+(b.four||[]).join(' ');
-      if(hay.indexOf(q)<0)continue;
+      if(B_SEARCH===null){ B_SEARCH=[]; var bi3; for(bi3=0;bi3<DATA.banners.length;bi3++)B_SEARCH.push(bannerHay(DATA.banners[bi3])); }
+      if(B_SEARCH[i].indexOf(q)<0)continue;
     }
     matched.push(b);
   }
@@ -398,7 +400,7 @@ function bannerInfoHtml(b){
     h.push('<div class="rup-card r'+o.rarity+'" data-op="'+esc(ups5[j])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/>');
     h.push('<div class="rn">'+esc(o.name)+'</div><div class="rb">UP</div><div class="rr">'+stars(o.rarity)+'</div></div>');
   }
-  var ups4=b.four.slice(0,3);
+  var ups4=(b.four||[]).slice(0,3);
   for(j=0;j<ups4.length;j++){
     o=opOf(ups4[j]); if(!o)continue;
     h.push('<div class="rup-card r'+o.rarity+'" data-op="'+esc(ups4[j])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/>');
@@ -1458,6 +1460,7 @@ function init(){
   wire('btnCopyStats',copyStats);
   wire('btnRules',openRules);
   wire('btnGallery',openGallery);
+  wire('btnRandOp',function(){ var keys=Object.keys(opByName); if(!keys.length)return; openModal(keys[Math.floor(Math.random()*keys.length)]); });
   wire('btnAch',openAch);
   wire('btnExportHist',exportHistory);
   wire('btnRandom',randomBanner);
