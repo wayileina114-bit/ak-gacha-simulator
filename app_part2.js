@@ -965,26 +965,34 @@ function doUntil6(){
   checkNewAch(achBefore);
   setFortune();
 }
+var POOL_N=36, POOL_Q='';
 function openPoolModal(){
   var b=bannerById(state.cur); if(!b)return;
   var pool=getPool(b);
-  var h=['<h4 class="sect" style="margin-top:0">'+esc(b.full)+' 完整卡池</h4>'];
+  var h=['<h4 class="sect" style="margin-top:0">'+esc(b.full)+' 完整卡池</h4><input id="poolSearch" placeholder="搜索池内干员..." value="'+esc(POOL_Q)+'"/>'];
   var i,o;
   h.push('<div class="notice">6★干员（'+pool.p6.length+'）</div><div class="rateup">');
-  for(i=0;i<pool.p6.length;i++){
+  var p6n=Math.min(pool.p6.length,POOL_N);
+  for(i=0;i<p6n;i++){
     o=opOf(pool.p6[i]); if(!o)continue;
+    if(POOL_Q&&o.name.indexOf(POOL_Q)<0)continue;
     h.push('<div class="rup-card r6" data-op="'+esc(pool.p6[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/><div class="rn">'+esc(o.name)+'</div><div class="rb">6★</div><div class="rr">'+stars(6)+'</div></div>');
   }
   h.push('</div><div class="notice">5★干员（'+pool.p5.length+'）</div><div class="rateup">');
-  for(i=0;i<pool.p5.length;i++){
+  var p5n=Math.min(pool.p5.length,POOL_N);
+  for(i=0;i<p5n;i++){
     o=opOf(pool.p5[i]); if(!o)continue;
+    if(POOL_Q&&o.name.indexOf(POOL_Q)<0)continue;
     h.push('<div class="rup-card r5" data-op="'+esc(pool.p5[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/><div class="rn">'+esc(o.name)+'</div><div class="rb">5★</div><div class="rr">'+stars(5)+'</div></div>');
   }
+  if(pool.p6.length>POOL_N||pool.p5.length>POOL_N)h.push('<button class="mini-btn" id="poolMore" style="margin:8px auto;display:block">加载更多卡池干员</button>');
   h.push('</div>');
   $('mBody').innerHTML=h.join('');
   openModalBox();
   var cards=$('mBody').querySelectorAll('.rup-card');
   for(i=0;i<cards.length;i++){ cards[i].onclick=function(){ openModal(this.getAttribute('data-op')); }; }
+  var pm=$('poolMore'); if(pm)pm.onclick=function(){ POOL_N+=36; openPoolModal(); };
+  var ps=$('poolSearch'); if(ps){ var pst=null; ps.oninput=function(){ POOL_Q=this.value.trim(); POOL_N=36; clearTimeout(pst); pst=setTimeout(function(){ openPoolModal(); },180); }; }
 }
 var galF='all', galV=2;
 var GAL_ART_CACHE={};
