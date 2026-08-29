@@ -265,7 +265,8 @@ function copyBannerInfo(b){
   var ups6=b.six.map(function(n){var o=opOf(n);return o?o.name:n;}).join('、')||'无';
   var ups5=b.five.map(function(n){var o=opOf(n);return o?o.name:n;}).join('、')||'无';
   var cf=(state.pity[pityKey(b)]||{fails:0}).fails;
-  var text=['【卡池信息】'+b.full,'时间：'+b.start+' ~ '+b.end,'类型：'+b.label,'UP 6★：'+ups6,'UP 5★：'+ups5,'出率：6★2%（保底100抽）· 5★8% · 十连保底5★','当前保底：已抽 '+cf+' 抽 · 还剩 '+Math.max(0,100-cf)+' 抽必出'].join(NL);
+  var ups4=b.four&&b.four.length?b.four.map(function(n){var o=opOf(n);return o?o.name:n;}).slice(0,3).join('、'):'无';
+  var text=['【卡池信息】'+b.full,'时间：'+b.start+' ~ '+b.end,'类型：'+b.label,'UP 6★：'+ups6,'UP 5★：'+ups5,'UP 4★：'+ups4,'出率：6★2%（保底100抽）· 5★8% · 十连保底5★','当前保底：已抽 '+cf+' 抽 · 还剩 '+Math.max(0,100-cf)+' 抽必出'].join(NL);
   var ta=document.createElement('textarea');
   ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
   document.body.appendChild(ta); ta.select();
@@ -680,13 +681,19 @@ function renderHistory(){
   var hc=$('history'); if(hc)hc.onclick=function(e){ var t=e.target; if(t&&t.classList&&t.classList.contains('jump')){ jumpBanner(t.getAttribute('data-bid')); } };
 }
 var colF='all', colP='all', colSort='rarity', colSearch='';
+var COL_SORT_CACHE=null, COL_SORT_KEY='';
 function renderCollection(){
-  var names=Object.keys(opByName).sort(function(a,b){
+  var names;
+  if(COL_SORT_KEY===colSort&&COL_SORT_CACHE){ names=COL_SORT_CACHE; }
+  else{
+    names=Object.keys(opByName).sort(function(a,b){
     if(colSort==='fav'){ var fa=state.favOps&&state.favOps[a]?1:0, fb=state.favOps&&state.favOps[b]?1:0; if(fa!==fb)return fb-fa; }
     if(colSort==='name')return a.localeCompare(b,'zh');
     if(colSort==='prof'){ var pa=(opByName[a]&&opByName[a].prof)||'', pb=(opByName[b]&&opByName[b].prof)||''; return pa.localeCompare(pb,'zh')||opByName[b].rarity-opByName[a].rarity; }
     return opByName[b].rarity-opByName[a].rarity||a.localeCompare(b,'zh');
   });
+    COL_SORT_KEY=colSort; COL_SORT_CACHE=names;
+  }
   var h=[],i,o;
   var colSet={}, csi;
   for(csi=0;csi<state.collection.length;csi++)colSet[state.collection[csi]]=1;
@@ -1331,7 +1338,7 @@ function exportBanners(){
   var NL=String.fromCharCode(10);
   var lines=['卡池,类型,开始,结束,UP6★,UP5★'];
   for(var i=0;i<DATA.banners.length;i++){ var b=DATA.banners[i];
-    lines.push([b.full,b.label,b.start,b.end,b.six.map(function(n){var o=opOf(n);return o?o.name:n;}).join(' '),b.five.map(function(n){var o=opOf(n);return o?o.name:n;}).join(' ')].join(','));
+    lines.push([csvEsc(b.full),csvEsc(b.label),csvEsc(b.start),csvEsc(b.end),csvEsc(b.six.map(function(n){var o=opOf(n);return o?o.name:n;}).join(' ')),csvEsc(b.five.map(function(n){var o=opOf(n);return o?o.name:n;}).join(' '))].join(','));
   }
   var text=String.fromCharCode(0xFEFF)+lines.join(NL);
   try{
@@ -1345,11 +1352,11 @@ function exportBanners(){
     toast('卡池清单已导出（共 '+DATA.banners.length+' 个）');
   }catch(e){ window.prompt('复制以下内容：', text); }
 }
+function csvEsc(v){ v=String(v==null?'':v); return v.indexOf(',')>=0||v.indexOf('"')>=0?'"'+v.split('"').join('""')+'"':v; }
 function exportHistory(){
   var NL=String.fromCharCode(10);
   var lines=['干员,稀有度,时间,卡池,卡池类型,距上次6★(抽)'];
   var last6i=-1;
-  function csvEsc(v){ v=String(v==null?'':v); return v.indexOf(',')>=0||v.indexOf('"')>=0?'"'+v.split('"').join('""')+'"':v; }
   for(var i=0;i<state.history.length;i++){ var r=state.history[i], o=opOf(r.op), dt=new Date(r.t||Date.now()); var gapTxt='';
     if(r.rar===6){ gapTxt=last6i>=0?String(i-last6i-1):'首个6★'; last6i=i; }
     lines.push(csvEsc(o?o.name:r.op)+','+r.rar+'星,'+dt.getFullYear()+'-'+(dt.getMonth()+1)+'-'+dt.getDate()+' '+dt.getHours()+':'+(dt.getMinutes()<10?'0':'')+dt.getMinutes()+','+csvEsc(r.bn||'')+','+(r.type||'event')+','+gapTxt); }
