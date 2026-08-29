@@ -192,6 +192,7 @@ header{
   50%{box-shadow:0 0 40px rgba(255,157,46,.85)}
 }
 #resultMsg{text-align:center; font-size:14px; color:var(--dim); margin-top:10px; min-height:20px}
+#resultMsg .newline{color:var(--acc); font-weight:800; font-size:15px; text-shadow:0 0 12px rgba(74,179,255,.4)}
 #resultMsg b{color:var(--gold); font-size:16px}
 .stats-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:10px}
 .stat{background:var(--bg2); border:1px solid var(--line); border-radius:10px; padding:10px; text-align:center}
@@ -333,6 +334,7 @@ header{
   #layout{display:block}
   .sidebar{
     position:fixed; top:0; left:0; width:86vw; max-width:330px; height:100vh; max-height:100vh;
+    height:100dvh; max-height:100dvh;
     z-index:45; border-radius:0 12px 12px 0; transform:translateX(-105%); transition:transform .25s;
   }
   .sidebar.open{transform:none}
@@ -428,7 +430,7 @@ header{
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v5.7（结果可点击+抽卡缓存+收藏置顶）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v5.8（iOS抽屉修复+索引缓存+新干员汇总）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -544,8 +546,10 @@ function uniq(a){ var m={},r=[],i; for(i=0;i<a.length;i++){ if(!m[a[i]]){m[a[i]]
 function rnd(a){ return a[Math.floor(Math.random()*a.length)]; }
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function stars(n){ var s=''; for(var i=0;i<n;i++)s+='★'; return s; }
-function bannerById(id){ var bs=DATA.banners,i; for(i=0;i<bs.length;i++){ if(bs[i].id===id)return bs[i]; } return bs[0]; }
-function bannerByFull(full){ var bs=DATA.banners,i; for(i=0;i<bs.length;i++){ if(bs[i].full===full)return bs[i]; } return null; }
+var BID_INDEX={}, BFULL_INDEX={}, INDEXED=false;
+function buildBannerIndex(){ if(INDEXED)return; var bs=DATA.banners,i; for(i=0;i<bs.length;i++){ BID_INDEX[bs[i].id]=bs[i]; BFULL_INDEX[bs[i].full]=bs[i]; } INDEXED=true; }
+function bannerById(id){ buildBannerIndex(); return BID_INDEX[id]||DATA.banners[0]; }
+function bannerByFull(full){ buildBannerIndex(); return BFULL_INDEX[full]||null; }
 function opOf(name){ return opByName[name]; }
 function thumbOf(art,name,variant,w){
   var m=art?art.match(/images\/arknights\/([0-9a-f])\/([0-9a-f]{2})\/([^/]+)$/):null;
@@ -1005,6 +1009,8 @@ function doPull(n){
   BUSY=true;
   setBusyUI(true);
   var results=[], i, r;
+  var hadSet={}, hi2;
+  for(hi2=0;hi2<state.collection.length;hi2++)hadSet[state.collection[hi2]]=1;
   for(i=0;i<n;i++){
     r=pullOne(b);
     results.push(r);
@@ -1029,6 +1035,9 @@ function doPull(n){
   }
   var msg='';
   if(names6.length)msg='<b>★ 六星干员：'+names6.join('、')+' ★</b>';
+  var newNames=[];
+  for(i=0;i<results.length;i++){ var nx=results[i]; if(!hadSet[nx.op]&&state.collection.indexOf(nx.op)>=0)newNames.push(opOf(nx.op).name); }
+  if(newNames.length)msg+='<br/><span class="newline">🆕 新干员：'+newNames.join('、')+'</span>';
   msg+='<br/>本次 '+n+' 抽：6★×'+c6+' · 5★×'+c5+' · 4★×'+c4+' · 3★×'+c3;
   if(n>10&&!names6.length)msg+='（本次未出高星，展示最后10张）';
   lastBatch=results;

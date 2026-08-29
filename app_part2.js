@@ -104,8 +104,10 @@ function uniq(a){ var m={},r=[],i; for(i=0;i<a.length;i++){ if(!m[a[i]]){m[a[i]]
 function rnd(a){ return a[Math.floor(Math.random()*a.length)]; }
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function stars(n){ var s=''; for(var i=0;i<n;i++)s+='★'; return s; }
-function bannerById(id){ var bs=DATA.banners,i; for(i=0;i<bs.length;i++){ if(bs[i].id===id)return bs[i]; } return bs[0]; }
-function bannerByFull(full){ var bs=DATA.banners,i; for(i=0;i<bs.length;i++){ if(bs[i].full===full)return bs[i]; } return null; }
+var BID_INDEX={}, BFULL_INDEX={}, INDEXED=false;
+function buildBannerIndex(){ if(INDEXED)return; var bs=DATA.banners,i; for(i=0;i<bs.length;i++){ BID_INDEX[bs[i].id]=bs[i]; BFULL_INDEX[bs[i].full]=bs[i]; } INDEXED=true; }
+function bannerById(id){ buildBannerIndex(); return BID_INDEX[id]||DATA.banners[0]; }
+function bannerByFull(full){ buildBannerIndex(); return BFULL_INDEX[full]||null; }
 function opOf(name){ return opByName[name]; }
 function thumbOf(art,name,variant,w){
   var m=art?art.match(/images\/arknights\/([0-9a-f])\/([0-9a-f]{2})\/([^/]+)$/):null;
@@ -565,6 +567,8 @@ function doPull(n){
   BUSY=true;
   setBusyUI(true);
   var results=[], i, r;
+  var hadSet={}, hi2;
+  for(hi2=0;hi2<state.collection.length;hi2++)hadSet[state.collection[hi2]]=1;
   for(i=0;i<n;i++){
     r=pullOne(b);
     results.push(r);
@@ -589,6 +593,9 @@ function doPull(n){
   }
   var msg='';
   if(names6.length)msg='<b>★ 六星干员：'+names6.join('、')+' ★</b>';
+  var newNames=[];
+  for(i=0;i<results.length;i++){ var nx=results[i]; if(!hadSet[nx.op]&&state.collection.indexOf(nx.op)>=0)newNames.push(opOf(nx.op).name); }
+  if(newNames.length)msg+='<br/><span class="newline">🆕 新干员：'+newNames.join('、')+'</span>';
   msg+='<br/>本次 '+n+' 抽：6★×'+c6+' · 5★×'+c5+' · 4★×'+c4+' · 3★×'+c3;
   if(n>10&&!names6.length)msg+='（本次未出高星，展示最后10张）';
   lastBatch=results;
