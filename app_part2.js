@@ -423,7 +423,7 @@ function bannerInfoHtml(b){
   }
   if(b.spark){
     var tok=state.spark[b.id]||0;
-    h.push('<div class="spark"><span>寻访数据契约</span><div class="bar"><i style="width:'+Math.min(100,tok/3)+'%"></i></div><b>'+tok+' / 300</b>');
+    h.push('<div class="spark"><span>寻访数据契约</span><div class="bar"><i style="width:'+Math.min(100,tok/3)+'%"></i></div><b>'+tok+' / 300</b>'+(tok<300?'<span class="sparkhint">还差 <b>'+(300-tok)+'</b> 抽可兑换限定</span>':'<span class="sparkhint done">已可兑换限定干员！</span>'));
     h.push('<button class="mini-btn" id="spark300" '+(tok>=300?'':'disabled')+'>300兑换限定</button>');
     var nonLim=b.six.filter(function(n){return b.limitedSix.indexOf(n)<0;});
     if(nonLim.length)h.push('<button class="mini-btn" id="spark200" '+(tok>=200?'':'disabled')+'>200兑换当期6★</button>');
