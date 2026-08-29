@@ -163,7 +163,7 @@ header{
   position:relative; height:176px; border-radius:10px; cursor:pointer;
   transform-style:preserve-3d; transition:transform .5s;
 }
-.card.flip{transform:rotateY(180deg)}
+.card.flip{transform:rotateY(180deg) scale(1.03); transition:transform .45s cubic-bezier(.2,.8,.25,1.1)}
 .card .face{
   position:absolute; inset:0; border-radius:10px; backface-visibility:hidden;
   overflow:hidden; border:2px solid var(--line); background:var(--bg2);
@@ -434,7 +434,7 @@ header{
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v6.1（随机池修复+UP次数统计）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v6.2（抽卡消息统一+限定筛选+翻转动画）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -1040,11 +1040,7 @@ function doPull(n){
   }
   var msg='';
   if(names6.length)msg='<b>★ 六星干员：'+names6.join('、')+' ★</b>';
-  var newNames=[];
-  var wishHit=[];
-  for(i=0;i<results.length;i++){ var nx=results[i]; if(!hadSet[nx.op]&&state.collection.indexOf(nx.op)>=0)newNames.push(opOf(nx.op).name); if(state.wish&&state.wish.indexOf(nx.op)>=0)wishHit.push(opOf(nx.op).name); }
-  if(newNames.length)msg+='<br/><span class="newline">🆕 新干员：'+newNames.join('、')+'</span>';
-  if(wishHit.length){ msg+='<br/><span class="wishhit">💝 心愿达成：'+wishHit.join('、')+'</span>'; if(state.wish)state.wish=state.wish.filter(function(w){return wishHit.indexOf(opOf(w)?opOf(w).name:w)<0;}); save(); }
+  msg=enhancePullMsg(results,hadSet,msg);
   msg+='<br/>本次 '+n+' 抽：6★×'+c6+' · 5★×'+c5+' · 4★×'+c4+' · 3★×'+c3;
   if(n>10&&!names6.length)msg+='（本次未出高星，展示最后10张）';
   lastBatch=results;
@@ -1331,11 +1327,20 @@ function randomBanner(){
 }
 function openDrawer(){ var s=$('sidebar'); if(s)s.classList.add('open'); var b=$('mBackdrop'); if(b)b.classList.add('show'); if(isMobile()){ try{ document.body.style.overflow='hidden'; }catch(e){} var sb=$('searchBox'); if(sb&&sb.focus)sb.focus(); } }
 function closeDrawer(){ var s=$('sidebar'); if(s)s.classList.remove('open'); var b=$('mBackdrop'); if(b)b.classList.remove('show'); if(isMobile()){ try{ document.body.style.overflow=''; }catch(e){} } }
+function enhancePullMsg(results, hadSet, msg){
+  var newNames=[], wishHit=[], i2, nx2;
+  for(i2=0;i2<results.length;i2++){ nx2=results[i2]; if(!hadSet[nx2.op]&&state.collection.indexOf(nx2.op)>=0)newNames.push(opOf(nx2.op).name); if(state.wish&&state.wish.indexOf(nx2.op)>=0)wishHit.push(opOf(nx2.op).name); }
+  if(newNames.length)msg+='<br/><span class="newline">🆕 新干员：'+newNames.join('、')+'</span>';
+  if(wishHit.length){ msg+='<br/><span class="wishhit">💝 心愿达成：'+wishHit.join('、')+'</span>'; state.wish=state.wish.filter(function(w){return wishHit.indexOf(opOf(w)?opOf(w).name:w)<0;}); save(); }
+  return msg;
+}
 function doUntil6(){
   if(BUSY)return;
   var achBefore=achDoneSet();
   var b=bannerById(state.cur); if(!b)return;
   var results=[];
+  var hadSet={}, hi4;
+  for(hi4=0;hi4<state.collection.length;hi4++)hadSet[state.collection[hi4]]=1;
   while(results.length<120){
     var r=pullOne(b);
     results.push(r);
@@ -1351,6 +1356,7 @@ function doUntil6(){
   var total=results.length;
   var names6=results.filter(function(x){return x.rar===6;}).map(function(x){return opOf(x.op).name;});
   var msg=names6.length?('连抽 <b>'+total+'</b> 抽出货：'+names6.join('、')):('连抽 '+total+' 抽未出货（已达120抽上限）');
+  msg=enhancePullMsg(results,hadSet,msg);
   var shown=results.slice(-12);
   lastBatch=results;
   renderCards(shown,msg,names6.length>0,names6,false);
@@ -1697,7 +1703,7 @@ function openOpStats(){
   h.push('<div id="opTable"></div>');
   h.push('</div>');
   $('mBody').innerHTML=h.join('');
-  setChips($('opChips'),[['all','全部'],['had','出过'],['miss','未拥有'],['6','6★'],['5','5★'],['4','4★'],['3','3★']],opFilter,function(){ opFilter=$('opChips')._v; renderOpStatsTable(); });
+  setChips($('opChips'),[['all','全部'],['had','出过'],['miss','未拥有'],['lim','限定'],['6','6★'],['5','5★'],['4','4★'],['3','3★']],opFilter,function(){ opFilter=$('opChips')._v; renderOpStatsTable(); });
   var inp=$('opSearch'); if(inp){ var opT=null; inp.oninput=function(){ opSearch=this.value.trim(); clearTimeout(opT); opT=setTimeout(function(){ renderOpStatsTable(); },150); }; }
   var sel=$('opSort'); if(sel)sel.onchange=function(){ opSort=this.value; renderOpStatsTable(); };
   renderOpStatsTable();
@@ -1711,6 +1717,7 @@ function renderOpStatsTable(){
     o=opByName[names[i]]; cnt=(state.opCnt||{})[names[i]]||0;
     if(opFilter==='had'&&cnt===0)continue;
     if(opFilter==='miss'&&cnt>0)continue;
+    if(opFilter==='lim'&&!limitedOps[names[i]])continue;
     if(opFilter==='6'&&o.rarity!==6)continue;
     if(opFilter==='5'&&o.rarity!==5)continue;
     if(opFilter==='4'&&o.rarity!==4)continue;

@@ -163,7 +163,7 @@ header{
   position:relative; height:176px; border-radius:10px; cursor:pointer;
   transform-style:preserve-3d; transition:transform .5s;
 }
-.card.flip{transform:rotateY(180deg)}
+.card.flip{transform:rotateY(180deg) scale(1.03); transition:transform .45s cubic-bezier(.2,.8,.25,1.1)}
 .card .face{
   position:absolute; inset:0; border-radius:10px; backface-visibility:hidden;
   overflow:hidden; border:2px solid var(--line); background:var(--bg2);
@@ -434,7 +434,7 @@ header{
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v6.1（随机池修复+UP次数统计）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v6.2（抽卡消息统一+限定筛选+翻转动画）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
