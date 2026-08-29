@@ -737,9 +737,12 @@ function renderHistory(){
     list=filtered;
   }
   var show=list.slice(0,histN);
-  var h=[],r,o;
+  var h=[],r,o,lastDay='';
   for(i=0;i<show.length;i++){
     r=show[i]; o=opOf(r.op);
+    var dayKey='';
+    if(r.t){ var dt2=new Date(r.t); dayKey=dt2.getFullYear()+'-'+(dt2.getMonth()+1)+'-'+dt2.getDate(); }
+    if(dayKey&&dayKey!==lastDay){ lastDay=dayKey; h.push('<div class="histday">'+dayKey+'</div>'); }
     var gapTxt='';
     if(r._gap===0)gapTxt='<span class="hgap six">🎯 6★</span>';
     else if(r._gap>0)gapTxt='<span class="hgap">距上次6★ '+r._gap+' 抽</span>';
