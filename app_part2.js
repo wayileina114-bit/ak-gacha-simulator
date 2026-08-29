@@ -917,7 +917,8 @@ function renderWikiData(name,data){
   var o=opOf(name);
   if(data&&data.attr){
     var attr=data.attr;
-    function kv(k){ var m=attr.match(new RegExp('\\|'+k+'=(.*?)(\\n|$)')); return m?m[1].trim():''; }
+    var kvCache={};
+    function kv(k){ if(kvCache[k]!==undefined)return kvCache[k]; var m=attr.match(new RegExp('\\|'+k+'=(.*?)(\\n|$)')); kvCache[k]=m?m[1].trim():''; return kvCache[k]; }
     h.push('<div class="wikisec"><h4>📈 属性数值（PRTS）</h4>');
     var rows=[['再部署',kv('再部署')],['部署费用',kv('部署费用')],['阻挡数',kv('阻挡数')],['攻击速度',kv('攻击速度')]];
     h.push('<div class="wikirows">');
@@ -927,6 +928,9 @@ function renderWikiData(name,data){
     h.push('<div class="wikitbl"><table><tr><th>阶段</th><th>生命</th><th>攻击</th><th>防御</th><th>法抗</th></tr>');
     for(ri=0;ri<stages.length;ri++){ var st=stages[ri]; var hp=kv(st[1]+'_生命上限'), atk=kv(st[1]+'_攻击'), df=kv(st[1]+'_防御'), mr=kv(st[1]+'_法术抗性'); if(hp||atk)h.push('<tr><td>'+st[0]+'</td><td>'+esc(hp)+'</td><td>'+esc(atk)+'</td><td>'+esc(df)+'</td><td>'+esc(mr)+'</td></tr>'); }
     h.push('</table></div>');
+    var e0=kv('精英0_满级_攻击'), e2=kv('精英2_满级_攻击'), grow=0;
+    if(e0&&e2){ grow=Math.round((parseInt(e2,10)-parseInt(e0,10))/parseInt(e0,10)*100); }
+    if(grow)h.push('<div class="notice">📈 精英化攻击成长：满级 '+esc(e0)+' → '+esc(e2)+'（+'+grow+'%）</div>');
     var tr=kv('信赖加成_生命上限'), ta=kv('信赖加成_攻击'), td=kv('信赖加成_防御');
     if(tr||ta||td)h.push('<div class="notice">❤️ 信赖加成：生命 +'+esc(tr||'0')+' · 攻击 +'+esc(ta||'0')+' · 防御 +'+esc(td||'0')+'</div>');
     h.push('</div>');
