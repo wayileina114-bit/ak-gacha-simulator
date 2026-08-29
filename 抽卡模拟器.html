@@ -269,6 +269,9 @@ header{
 #sixBanner.show{animation:sixpop 2.4s ease forwards}
 @keyframes sixpop{0%{opacity:0; transform:translate(-50%,-50%) scale(.4)}10%{opacity:1; transform:translate(-50%,-50%) scale(1.14)}22%{transform:translate(-50%,-50%) scale(1)}72%{opacity:1}100%{opacity:0; transform:translate(-50%,-50%) scale(1.04)}}
 .hitem .ht{color:var(--dim); font-size:11px; margin-left:auto}
+.hitem .hopname{cursor:pointer; transition:color .15s}
+.hitem .hopname:hover{color:var(--acc)}
+.hitem .hopname.on{color:var(--acc); font-weight:800; text-decoration:underline}
 .hitem .hbn{color:var(--acc2); font-size:10px; background:rgba(74,179,255,.09); border:1px solid rgba(74,179,255,.22); border-radius:4px; padding:1px 6px; margin-left:8px; max-width:140px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:0}
 .hitem .hbn.jump{cursor:pointer; transition:border-color .15s, color .15s}
 .hitem .hbn.jump:hover{border-color:var(--acc); color:#fff; background:rgba(74,179,255,.18)}
@@ -449,7 +452,7 @@ header{
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v7.0（清空修复+委托优化+稀有度进度）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v7.1（历史干员筛选）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -1121,7 +1124,7 @@ function renderStats(){
   $('statsGrid').innerHTML=h.join('');
 }
 function totalOps(){ return Object.keys(opByName).length; }
-var histF='all', histT='all', histTime='all', histN=60;
+var histF='all', histT='all', histTime='all', histN=60, histOp='';
 function renderHistory(){
   var all=state.history;
   var nowH=new Date();
@@ -1135,13 +1138,14 @@ function renderHistory(){
     if(histTime==='today'&&(!all[i].t||all[i].t<dayS))continue;
     if(histTime==='week'&&(!all[i].t||all[i].t<weekS))continue;
     if(histTime==='month'&&(!all[i].t||all[i].t<monthS))continue;
+    if(histOp&&all[i].op!==histOp)continue;
     list.push(all[i]);
   }
   var show=list.slice(0,histN);
   var h=[],r,o;
   for(i=0;i<show.length;i++){
     r=show[i]; o=opOf(r.op);
-    h.push('<div class="hitem r'+r.rar+'"><span class="star">'+stars(r.rar)+'</span><span>'+esc(o?o.name:r.op)+'</span>'+(r.bid?'<span class="hbn jump" data-bid="'+esc(r.bid)+'">'+esc(r.bn||'')+'</span>':'')+'<span class="ht">'+relTime(r.t)+'</span></div>');
+    h.push('<div class="hitem r'+r.rar+'"><span class="star">'+stars(r.rar)+'</span><span class="hopname'+(histOp===r.op?' on':'')+'" data-op="'+esc(r.op)+'">'+esc(o?o.name:r.op)+'</span>'+(r.bid?'<span class="hbn jump" data-bid="'+esc(r.bid)+'">'+esc(r.bn||'')+'</span>':'')+'<span class="ht">'+relTime(r.t)+'</span></div>');
   }
   var fc6=0,fc5=0;
   for(var fi2=0;fi2<list.length;fi2++){ if(list[fi2].rar===6)fc6++; else if(list[fi2].rar===5)fc5++; }
@@ -1153,7 +1157,7 @@ function renderHistory(){
   $('history').innerHTML=h.join('');
   var hm=$('histMore');
   if(hm)hm.onclick=function(){ histN+=60; renderHistory(); };
-  var hc=$('history'); if(hc)hc.onclick=function(e){ var t=e.target; if(t&&t.classList&&t.classList.contains('jump')){ jumpBanner(t.getAttribute('data-bid')); } };
+  var hc=$('history'); if(hc)hc.onclick=function(e){ var t=e.target; if(t&&t.classList){ if(t.classList.contains('hopname')){ histOp=(histOp===t.getAttribute('data-op'))?'':t.getAttribute('data-op'); histN=60; renderHistory(); } else if(t.classList.contains('jump')){ jumpBanner(t.getAttribute('data-bid')); } } };
 }
 var colF='all', colP='all', colSort='rarity', colSearch='';
 var COL_SORT_CACHE=null, COL_SORT_KEY='';

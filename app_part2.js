@@ -660,7 +660,7 @@ function renderStats(){
   $('statsGrid').innerHTML=h.join('');
 }
 function totalOps(){ return Object.keys(opByName).length; }
-var histF='all', histT='all', histTime='all', histN=60;
+var histF='all', histT='all', histTime='all', histN=60, histOp='';
 function renderHistory(){
   var all=state.history;
   var nowH=new Date();
@@ -674,13 +674,14 @@ function renderHistory(){
     if(histTime==='today'&&(!all[i].t||all[i].t<dayS))continue;
     if(histTime==='week'&&(!all[i].t||all[i].t<weekS))continue;
     if(histTime==='month'&&(!all[i].t||all[i].t<monthS))continue;
+    if(histOp&&all[i].op!==histOp)continue;
     list.push(all[i]);
   }
   var show=list.slice(0,histN);
   var h=[],r,o;
   for(i=0;i<show.length;i++){
     r=show[i]; o=opOf(r.op);
-    h.push('<div class="hitem r'+r.rar+'"><span class="star">'+stars(r.rar)+'</span><span>'+esc(o?o.name:r.op)+'</span>'+(r.bid?'<span class="hbn jump" data-bid="'+esc(r.bid)+'">'+esc(r.bn||'')+'</span>':'')+'<span class="ht">'+relTime(r.t)+'</span></div>');
+    h.push('<div class="hitem r'+r.rar+'"><span class="star">'+stars(r.rar)+'</span><span class="hopname'+(histOp===r.op?' on':'')+'" data-op="'+esc(r.op)+'">'+esc(o?o.name:r.op)+'</span>'+(r.bid?'<span class="hbn jump" data-bid="'+esc(r.bid)+'">'+esc(r.bn||'')+'</span>':'')+'<span class="ht">'+relTime(r.t)+'</span></div>');
   }
   var fc6=0,fc5=0;
   for(var fi2=0;fi2<list.length;fi2++){ if(list[fi2].rar===6)fc6++; else if(list[fi2].rar===5)fc5++; }
@@ -692,7 +693,7 @@ function renderHistory(){
   $('history').innerHTML=h.join('');
   var hm=$('histMore');
   if(hm)hm.onclick=function(){ histN+=60; renderHistory(); };
-  var hc=$('history'); if(hc)hc.onclick=function(e){ var t=e.target; if(t&&t.classList&&t.classList.contains('jump')){ jumpBanner(t.getAttribute('data-bid')); } };
+  var hc=$('history'); if(hc)hc.onclick=function(e){ var t=e.target; if(t&&t.classList){ if(t.classList.contains('hopname')){ histOp=(histOp===t.getAttribute('data-op'))?'':t.getAttribute('data-op'); histN=60; renderHistory(); } else if(t.classList.contains('jump')){ jumpBanner(t.getAttribute('data-bid')); } } };
 }
 var colF='all', colP='all', colSort='rarity', colSearch='';
 var COL_SORT_CACHE=null, COL_SORT_KEY='';
