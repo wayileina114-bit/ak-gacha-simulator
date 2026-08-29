@@ -180,6 +180,12 @@ function getPool(b){
   }
   return b._pool;
 }
+function poolOthers(b,rar){
+  var pool=getPool(b), ups=isSelect(b)?selUps(b,rar===6?6:5):(rar===6?b.six:b.five);
+  var key=rar===6?'_o6':'_o5';
+  if(!b[key]||b[key].ups!==ups){ b[key]={ups:ups,list:pool[(rar===6?'p6':'p5')].filter(function(n){return ups.indexOf(n)<0;})}; }
+  return b[key].list;
+}
 function upShare(b,ups){
   if(b.type==='joint'||b.type==='special'||b.type==='direct')return 100;
   if(b.type==='zjselect'){
@@ -203,7 +209,7 @@ function pick6(b){
       st6.got6=true;
     }
   }
-  var others=p6list.filter(function(n){return ups.indexOf(n)<0;});
+  var others=poolOthers(b,6);
   if(!others.length)return rnd(p6list);
   return rnd(others);
 }
@@ -211,7 +217,7 @@ function pick5(b){
   var pool=getPool(b), ups=isSelect(b)?selUps(b,5):b.five;
   if(ups.length&&Math.random()<0.5)return rnd(ups);
   var p5list=pool.p5.length?pool.p5:ups;
-  var others=p5list.filter(function(n){return ups.indexOf(n)<0;});
+  var others=poolOthers(b,5);
   if(!others.length)return rnd(p5list);
   return rnd(others);
 }
@@ -667,7 +673,12 @@ function renderHistory(){
 }
 var colF='all', colP='all', colSort='rarity', colSearch='';
 function renderCollection(){
-  var names=Object.keys(opByName).sort(function(a,b){return opByName[b].rarity-opByName[a].rarity||a.localeCompare(b,'zh');});
+  var names=Object.keys(opByName).sort(function(a,b){
+    if(colSort==='fav'){ var fa=state.favOps&&state.favOps[a]?1:0, fb=state.favOps&&state.favOps[b]?1:0; if(fa!==fb)return fb-fa; }
+    if(colSort==='name')return a.localeCompare(b,'zh');
+    if(colSort==='prof'){ var pa=(opByName[a]&&opByName[a].prof)||'', pb=(opByName[b]&&opByName[b].prof)||''; return pa.localeCompare(pb,'zh')||opByName[b].rarity-opByName[a].rarity; }
+    return opByName[b].rarity-opByName[a].rarity||a.localeCompare(b,'zh');
+  });
   var h=[],i,o;
   var colSet={}, csi;
   for(csi=0;csi<state.collection.length;csi++)colSet[state.collection[csi]]=1;
@@ -682,7 +693,7 @@ function renderCollection(){
     if(colSearch&&o.name.indexOf(colSearch)<0)continue;
     var pul=(newPulse[names[i]]&&(Date.now()-newPulse[names[i]])<20000);
     var ocnt=(state.opCnt||{})[names[i]]||0;
-    h.push('<div class="cop'+(got?'':' miss')+(pul?' new':'')+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/><div class="cs">'+esc(o.name)+'</div>'+(ocnt>1?'<div class="cdup">×'+ocnt+'</div>':'')+'<div class="nb"></div></div>');
+    h.push('<div class="cop'+(got?'':' miss')+(pul?' new':'')+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/>'+(state.favOps&&state.favOps[names[i]]?'<div class="favstar">★</div>':'')+'<div class="cs">'+esc(o.name)+'</div>'+(ocnt>1?'<div class="cdup">×'+ocnt+'</div>':'')+'<div class="nb"></div></div>');
   }
   $('collection').innerHTML=h.join('');
   var cc=$('colCount'); if(cc)cc.textContent='已拥有 '+state.collection.length+' / '+totalOps()+' · 未拥有 '+(totalOps()-state.collection.length);
@@ -810,10 +821,12 @@ function copyBatch(){
 }
 function openAllResults(){
   var res=lastBatch||[], h=['<h4 class="sect" style="margin-top:0">本次抽卡结果（'+res.length+' 抽）</h4><button class="mini-btn" id="btnCopyBatch">复制本次结果</button><div id="allResList">'], i, rr, oo;
-  for(i=0;i<res.length;i++){ rr=res[i]; oo=opOf(rr.op); h.push('<div class="hitem r'+rr.rar+'"><span class="star">'+stars(rr.rar)+'</span><span>'+esc(oo?oo.name:rr.op)+'</span></div>'); }
+  for(i=0;i<res.length;i++){ rr=res[i]; oo=opOf(rr.op); h.push('<div class="hitem r'+rr.rar+' ares" data-op="'+esc(rr.op)+'"><span class="star">'+stars(rr.rar)+'</span><span>'+esc(oo?oo.name:rr.op)+'</span></div>'); }
   h.push('</div>');
   $('mBody').innerHTML=h.join('');
   var cbb=$('btnCopyBatch'); if(cbb)cbb.onclick=copyBatch;
+  var ares=$('mBody').querySelectorAll('.ares');
+  for(i=0;i<ares.length;i++){ ares[i].onclick=function(){ openModal(this.getAttribute('data-op')); }; }
   $('modal').classList.add('show');
 }
 function openLightbox(src){

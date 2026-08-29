@@ -210,7 +210,9 @@ header{
 .hitem.r6 .star{color:var(--r6); font-weight:800}
 .hitem.r5 .star{color:var(--r5)}
 #collection{display:grid; grid-template-columns:repeat(auto-fill,minmax(54px,1fr)); gap:6px; max-height:280px; overflow-y:auto}
-.cop{position:relative; border-radius:8px; overflow:hidden; border:1px solid var(--line); cursor:pointer}
+.cop{position:relative; border-radius:8px; overflow:hidden; border:1px solid var(--line); cursor:pointer; transition:transform .15s, border-color .15s, box-shadow .15s}
+.cop:hover{transform:translateY(-2px); border-color:var(--acc2); box-shadow:0 4px 14px rgba(74,179,255,.18)}
+.cop .favstar{position:absolute; top:1px; right:1px; font-size:9px; color:var(--gold); text-shadow:0 0 4px rgba(0,0,0,.8); z-index:2}
 .cop img{width:100%; height:60px; object-fit:cover; object-position:top; display:block}
 .cop .cs{position:absolute; bottom:0; left:0; right:0; font-size:8px; text-align:center; color:#fff; background:rgba(0,0,0,.6); padding:1px 0}
 .cop.miss{opacity:.18; filter:grayscale(1)}
@@ -416,7 +418,7 @@ header{
       <div class="filters" id="histTypeChips"></div>
       <div class="filters" id="histTimeChips"></div>
       <div id="history"></div>
-      <div class="sectbar"><h4>干员图鉴</h4><span class="notice" id="colCount" style="margin-left:4px"></span><select id="colSortSel"><option value="rarity">按稀有度</option><option value="name">按名称</option><option value="prof">按职业</option></select><button class="mini-btn" id="btnGallery">立绘画廊</button></div>
+      <div class="sectbar"><h4>干员图鉴</h4><span class="notice" id="colCount" style="margin-left:4px"></span><select id="colSortSel"><option value="fav">收藏置顶</option><option value="rarity">按稀有度</option><option value="name">按名称</option><option value="prof">按职业</option></select><button class="mini-btn" id="btnGallery">立绘画廊</button></div>
       <div class="colbar" id="colBar"></div>
       <div class="filters" id="colChips"></div>
       <div class="filters" id="colProfChips"></div>
@@ -426,7 +428,7 @@ header{
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v5.6（图鉴筛选修复+运势详解+6星卡片增强）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v5.7（结果可点击+抽卡缓存+收藏置顶）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>

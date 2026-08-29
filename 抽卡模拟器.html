@@ -210,7 +210,9 @@ header{
 .hitem.r6 .star{color:var(--r6); font-weight:800}
 .hitem.r5 .star{color:var(--r5)}
 #collection{display:grid; grid-template-columns:repeat(auto-fill,minmax(54px,1fr)); gap:6px; max-height:280px; overflow-y:auto}
-.cop{position:relative; border-radius:8px; overflow:hidden; border:1px solid var(--line); cursor:pointer}
+.cop{position:relative; border-radius:8px; overflow:hidden; border:1px solid var(--line); cursor:pointer; transition:transform .15s, border-color .15s, box-shadow .15s}
+.cop:hover{transform:translateY(-2px); border-color:var(--acc2); box-shadow:0 4px 14px rgba(74,179,255,.18)}
+.cop .favstar{position:absolute; top:1px; right:1px; font-size:9px; color:var(--gold); text-shadow:0 0 4px rgba(0,0,0,.8); z-index:2}
 .cop img{width:100%; height:60px; object-fit:cover; object-position:top; display:block}
 .cop .cs{position:absolute; bottom:0; left:0; right:0; font-size:8px; text-align:center; color:#fff; background:rgba(0,0,0,.6); padding:1px 0}
 .cop.miss{opacity:.18; filter:grayscale(1)}
@@ -416,7 +418,7 @@ header{
       <div class="filters" id="histTypeChips"></div>
       <div class="filters" id="histTimeChips"></div>
       <div id="history"></div>
-      <div class="sectbar"><h4>干员图鉴</h4><span class="notice" id="colCount" style="margin-left:4px"></span><select id="colSortSel"><option value="rarity">按稀有度</option><option value="name">按名称</option><option value="prof">按职业</option></select><button class="mini-btn" id="btnGallery">立绘画廊</button></div>
+      <div class="sectbar"><h4>干员图鉴</h4><span class="notice" id="colCount" style="margin-left:4px"></span><select id="colSortSel"><option value="fav">收藏置顶</option><option value="rarity">按稀有度</option><option value="name">按名称</option><option value="prof">按职业</option></select><button class="mini-btn" id="btnGallery">立绘画廊</button></div>
       <div class="colbar" id="colBar"></div>
       <div class="filters" id="colChips"></div>
       <div class="filters" id="colProfChips"></div>
@@ -426,7 +428,7 @@ header{
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v5.6（图鉴筛选修复+运势详解+6星卡片增强）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v5.7（结果可点击+抽卡缓存+收藏置顶）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -618,6 +620,12 @@ function getPool(b){
   }
   return b._pool;
 }
+function poolOthers(b,rar){
+  var pool=getPool(b), ups=isSelect(b)?selUps(b,rar===6?6:5):(rar===6?b.six:b.five);
+  var key=rar===6?'_o6':'_o5';
+  if(!b[key]||b[key].ups!==ups){ b[key]={ups:ups,list:pool[(rar===6?'p6':'p5')].filter(function(n){return ups.indexOf(n)<0;})}; }
+  return b[key].list;
+}
 function upShare(b,ups){
   if(b.type==='joint'||b.type==='special'||b.type==='direct')return 100;
   if(b.type==='zjselect'){
@@ -641,7 +649,7 @@ function pick6(b){
       st6.got6=true;
     }
   }
-  var others=p6list.filter(function(n){return ups.indexOf(n)<0;});
+  var others=poolOthers(b,6);
   if(!others.length)return rnd(p6list);
   return rnd(others);
 }
@@ -649,7 +657,7 @@ function pick5(b){
   var pool=getPool(b), ups=isSelect(b)?selUps(b,5):b.five;
   if(ups.length&&Math.random()<0.5)return rnd(ups);
   var p5list=pool.p5.length?pool.p5:ups;
-  var others=p5list.filter(function(n){return ups.indexOf(n)<0;});
+  var others=poolOthers(b,5);
   if(!others.length)return rnd(p5list);
   return rnd(others);
 }
@@ -1105,7 +1113,12 @@ function renderHistory(){
 }
 var colF='all', colP='all', colSort='rarity', colSearch='';
 function renderCollection(){
-  var names=Object.keys(opByName).sort(function(a,b){return opByName[b].rarity-opByName[a].rarity||a.localeCompare(b,'zh');});
+  var names=Object.keys(opByName).sort(function(a,b){
+    if(colSort==='fav'){ var fa=state.favOps&&state.favOps[a]?1:0, fb=state.favOps&&state.favOps[b]?1:0; if(fa!==fb)return fb-fa; }
+    if(colSort==='name')return a.localeCompare(b,'zh');
+    if(colSort==='prof'){ var pa=(opByName[a]&&opByName[a].prof)||'', pb=(opByName[b]&&opByName[b].prof)||''; return pa.localeCompare(pb,'zh')||opByName[b].rarity-opByName[a].rarity; }
+    return opByName[b].rarity-opByName[a].rarity||a.localeCompare(b,'zh');
+  });
   var h=[],i,o;
   var colSet={}, csi;
   for(csi=0;csi<state.collection.length;csi++)colSet[state.collection[csi]]=1;
@@ -1120,7 +1133,7 @@ function renderCollection(){
     if(colSearch&&o.name.indexOf(colSearch)<0)continue;
     var pul=(newPulse[names[i]]&&(Date.now()-newPulse[names[i]])<20000);
     var ocnt=(state.opCnt||{})[names[i]]||0;
-    h.push('<div class="cop'+(got?'':' miss')+(pul?' new':'')+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/><div class="cs">'+esc(o.name)+'</div>'+(ocnt>1?'<div class="cdup">×'+ocnt+'</div>':'')+'<div class="nb"></div></div>');
+    h.push('<div class="cop'+(got?'':' miss')+(pul?' new':'')+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/>'+(state.favOps&&state.favOps[names[i]]?'<div class="favstar">★</div>':'')+'<div class="cs">'+esc(o.name)+'</div>'+(ocnt>1?'<div class="cdup">×'+ocnt+'</div>':'')+'<div class="nb"></div></div>');
   }
   $('collection').innerHTML=h.join('');
   var cc=$('colCount'); if(cc)cc.textContent='已拥有 '+state.collection.length+' / '+totalOps()+' · 未拥有 '+(totalOps()-state.collection.length);
@@ -1248,10 +1261,12 @@ function copyBatch(){
 }
 function openAllResults(){
   var res=lastBatch||[], h=['<h4 class="sect" style="margin-top:0">本次抽卡结果（'+res.length+' 抽）</h4><button class="mini-btn" id="btnCopyBatch">复制本次结果</button><div id="allResList">'], i, rr, oo;
-  for(i=0;i<res.length;i++){ rr=res[i]; oo=opOf(rr.op); h.push('<div class="hitem r'+rr.rar+'"><span class="star">'+stars(rr.rar)+'</span><span>'+esc(oo?oo.name:rr.op)+'</span></div>'); }
+  for(i=0;i<res.length;i++){ rr=res[i]; oo=opOf(rr.op); h.push('<div class="hitem r'+rr.rar+' ares" data-op="'+esc(rr.op)+'"><span class="star">'+stars(rr.rar)+'</span><span>'+esc(oo?oo.name:rr.op)+'</span></div>'); }
   h.push('</div>');
   $('mBody').innerHTML=h.join('');
   var cbb=$('btnCopyBatch'); if(cbb)cbb.onclick=copyBatch;
+  var ares=$('mBody').querySelectorAll('.ares');
+  for(i=0;i<ares.length;i++){ ares[i].onclick=function(){ openModal(this.getAttribute('data-op')); }; }
   $('modal').classList.add('show');
 }
 function openLightbox(src){
