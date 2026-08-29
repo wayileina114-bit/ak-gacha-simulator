@@ -1,0 +1,11 @@
+# 大型原始数据（14.8MB，不纳入版本库，可由 fix_parser3.js 重新生成）
+data/character_table.json
+data/_*.js
+data/_*.json
+# 临时文件
+*.tmp
+Thumbs.db
+.DS_Store
+node_modules/
+# 便携版 git（本地工具，不入库）
+PortableGit/
