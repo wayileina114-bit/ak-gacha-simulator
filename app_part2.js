@@ -704,7 +704,9 @@ function openPityMap(){
 function renderStats(){
   var b=bannerById(state.cur), st=state.pity[pityKey(b)]||{fails:0}, p6=Math.min(0.02+Math.max(0,st.fails-49)*0.02,1);
   var hist=state.history, c6=0,c5=0,c4=0,i;
-  for(i=0;i<hist.length;i++){ if(hist[i].rar===6)c6++; else if(hist[i].rar===5)c5++; else if(hist[i].rar===4)c4++; }
+  var today0=new Date(), dayStart=new Date(today0.getFullYear(),today0.getMonth(),today0.getDate()).getTime(), wkStart=Date.now()-7*86400000;
+  var tToday=0,t6Today=0,w6=0;
+  for(i=0;i<hist.length;i++){ var hhS=hist[i]; if(hhS.rar===6)c6++; else if(hhS.rar===5)c5++; else if(hhS.rar===4)c4++; if(hhS.t>=dayStart){ tToday++; if(hhS.rar===6)t6Today++; } if(hhS.t>=wkStart&&hhS.rar===6)w6++; }
   var rate6=hist.length?(c6/hist.length*100).toFixed(2)+'%':'—';
   var g=[];
   g.push(['距上次6★',st.fails+' 抽','red']);
@@ -716,13 +718,8 @@ function renderStats(){
   g.push(['5★总数',c5,'']);
   g.push(['4★总数',c4,'']);
   g.push(['已拥有干员',state.collection.length+' / '+totalOps(),'']);
-  var today0=new Date(), dayStart=new Date(today0.getFullYear(),today0.getMonth(),today0.getDate()).getTime();
-  var tToday=0,t6Today=0;
-  for(i=0;i<hist.length;i++){ if(hist[i].t>=dayStart){ tToday++; if(hist[i].rar===6)t6Today++; } }
   g.push(['今日抽数',tToday>=1000?tToday.toLocaleString():tToday,'']);
   g.push(['今日6★',t6Today,'orange']);
-  var wk=Date.now()-7*86400000, w6=0;
-  for(i=0;i<hist.length;i++){ if(hist[i].t>=wk&&hist[i].rar===6)w6++; }
   g.push(['近7天6★',w6,'gold']);
   var dupN=0, dk;
   for(dk in (state.opCnt||{})){ if(state.opCnt[dk]>1)dupN+=state.opCnt[dk]-1; }
@@ -810,7 +807,7 @@ function renderHistory(){
     var segMax=1;
     for(si7=0;si7<segR.length;si7++){ if(segR[si7]>segMax)segMax=segR[si7]; }
     h.push('<div class="histtrend"><span class="ht-label">6★率趋势（每50抽）</span><div class="ht-bars">');
-    for(si7=segR.length-1;si7>=0;si7--){ var luck2=segR[si7]/2.89*100; h.push('<div class="ht-cell"><i style="height:'+Math.max(4,Math.round(segR[si7]/segMax*100))+'%" class="'+(luck2>=130?'hi':(luck2<60?'lo':''))+'"></i><b>'+(segR[si7]||'')+'</b></div>'); }
+    for(si7=segR.length-1;si7>=0;si7--){ var luck2=segR[si7]/1.445*100; h.push('<div class="ht-cell"><i style="height:'+Math.max(4,Math.round(segR[si7]/segMax*100))+'%" class="'+(luck2>=130?'hi':(luck2<60?'lo':''))+'"></i><b>'+(segR[si7]||'')+'</b></div>'); }
     h.push('</div></div>');
   }
   $('history').innerHTML=h.join('');
@@ -893,9 +890,11 @@ function openModal(opName){
   var mi=$('martImg'); if(mi)mi.onclick=function(){ openLightbox(o.art||opArtT(o)); };
   var atg=$('artToggle'); if(atg)atg.onclick=function(){
     var img=$('martImg'); if(!img)return;
+    if(img._v===undefined)img._v=2;
     if(img._v===0){ img.src=opArtT(o); img._v=2; atg.textContent='🔄 切换立绘（当前：精二）'; }
     else { img.src=thumbOf(o.art,o.name,'skin 0 0.png',480)||o.art||avUrl(o); img._v=0; atg.textContent='🔄 切换立绘（当前：初始）'; }
   };
+  if(atg)atg.textContent='🔄 切换立绘（当前：精二）';
   var bfo=$('btnFavOp'); if(bfo)bfo.onclick=function(){
     if(!state.favOps)state.favOps={};
     if(state.favOps[opName]){ delete state.favOps[opName]; bfo.textContent='☆ 收藏干员'; }
@@ -1040,7 +1039,7 @@ function renderWikiData(name,data){
     h.push('<div class="wikisec"><h4>⚔️ 技能详情</h4>');
     var skills=data.skills;
     var blocks=skills.split(/'''技能[0-9]+（/);
-    for(var bi=1;bi<blocks.length;bi++){ var blk=blocks[bi]; var endNm=blk.indexOf("'''"); var nm=endNm>=0?blk.slice(0,endNm):''; h.push('<div class="wskill"><div class="wskillname">'+esc(stripWiki(nm))+'</div>'); var sm=blk.match(/技能名=(.*?)(\n|$)/); if(sm)h.push('<div class="wskillnm">'+esc(stripWiki(sm[1]))+'</div>'); var lv7m=blk.match(/技能7描述=(.*?)(\n|$)/); if(lv7m)h.push('<div class="wskilldesc">'+esc(wikiColor(stripWiki(lv7m[1])))+'</div>'); var m1=blk.match(/技能专精1描述=(.*?)(\n|$)/); if(m1)h.push('<div class="wskilldesc m">专精1：'+esc(wikiColor(stripWiki(m1[1])))+'</div>'); h.push('</div>'); }
+    for(var bi=1;bi<blocks.length;bi++){ var blk=blocks[bi]; var endNm=blk.indexOf("'''"); var nm=endNm>=0?blk.slice(0,endNm):''; h.push('<div class="wskill"><div class="wskillname">'+esc(stripWiki(nm))+'</div>'); var sm=blk.match(/技能名=(.*?)(\n|$)/); if(sm)h.push('<div class="wskillnm">'+esc(stripWiki(sm[1]))+'</div>'); var lv7m=blk.match(/技能7描述=(.*?)(\n|$)/); if(lv7m)h.push('<div class="wskilldesc">'+esc(wikiColor(stripWiki(lv7m[1])))+'</div>'); var m1=blk.match(/技能专精1描述=(.*?)(\n|$)/); if(m1)h.push('<div class="wskilldesc m">专精1：'+esc(wikiColor(stripWiki(m1[1])))+'</div>'); var m2=blk.match(/技能专精2描述=(.*?)(\n|$)/); if(m2)h.push('<div class="wskilldesc m">专精2：'+esc(wikiColor(stripWiki(m2[1])))+'</div>'); var m3=blk.match(/技能专精3描述=(.*?)(\n|$)/); if(m3)h.push('<div class="wskilldesc m">专精3：'+esc(wikiColor(stripWiki(m3[1])))+'</div>'); h.push('</div>'); }
     h.push('</div>');
   }
   if(data&&data.mats){
@@ -1380,8 +1379,17 @@ function openStats(){
   var buckets=[0,0,0,0,0,0,0,0,0,0], bi, bmax=1;
   for(i=0;i<gaps.length;i++){ bi=Math.min(9,Math.floor(gaps[i]/10)); buckets[bi]++; if(buckets[bi]>bmax)bmax=buckets[bi]; }
   var exp6=total*0.0289;
-  var score=exp6>0?Math.round(c6/exp6*100):100;
-  var label=score>=150?'欧皇转世 ✨':score>=110?'运气爆棚':score>=85?'正常水平':score>=60?'有点非了':'非洲酋长 ☔';
+  var bestTen=0;
+  for(i=0;i<hist.length;i++){ var t10=0; for(var tj=i;tj<hist.length&&tj<i+10;tj++){ if(hist[tj].rar===6)t10++; } if(t10>bestTen)bestTen=t10; }
+  var score6=exp6>0?(c6/exp6*100):100;
+  var score5=total>0?Math.min(200,(c5/(total*0.08)*100)):100;
+  var s6p=Math.max(0,Math.min(100,(score6-50)*1.5));
+  var s5p=Math.max(0,Math.min(100,(score5-50)*1.2));
+  var s10p=bestTen>=2?100:(bestTen===1?55:20);
+  var sgp=Math.max(0,Math.min(100,(50-maxG)*2));
+  var luckIdx=Math.round(s6p*0.5+s5p*0.15+s10p*0.15+sgp*0.2);
+  if(!total)luckIdx=50;
+  var label=luckIdx>=85?'欧皇转世 ✨':luckIdx>=70?'运气爆棚':luckIdx>=45?'正常水平':luckIdx>=25?'有点非了':'非洲酋长 ☔';
   var TCN={limited:'限定',event:'活动',standard:'标准',zhongjian:'中坚',joint:'联合行动',direct:'定向甄选',zjselect:'中坚甄选',special:'特殊'};
   var h=[];
   h.push('<h4 class="sect" style="margin-top:0">总览</h4><div class="stats-grid">');
@@ -1390,17 +1398,19 @@ function openStats(){
   h.push('<div class="stat"><div class="v gold">'+c5+'</div><div class="k">5★（'+(total?(c5/total*100).toFixed(2):0)+'%）</div></div>');
   h.push('<div class="stat"><div class="v">'+c4+'</div><div class="k">4★（'+(total?(c4/total*100).toFixed(2):0)+'%）</div></div>');
   h.push('<div class="stat"><div class="v">'+c3+'</div><div class="k">3★（'+(total?(c3/total*100).toFixed(2):0)+'%）</div></div>');
-  var badge=score>=150?'👑':score>=110?'🔥':score>=85?'⭐':score>=60?'🌧️':'☔';
-  h.push('<div class="stat"><div class="v gold">'+score+'</div><div class="k">欧气评分：'+label+' '+badge+'</div></div>');
+  var badge=luckIdx>=85?'👑':luckIdx>=70?'🔥':luckIdx>=45?'⭐':luckIdx>=25?'🌧️':'☔';
+  h.push('<div class="luckbadge lv'+(luckIdx>=85?5:(luckIdx>=70?4:(luckIdx>=45?3:(luckIdx>=25?2:1))))+'"><div class="lb-score">'+luckIdx+'</div><div class="lb-label">'+label+' '+badge+'</div></div>');
+  h.push('<div class="luckdetail"><div class="ld-row"><span>6★出率 '+(total?(c6/total*100).toFixed(2):'—')+'%</span><div class="ld-bar"><i style="width:'+Math.round(s6p)+'%"></i></div><b>'+s6p.toFixed(0)+'分</b></div>');
+  h.push('<div class="ld-row"><span>5★出率 '+(total?(c5/total*100).toFixed(2):'—')+'%</span><div class="ld-bar"><i style="width:'+Math.round(s5p)+'%"></i></div><b>'+s5p.toFixed(0)+'分</b></div>');
+  h.push('<div class="ld-row"><span>最欧十连 '+bestTen+'只6★</span><div class="ld-bar"><i style="width:'+s10p+'%"></i></div><b>'+s10p+'分</b></div>');
+  h.push('<div class="ld-row"><span>最长非酋 '+maxG+'抽</span><div class="ld-bar"><i style="width:'+sgp+'%"></i></div><b>'+sgp.toFixed(0)+'分</b></div></div>');
   h.push('<div class="stat"><div class="v" style="color:var(--acc2)">'+(total*600).toLocaleString()+'</div><div class="k">等价合成玉（600/抽）</div></div>');
   var limGotN=0, lk3;
   for(lk3 in limitedOps){ if(state.collection.indexOf(lk3)>=0)limGotN++; }
   h.push('<div class="stat"><div class="v" style="color:#ff6ec7">'+limGotN+'/'+limitedTotal+'</div><div class="k">限定图鉴完成度</div><div class="statbar"><i style="width:'+(limitedTotal?Math.round(limGotN/limitedTotal*100):0)+'%"></i></div></div>');
-  var bestTen=0;
-  for(i=0;i<hist.length;i++){ var t10=0; for(var tj=i;tj<hist.length&&tj<i+10;tj++){ if(hist[tj].rar===6)t10++; } if(t10>bestTen)bestTen=t10; }
   h.push('<div class="stat"><div class="v gold">'+bestTen+'</div><div class="k">最欧十连（最多6★）</div></div>');
   h.push('</div>');
-  h.push('<div class="notice">欧气评分 = 实际6★数 ÷ 期望6★数 × 100（期望按保底机制约每 34.6 抽一只）</div>');
+  h.push('<div class="notice">欧气指数 = 6★出率(50%) + 5★出率(15%) + 最欧十连(15%) + 最长非酋(20%) 综合加权 · 期望6★率约 2.89%</div>');
   h.push('<h4 class="sect">期望对比</h4><div class="chart">');
   var expC=c6>0?exp6:0;
   var diffN=Math.round(c6-exp6);
@@ -1726,9 +1736,12 @@ function csvEsc(v){ v=String(v==null?'':v); return v.indexOf(',')>=0||v.indexOf(
 function exportHistory(){
   var NL=String.fromCharCode(10);
   var lines=['干员,稀有度,时间,卡池,卡池类型,距上次6★(抽)'];
-  var last6i=-1;
-  for(var i=0;i<state.history.length;i++){ var r=state.history[i], o=opOf(r.op), dt=new Date(r.t||Date.now()); var gapTxt='';
-    if(r.rar===6){ gapTxt=last6i>=0?String(i-last6i-1):'首个6★'; last6i=i; }
+  var gapArr=[], gi6=-1, gi2;
+  for(gi2=state.history.length-1;gi2>=0;gi2--){
+    if(state.history[gi2].rar===6){ gi6=gi2; gapArr[gi2]=0; }
+    else gapArr[gi2]=(gi6>=0)?(gi6-gi2):-1;
+  }
+  for(var i=0;i<state.history.length;i++){ var r=state.history[i], o=opOf(r.op), dt=new Date(r.t||Date.now()); var gapTxt=gapArr[i]>=0?String(gapArr[i]):'—';
     lines.push(csvEsc(o?o.name:r.op)+','+r.rar+'星,'+dt.getFullYear()+'-'+(dt.getMonth()+1)+'-'+dt.getDate()+' '+dt.getHours()+':'+(dt.getMinutes()<10?'0':'')+dt.getMinutes()+','+csvEsc(r.bn||'')+','+(r.type||'event')+','+gapTxt); }
   var text=String.fromCharCode(0xFEFF)+lines.join(NL);
   try{
