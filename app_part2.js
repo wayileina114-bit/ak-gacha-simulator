@@ -32,7 +32,7 @@ function openFortune(idx){
   h.push('<div class="notice" style="color:var(--gold)">'+esc(FORTUNE_DETAILS[idx]||FORTUNE_DETAILS[0])+'</div>');
   h.push('<div class="notice">玄学仅供参考，出货率与运势无关 😄</div>');
   $('mBody').innerHTML=h.join('');
-  $('modal').classList.add('show');
+  openModalBox();
 }
 var opByName={}, ops4=[], ops3=[], opBanners={}, limitedOps={}, limitedTotal=0;
 (function(){
@@ -508,7 +508,7 @@ function sparkExchange(cost){
   }
   h.push('</div><div class="notice">点击干员卡片完成兑换，优先换未拥有的干员</div>');
   $('mBody').innerHTML=h.join('');
-  $('modal').classList.add('show');
+  openModalBox();
   var cards=$('mBody').querySelectorAll('.rup-card');
   for(i=0;i<cards.length;i++){
     (function(card,opName){
@@ -695,12 +695,13 @@ function renderCollection(){
     if(colF==='miss'&&got)continue;
     if(colF==='lim'&&!limitedOps[names[i]])continue;
     if(colF==='favop'&&!(state.favOps&&state.favOps[names[i]]))continue;
-    if(colF!=='all'&&colF!=='miss'&&colF!=='lim'&&colF!=='favop'&&String(o.rarity)!==colF)continue;
+    if(colF==='wish'&&!(state.wish&&state.wish.indexOf(names[i])>=0))continue;
+    if(colF!=='all'&&colF!=='miss'&&colF!=='lim'&&colF!=='favop'&&colF!=='wish'&&String(o.rarity)!==colF)continue;
     if(colP!=='all'&&o.prof!==colP)continue;
     if(colSearch&&o.name.indexOf(colSearch)<0)continue;
     var pul=(newPulse[names[i]]&&(Date.now()-newPulse[names[i]])<20000);
     var ocnt=(state.opCnt||{})[names[i]]||0;
-    h.push('<div class="cop'+(got?'':' miss')+(pul?' new':'')+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/>'+(state.favOps&&state.favOps[names[i]]?'<div class="favstar">★</div>':'')+(state.wish&&state.wish.indexOf(names[i])>=0?'<div class="wishmark">💝</div>':'')+'<div class="cs">'+esc(o.name)+'</div>'+(ocnt>1?'<div class="cdup">×'+ocnt+'</div>':'')+'<div class="nb"></div></div>');
+    h.push('<div class="cop'+(got?'':' miss')+(pul?' new':'')+((state.wish&&state.wish.indexOf(names[i])>=0)?' wished':'')+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/>'+(state.favOps&&state.favOps[names[i]]?'<div class="favstar">★</div>':'')+(state.wish&&state.wish.indexOf(names[i])>=0?'<div class="wishmark">💝</div>':'')+'<div class="cs">'+esc(o.name)+'</div>'+(ocnt>1?'<div class="cdup">×'+ocnt+'</div>':'')+'<div class="nb"></div></div>');
   }
   $('collection').innerHTML=h.join('');
   var cc=$('colCount'); if(cc)cc.textContent='已拥有 '+state.collection.length+' / '+totalOps()+' · 未拥有 '+(totalOps()-state.collection.length);
@@ -755,7 +756,7 @@ function openModal(opName){
   };
   var links=$('mBody').querySelectorAll('.srcLink');
   for(var li=0;li<links.length;li++){ links[li].onclick=function(){ jumpBanner(this.getAttribute('data-bid')); }; }
-  $('modal').classList.add('show');
+  openModalBox();
 }
 var skinCache={};
 function skinListUrl(name){
@@ -783,7 +784,7 @@ function openSkins(opName){
   var cache=skinCache[name];
   if(cache&&Date.now()-cache.t<600000){ renderSkins(name,cache.skins); return; }
   $('mBody').innerHTML='<div class="notice">正在加载 '+esc(name)+' 的皮肤…（需联网）</div>';
-  $('modal').classList.add('show');
+  openModalBox();
   jsonp(skinListUrl(name),function(data){
     var skins=[];
     if(data&&data.query&&data.query.allimages){
@@ -814,7 +815,7 @@ function renderSkins(name,skins){
   var bb=$('btnSkinsBack'); if(bb)bb.onclick=function(){ openModal(name); };
   var items=$('mBody').querySelectorAll('.skin-item');
   for(var j=0;j<items.length;j++){ (function(el){ el.onclick=function(){ openLightbox(el.getAttribute('data-url')); }; })(items[j]); }
-  $('modal').classList.add('show');
+  openModalBox();
 }
 function jumpBanner(id){
   state.cur=id; save(); closeModal();
@@ -843,7 +844,7 @@ function openAllResults(){
   var cbb=$('btnCopyBatch'); if(cbb)cbb.onclick=copyBatch;
   var ares=$('mBody').querySelectorAll('.ares');
   for(i=0;i<ares.length;i++){ ares[i].onclick=function(){ openModal(this.getAttribute('data-op')); }; }
-  $('modal').classList.add('show');
+  openModalBox();
 }
 function openLightbox(src){
   var lb=$('lightbox'), im=$('lbImg');
@@ -852,7 +853,9 @@ function openLightbox(src){
   lb.classList.add('show');
 }
 function closeLightbox(){ var lb=$('lightbox'); if(lb)lb.classList.remove('show'); }
-function closeModal(){ $('modal').classList.remove('show'); }
+function openModalBox(){ var md=$('modal'); if(md)md.classList.add('show'); if(isMobile()){ try{ document.body.style.overflow='hidden'; }catch(e){} } }
+function closeModalBox(){ var md=$('modal'); if(md)md.classList.remove('show'); if(isMobile()){ try{ document.body.style.overflow=''; }catch(e){} } }
+function closeModal(){ closeModalBox(); }
 function isMobile(){ return (typeof window!=='undefined')&&!!window.innerWidth&&window.innerWidth<=720; }
 function navBanner(dir){
   var bs=DATA.banners, curIdx=-1, qi;
@@ -936,7 +939,7 @@ function openPoolModal(){
   }
   h.push('</div>');
   $('mBody').innerHTML=h.join('');
-  $('modal').classList.add('show');
+  openModalBox();
   var cards=$('mBody').querySelectorAll('.rup-card');
   for(i=0;i<cards.length;i++){ cards[i].onclick=function(){ openModal(this.getAttribute('data-op')); }; }
 }
@@ -949,20 +952,28 @@ function openGallery(){
   var gv2=$('galV2'); if(gv2)gv2.onclick=function(){ galV=2; openGallery(); };
   var gv0=$('galV0'); if(gv0)gv0.onclick=function(){ galV=0; openGallery(); };
   renderGallery();
-  $('modal').classList.add('show');
+  openModalBox();
 }
+var GAL_N=120;
 function renderGallery(){
   var names=Object.keys(opByName).sort(function(a,b){return opByName[b].rarity-opByName[a].rarity||a.localeCompare(b,'zh');});
   var h=[],i,o;
+  var shown=0;
   for(i=0;i<names.length;i++){
     o=opByName[names[i]];
     if(galF!=='all'&&String(o.rarity)!==galF)continue;
+    if(shown>=GAL_N)break;
+    shown++;
     h.push('<div class="gal-item r'+o.rarity+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(galArt(o))+'" alt=""/><div class="gal-nm">'+esc(o.name)+'</div><div class="gal-st">'+stars(o.rarity)+'</div></div>');
   }
+  var totalMatch=0;
+  for(var gi2=0;gi2<names.length;gi2++){ if(galF==='all'||String(opByName[names[gi2]].rarity)===galF)totalMatch++; }
+  if(totalMatch>shown)h.push('<button class="mini-btn" id="galMore" style="margin:8px auto;display:block">加载更多（'+(totalMatch-shown)+'）</button>');
   if(!h.length)h.push('<div class="notice">暂无符合条件的干员</div>');
   $('galGrid').innerHTML=h.join('');
   var items=$('galGrid').querySelectorAll('.gal-item');
   for(i=0;i<items.length;i++){ items[i].onclick=function(){ openModal(this.getAttribute('data-op')); }; }
+  var gm=$('galMore'); if(gm)gm.onclick=function(){ GAL_N+=120; renderGallery(); };
 }
 function calcAch(){
   var hist=state.history, i, last6=-1, maxG=0;
@@ -1028,14 +1039,14 @@ function openAch(){
   h.push('</div>');
   $('mBody').innerHTML=h.join('');
   var bca=$('btnCopyAch'); if(bca)bca.onclick=copyAch;
-  $('modal').classList.add('show');
+  openModalBox();
 }
 function openRules(){
   var NL=String.fromCharCode(10);
   var txt=['【明日方舟干员寻访模拟器 · 规则说明】','','★ 出率（按官方规则模拟）','6★：2%（51抽起每抽+2%，100抽必出）','5★：8%（每次十连内必出5★以上）','4★：50% · 3★：40%','','★ 保底','· 常驻标准寻访之间保底共享；中坚寻访之间共享','· 限定/活动/联合行动/定向甄选各自独立','','★ UP 概率','· 单UP池：当期6★占6★出率的50%','· 双UP池（限定/标准轮换）：各占35%','· 定向甄选：只含选中的干员，等概率','· 中坚甄选：选2位各占35%','· 联合行动/跨年欢庆：池内等概率','','★ 限定寻访','· 每抽获得1张寻访数据契约','· 300契约可兑换限定干员，200契约兑换当期非限定6★','· 跨年欢庆池首次6★必为未拥有干员','','★ 其他','· 快捷键：1 单抽 · 2 十连 · 3 抽到6★','· 存档保存在浏览器本地，可导出/导入','· 干员立绘/头像为在线加载，需联网'].join(NL);
   var h=['<h4 class="sect" style="margin-top:0">规则说明</h4><pre class="rules">'+esc(txt)+'</pre>'];
   $('mBody').innerHTML=h.join('');
-  $('modal').classList.add('show');
+  openModalBox();
 }
 function openStats(){
   var hist=state.history, i, r;
@@ -1198,7 +1209,7 @@ function openStats(){
     catch(e){ window.prompt('复制以下内容：', text); }
     ta.remove();
   };
-  $('modal').classList.add('show');
+  openModalBox();
 }
 function copyStats(){
   var hist=state.history, i, c6=0,c5=0,c4=0,c3=0;
@@ -1261,7 +1272,7 @@ function openOpStats(){
   var inp=$('opSearch'); if(inp){ var opT=null; inp.oninput=function(){ opSearch=this.value.trim(); clearTimeout(opT); opT=setTimeout(function(){ renderOpStatsTable(); },150); }; }
   var sel=$('opSort'); if(sel)sel.onchange=function(){ opSort=this.value; renderOpStatsTable(); };
   renderOpStatsTable();
-  $('modal').classList.add('show');
+  openModalBox();
 }
 var OP_N=200;
 function renderOpStatsTable(){
@@ -1433,7 +1444,7 @@ function init(){
     var c=e.target.closest?e.target.closest('.bcard'):null;
     if(c){ state.cur=c.getAttribute('data-id'); save(); renderBannerList(); renderBannerInfo(); renderStats(); if(isMobile())closeDrawer(); }
   };
-  setChips($('colChips'),[['all','全部'],['miss','未拥有'],['lim','限定'],['favop','收藏'],['6','6★'],['5','5★'],['4','4★'],['3','3★']],'all',function(){
+  setChips($('colChips'),[['all','全部'],['miss','未拥有'],['lim','限定'],['favop','收藏'],['wish','心愿'],['6','6★'],['5','5★'],['4','4★'],['3','3★']],'all',function(){
     colF=$('colChips')._v; renderCollection();
   });
   setChips($('colProfChips'),[['all','职业:全部'],['先锋','先锋'],['近卫','近卫'],['重装','重装'],['狙击','狙击'],['术师','术师'],['医疗','医疗'],['辅助','辅助'],['特种','特种']],'all',function(){
