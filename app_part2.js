@@ -1016,8 +1016,8 @@ function renderGallery(){
 }
 function calcAch(){
   var hist=state.history, i, last6=-1, maxG=0;
-  var first=hist.length>0, first6=false, double6=false, extreme=false, bigDrought=false, early6=false;
-  for(i=0;i<hist.length;i++){
+  var first=hist.length>0, first6=false, double6=false, extreme=false, bigDrought=false, early6=false, c5all=0;
+  for(i=0;i<hist.length;i++){ if(hist[i].rar===5)c5all++;
     if(hist[i].rar===6){
       first6=true;
       var cnt=0, j;
@@ -1030,8 +1030,9 @@ function calcAch(){
   var tail=hist.slice(Math.max(0,hist.length-10));
   for(i=0;i<tail.length;i++){ if(tail[i].rar===6)early6=true; }
   if(maxG>=70)bigDrought=true;
-  var limCol=0, lk2;
-  for(lk2 in limitedOps){ if(state.collection.indexOf(lk2)>=0)limCol++; }
+  var limCol=0, lk2, colSet2={}, csi2;
+  for(csi2=0;csi2<state.collection.length;csi2++)colSet2[state.collection[csi2]]=1;
+  for(lk2 in limitedOps){ if(colSet2[lk2])limCol++; }
   var totalOpsN=Object.keys(opByName).length;
   return { list:[
     {name:'初来乍到',desc:'完成第一次抽卡',icon:'🌱',done:first,prog:''},
@@ -1042,6 +1043,8 @@ function calcAch(){
     {name:'欧皇降临',desc:'最早10抽内出六星',icon:'✨',done:early6,prog:''},
     {name:'图鉴收藏家',desc:'已拥有干员≥200',icon:'📚',done:state.collection.length>=200,prog:state.collection.length+' / 200'},
     {name:'千抽达人',desc:'总抽数≥1000',icon:'🎰',done:hist.length>=1000,prog:hist.length+' / 1000'},
+    {name:'五星常客',desc:'累计抽到50名5★干员',icon:'💠',done:c5all>=50,prog:c5all+' / 50'},
+    {name:'深度博士',desc:'累计抽卡≥5000抽',icon:'📖',done:hist.length>=5000,prog:hist.length+' / 5000'},
     {name:'限定收藏家',desc:'集齐所有限定干员（'+limitedTotal+'）',icon:'👑',done:limCol>=limitedTotal&&limitedTotal>0,prog:limCol+' / '+limitedTotal},
     {name:'全图鉴',desc:'拥有全部干员（'+totalOpsN+'）',icon:'🏅',done:state.collection.length>=totalOpsN,prog:state.collection.length+' / '+totalOpsN}
   ]};
