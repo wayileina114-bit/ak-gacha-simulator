@@ -866,12 +866,12 @@ function openWiki(opName){
   openModalBox();
   var ck=name;
   if(wikiCache[ck]&&Date.now()-wikiCache[ck].t<600000){ renderWikiData(name,wikiCache[ck]); return; }
-  var secs=[3,5,7,9,10], got={};
+  var secs=[2,3,5,7,9,10], got={};
   var pending=secs.length;
   function done(){
     if(--pending>0)return;
     if(!got[3]&&!got[7]){ $('mBody').innerHTML='<h4 class="sect" style="margin-top:0">📊 '+esc(name)+' · Wiki数据</h4><div class="notice">同步失败：无法连接 PRTS Wiki（需联网）</div>'; return; }
-    wikiCache[ck]={t:Date.now(),attr:got[3]||'',talents:got[5]||'',skills:got[7]||'',mats:got[9]||'',skillMats:got[10]||''};
+    wikiCache[ck]={t:Date.now(),acquire:got[2]||'',attr:got[3]||'',talents:got[5]||'',skills:got[7]||'',mats:got[9]||'',skillMats:got[10]||''};
     renderWikiData(name,wikiCache[ck]);
   }
   for(var si=0;si<secs.length;si++){
@@ -930,6 +930,15 @@ function renderWikiData(name,data){
   }
   var h=['<h4 class="sect" style="margin-top:0">📊 '+esc(name)+' · Wiki数据</h4><button class="mini-btn" id="wikiBack">← 返回干员详情</button>'];
   var o=opOf(name);
+  if(data&&data.acquire){
+    var acqTxt=String(data.acquire||'');
+    var acqPieces=[];
+    var am1=acqTxt.match(/\|获得方式=([^\n|]*)/);
+    var am2=acqTxt.match(/\|上线时间=([^\n|]*)/);
+    if(am1)acqPieces.push('获得方式：'+stripWiki(am1[1]));
+    if(am2)acqPieces.push('上线时间：'+stripWiki(am2[1]));
+    if(acqPieces.length)h.push('<div class="wikisec"><h4>🎁 获取方式</h4><div class="notice">'+esc(acqPieces.join('<br/>'))+'</div></div>');
+  }
   if(data&&data.attr){
     var attr=data.attr;
     var kvCache={};
