@@ -146,6 +146,9 @@ function playTone(freq,dur,type,vol){
     o.stop(audioCtx.currentTime+dur);
   }catch(e){}
 }
+function playLimResult(){
+  playTone(587,.12,'sine',.12); setTimeout(function(){playTone(740,.12,'sine',.12);},120); setTimeout(function(){playTone(880,.12,'sine',.14);},240); setTimeout(function(){playTone(1175,.4,'sine',.18);},380);
+}
 function playResult(c6,c5){
   if(c6){ playTone(523,.14,'square',.12); setTimeout(function(){playTone(659,.14,'square',.12);},140); setTimeout(function(){playTone(784,.14,'square',.12);},280); setTimeout(function(){playTone(1046,.35,'square',.18);},420); }
   else if(c5){ playTone(660,.12,'triangle',.1); setTimeout(function(){playTone(880,.18,'triangle',.12);},120); }
@@ -570,7 +573,7 @@ function renderCards(results,msg,has6,names6,has5){
       if(big6.length){
         var bh=['<div class="sixstrip">'];
         var show6=Math.min(big6.length,3);
-        for(bi2=0;bi2<show6;bi2++){ var bo6=opOf(big6[bi2].op); if(bo6)bh.push('<div class="sixcard" data-op="'+esc(big6[bi2].op)+'"><img loading="lazy" src="'+esc(opArtT(bo6))+'"/><div class="sn6">'+esc(bo6.name)+'</div></div>'); }
+        for(bi2=0;bi2<show6;bi2++){ var bo6=opOf(big6[bi2].op); if(bo6)bh.push('<div class="sixcard'+(limitedOps[big6[bi2].op]?' lim':'')+'" data-op="'+esc(big6[bi2].op)+'"><img loading="lazy" src="'+esc(opArtT(bo6))+'"/>'+(limitedOps[big6[bi2].op]?'<div class="crown">👑</div>':'')+'<div class="sn6">'+esc(bo6.name)+'</div></div>'); }
         bh.push('</div>');
         msg=bh.join('')+msg;
         if(big6.length>3)msg+='<br/><span class="notice">……共 '+big6.length+' 只六星 · <a class="allreslink" id="sixAllLink">查看全部结果</a></span>';
@@ -583,7 +586,9 @@ function renderCards(results,msg,has6,names6,has5){
     var sal=$('sixAllLink'); if(sal)sal.onclick=function(){ openAllResults(); };
     var sixcards=$('resultMsg').querySelectorAll('.sixcard');
     for(var si6=0;si6<sixcards.length;si6++){ (function(sc){ sc.onclick=function(){ openModal(sc.getAttribute('data-op')); }; })(sixcards[si6]); }
-    playResult(has6||false,has5||false);
+    var hasLim=false;
+    for(si6=0;si6<results.length;si6++){ if(results[si6].rar===6&&limitedOps[results[si6].op]){hasLim=true;break;} }
+    if(hasLim){ playLimResult(); } else { playResult(has6||false,has5||false); }
   }, 100+results.length*SPEED);
 }
 function setBusyUI(on){
