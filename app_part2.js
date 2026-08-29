@@ -789,6 +789,7 @@ function renderCollection(){
   var h=[],i,o;
   var colSet={}, csi;
   for(csi=0;csi<state.collection.length;csi++)colSet[state.collection[csi]]=1;
+  var nowCol=Date.now();
   for(i=0;i<names.length;i++){
     o=opOf(names[i]); if(!o)continue;
     var got=colSet[names[i]]?1:0;
@@ -799,9 +800,9 @@ function renderCollection(){
     if(colF!=='all'&&colF!=='miss'&&colF!=='lim'&&colF!=='favop'&&colF!=='wish'&&String(o.rarity)!==colF)continue;
     if(colP!=='all'&&o.prof!==colP)continue;
     if(colSearch&&o.name.indexOf(colSearch)<0)continue;
-    var pul=(newPulse[names[i]]&&(Date.now()-newPulse[names[i]])<20000);
+    var pul=(newPulse[names[i]]&&(nowCol-newPulse[names[i]])<20000);
     var ocnt=(state.opCnt||{})[names[i]]||0;
-    h.push('<div class="cop'+(got?'':' miss')+(pul?' new':'')+((state.wish&&state.wish.indexOf(names[i])>=0)?' wished':'')+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/>'+(state.favOps&&state.favOps[names[i]]?'<div class="favstar">★</div>':'')+(state.wish&&state.wish.indexOf(names[i])>=0?'<div class="wishmark">💝</div>':'')+'<div class="cs">'+esc(o.name)+'</div>'+(ocnt>1?'<div class="cdup">×'+ocnt+'</div>':'')+'<div class="nb"></div></div>');
+    h.push('<div class="cop'+(got?'':' miss')+(pul?' new':'')+((state.wish&&state.wish.indexOf(names[i])>=0)?' wished':'')+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/>'+(state.favOps&&state.favOps[names[i]]?'<div class="favstar">★</div>':'')+(state.wish&&state.wish.indexOf(names[i])>=0?'<div class="wishmark">💝</div>':'')+(!got&&!(state.wish&&state.wish.indexOf(names[i])>=0)?'<button class="quickwish" data-op="'+esc(names[i])+'" title="加入心愿单">💝</button>':'')+'<div class="cs">'+esc(o.name)+'</div>'+(ocnt>1?'<div class="cdup">×'+ocnt+'</div>':'')+'<div class="nb"></div></div>');
   }
   $('collection').innerHTML=h.join('');
   var cc=$('colCount'); if(cc)cc.textContent='已拥有 '+state.collection.length+' / '+totalOps()+' · 未拥有 '+(totalOps()-state.collection.length);
@@ -810,7 +811,7 @@ function renderCollection(){
     rh.push('</div>'); cc2.innerHTML=rh.join(''); }
   var cb=$('colBar'); if(cb)cb.innerHTML='<i style="width:'+(totalOps()?Math.round(state.collection.length/totalOps()*100):0)+'%"></i>';
   var colWrap=$('collection');
-  if(colWrap&&!colWrap._delegated){ colWrap._delegated=true; colWrap.onclick=function(e){ var t=e.target; while(t&&t!==this){ if(t.classList&&t.classList.contains('cop')){ openModal(t.getAttribute('data-op')); return; } t=t.parentNode; } }; }
+  if(colWrap&&!colWrap._delegated){ colWrap._delegated=true; colWrap.onclick=function(e){ var t=e.target; while(t&&t!==this){ if(t.classList&&t.classList.contains('quickwish')){ var qop=t.getAttribute('data-op'); if(!state.wish)state.wish=[]; if(state.wish.indexOf(qop)<0){ state.wish.push(qop); save(); toast('💝 已加入心愿单'); renderCollection(); } return; } if(t.classList&&t.classList.contains('cop')){ openModal(t.getAttribute('data-op')); return; } t=t.parentNode; } }; }
 }
 function openModal(opName){
   var o=opOf(opName); if(!o)return;

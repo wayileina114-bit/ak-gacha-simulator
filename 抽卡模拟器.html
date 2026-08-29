@@ -221,6 +221,8 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 #resultMsg .batchrate{color:var(--dim); font-size:12px}
 #resultMsg .batchrate b{color:var(--acc); font-size:13px}
 .cop .wishmark{position:absolute; top:10px; left:1px; font-size:9px; z-index:2}
+.cop .quickwish{position:absolute; top:1px; right:1px; background:rgba(0,0,0,.65); border:1px solid rgba(255,110,199,.5); color:#ff6ec7; font-size:10px; border-radius:8px; padding:1px 5px; cursor:pointer; z-index:3; transition:transform .15s}
+.cop .quickwish:hover{transform:scale(1.15); background:rgba(255,110,199,.25)}
 .cop.wished{border-color:rgba(255,110,199,.55); box-shadow:0 0 10px rgba(255,110,199,.22)}
 #resultMsg b{color:var(--gold); font-size:16px}
 #btnAgain{margin-top:10px; background:linear-gradient(90deg,rgba(255,154,46,.25),rgba(255,93,58,.2)); border-color:var(--gold); color:var(--gold); font-weight:800}
@@ -520,7 +522,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.3（保底倒计时徽章）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.4（心愿快捷+性能）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -1321,6 +1323,7 @@ function renderCollection(){
   var h=[],i,o;
   var colSet={}, csi;
   for(csi=0;csi<state.collection.length;csi++)colSet[state.collection[csi]]=1;
+  var nowCol=Date.now();
   for(i=0;i<names.length;i++){
     o=opOf(names[i]); if(!o)continue;
     var got=colSet[names[i]]?1:0;
@@ -1331,9 +1334,9 @@ function renderCollection(){
     if(colF!=='all'&&colF!=='miss'&&colF!=='lim'&&colF!=='favop'&&colF!=='wish'&&String(o.rarity)!==colF)continue;
     if(colP!=='all'&&o.prof!==colP)continue;
     if(colSearch&&o.name.indexOf(colSearch)<0)continue;
-    var pul=(newPulse[names[i]]&&(Date.now()-newPulse[names[i]])<20000);
+    var pul=(newPulse[names[i]]&&(nowCol-newPulse[names[i]])<20000);
     var ocnt=(state.opCnt||{})[names[i]]||0;
-    h.push('<div class="cop'+(got?'':' miss')+(pul?' new':'')+((state.wish&&state.wish.indexOf(names[i])>=0)?' wished':'')+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/>'+(state.favOps&&state.favOps[names[i]]?'<div class="favstar">★</div>':'')+(state.wish&&state.wish.indexOf(names[i])>=0?'<div class="wishmark">💝</div>':'')+'<div class="cs">'+esc(o.name)+'</div>'+(ocnt>1?'<div class="cdup">×'+ocnt+'</div>':'')+'<div class="nb"></div></div>');
+    h.push('<div class="cop'+(got?'':' miss')+(pul?' new':'')+((state.wish&&state.wish.indexOf(names[i])>=0)?' wished':'')+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/>'+(state.favOps&&state.favOps[names[i]]?'<div class="favstar">★</div>':'')+(state.wish&&state.wish.indexOf(names[i])>=0?'<div class="wishmark">💝</div>':'')+(!got&&!(state.wish&&state.wish.indexOf(names[i])>=0)?'<button class="quickwish" data-op="'+esc(names[i])+'" title="加入心愿单">💝</button>':'')+'<div class="cs">'+esc(o.name)+'</div>'+(ocnt>1?'<div class="cdup">×'+ocnt+'</div>':'')+'<div class="nb"></div></div>');
   }
   $('collection').innerHTML=h.join('');
   var cc=$('colCount'); if(cc)cc.textContent='已拥有 '+state.collection.length+' / '+totalOps()+' · 未拥有 '+(totalOps()-state.collection.length);
@@ -1342,7 +1345,7 @@ function renderCollection(){
     rh.push('</div>'); cc2.innerHTML=rh.join(''); }
   var cb=$('colBar'); if(cb)cb.innerHTML='<i style="width:'+(totalOps()?Math.round(state.collection.length/totalOps()*100):0)+'%"></i>';
   var colWrap=$('collection');
-  if(colWrap&&!colWrap._delegated){ colWrap._delegated=true; colWrap.onclick=function(e){ var t=e.target; while(t&&t!==this){ if(t.classList&&t.classList.contains('cop')){ openModal(t.getAttribute('data-op')); return; } t=t.parentNode; } }; }
+  if(colWrap&&!colWrap._delegated){ colWrap._delegated=true; colWrap.onclick=function(e){ var t=e.target; while(t&&t!==this){ if(t.classList&&t.classList.contains('quickwish')){ var qop=t.getAttribute('data-op'); if(!state.wish)state.wish=[]; if(state.wish.indexOf(qop)<0){ state.wish.push(qop); save(); toast('💝 已加入心愿单'); renderCollection(); } return; } if(t.classList&&t.classList.contains('cop')){ openModal(t.getAttribute('data-op')); return; } t=t.parentNode; } }; }
 }
 function openModal(opName){
   var o=opOf(opName); if(!o)return;
