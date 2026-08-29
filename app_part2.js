@@ -594,6 +594,7 @@ function renderCards(results,msg,has6,names6,has5){
 function setBusyUI(on){
   var ids=['btn1','btn10','btnUntil6','btnCustom'], i2, el2;
   for(i2=0;i2<ids.length;i2++){ el2=$(ids[i2]); if(el2)el2.disabled=on; }
+  if(on){ var ft=$('fortune'); if(ft){ ft.textContent='✨ 抽卡中…'; ft.classList.add('busy'); } } else { var ft2=$('fortune'); if(ft2){ ft2.classList.remove('busy'); setFortune(); } }
 }
 function doPull(n){
   if(BUSY)return;
