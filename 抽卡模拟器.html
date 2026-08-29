@@ -512,7 +512,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v10.4（综合回归+抽到占比）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v10.5（技能升级材料）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -1390,12 +1390,12 @@ function openWiki(opName){
   openModalBox();
   var ck=name;
   if(wikiCache[ck]&&Date.now()-wikiCache[ck].t<600000){ renderWikiData(name,wikiCache[ck]); return; }
-  var secs=[3,5,7,9], got={};
+  var secs=[3,5,7,9,10], got={};
   var pending=secs.length;
   function done(){
     if(--pending>0)return;
     if(!got[3]&&!got[7]){ $('mBody').innerHTML='<h4 class="sect" style="margin-top:0">📊 '+esc(name)+' · Wiki数据</h4><div class="notice">同步失败：无法连接 PRTS Wiki（需联网）</div>'; return; }
-    wikiCache[ck]={t:Date.now(),attr:got[3]||'',talents:got[5]||'',skills:got[7]||'',mats:got[9]||''};
+    wikiCache[ck]={t:Date.now(),attr:got[3]||'',talents:got[5]||'',skills:got[7]||'',mats:got[9]||'',skillMats:got[10]||''};
     renderWikiData(name,wikiCache[ck]);
   }
   for(var si=0;si<secs.length;si++){
@@ -1448,6 +1448,10 @@ function openSkins(opName){
   },12000);
 }
 function renderWikiData(name,data){
+  function parseMatsLine(line){
+    var parts=String(line||'').split('}}').map(function(x){x=x.trim(); if(x.indexOf('材料消耗|')>=0){ var seg=x.split('材料消耗|')[1]; return seg; } return '';}).filter(function(x){return x;});
+    return parts.map(function(x){ return x.split('|').join(' '); }).join(' + ');
+  }
   var h=['<h4 class="sect" style="margin-top:0">📊 '+esc(name)+' · Wiki数据</h4><button class="mini-btn" id="wikiBack">← 返回干员详情</button>'];
   var o=opOf(name);
   if(data&&data.attr){
@@ -1484,13 +1488,16 @@ function renderWikiData(name,data){
   if(data&&data.mats){
     var matsLines=[];
     var matsTxt=String(data.mats||'');
-    function parseMatsLine(line){
-      var parts=line.split('}}').map(function(x){x=x.trim(); if(x.indexOf('材料消耗|')>=0){ var seg=x.split('材料消耗|')[1]; return seg; } return '';}).filter(function(x){return x;});
-      return parts.map(function(x){ return x.split('|').join(' '); }).join(' + ');
-    }
     var ml=matsTxt.split('\n');
     for(var mi2=0;mi2<ml.length;mi2++){ var l2=ml[mi2].trim(); if(l2.indexOf('|精')>=0&&l2.indexOf('=')>=0){ var kv2=l2.split('='); var matsInfo=parseMatsLine(kv2[1]||''); if(matsInfo)matsLines.push('<div class="wrow"><b>'+(kv2[0].indexOf('精1')>=0?'精1':'精2')+'</b><span>'+esc(matsInfo)+'</span></div>'); } }
     if(matsLines.length){ h.push('<div class="wikisec"><h4>🧱 精英化材料</h4><div class="wikirows">'+matsLines.join('')+'</div></div>'); }
+  }
+  if(data&&data.skillMats){
+    var smLines=[];
+    var smTxt=String(data.skillMats||'');
+    var sml=smTxt.split('\n');
+    for(var smi=0;smi<sml.length;smi++){ var sl2=sml[smi].trim(); if(sl2.indexOf('|')===0&&sl2.indexOf('=')>=0){ var kv3=sl2.slice(1).split('='); var lvName=kv3[0]; var info=parseMatsLine(kv3[1]||''); if(info)smLines.push('<div class="wrow"><b>'+esc(lvName.replace(/^一/,'专精'))+'</b><span>'+esc(info)+'</span></div>'); } }
+    if(smLines.length){ h.push('<div class="wikisec"><h4>📚 技能升级材料</h4><div class="wikirows">'+smLines.join('')+'</div></div>'); }
   }
   h.push('<div class="notice">数据来源：PRTS Wiki（实时同步）</div>');
   $('mBody').innerHTML=h.join('');
