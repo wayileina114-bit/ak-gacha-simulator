@@ -735,7 +735,7 @@ function openModal(opName){
   if(srcs&&srcs.length){
     var sl=[];
     for(var si=0;si<srcs.length;si++){ sl.push('<a class="srcLink" data-bid="'+srcs[si].id+'" data-full="'+esc(srcs[si].full)+'">'+esc(srcs[si].full)+'</a>'); }
-    h.push('<div class="kv"><b>UP卡池</b>'+sl.join('、')+'</div>');
+    h.push('<div class="kv"><b>UP卡池</b>'+sl.join('、')+'<span style="color:var(--gold)">（共 '+srcs.length+' 次UP）</span></div>');
   } else { h.push('<div class="kv"><b>UP卡池</b>—</div>'); }
   h.push('</div></div>');
   h.push('<div class="mdesc">立绘来源于 bilibili Wiki 与 PRTS，仅供娱乐参考。<a href="'+esc(o.art||'#')+'" target="_blank" rel="noopener">查看高清原图</a></div>');
@@ -875,7 +875,9 @@ function resetFilters(){
 function randomBanner(){
   var bs=DATA.banners;
   if(!bs.length)return;
-  var r=bs[Math.floor(Math.random()*bs.length)];
+  var good=bs.filter(function(x){return x.six&&x.six.length;}).filter(function(x){return x.id!==state.cur;});
+  if(!good.length)good=bs;
+  var r=good[Math.floor(Math.random()*good.length)];
   state.cur=r.id; save();
   renderBannerList(); renderBannerInfo(); renderStats();
   toast('🎲 随机到：'+esc(r.full));
@@ -1160,7 +1162,9 @@ function openStats(){
   for(i=0;i<Math.min(8,sixList.length);i++){ var s6=sixList[i], o6=opOf(s6.op); h.push('<div class="hitem r6"><span class="star">★★★★★★</span><span>'+esc(o6?o6.name:s6.op)+'</span></div>'); }
   if(!sixList.length)h.push('<div class="hitem" style="color:#5a6c8e">还没有六星干员，快去抽卡！</div>');
   var miss6=[];
-  for(var mk in opByName){ if(opByName[mk].rarity===6&&state.collection.indexOf(mk)<0)miss6.push(mk); }
+  var missSet={}, msi;
+  for(msi=0;msi<state.collection.length;msi++)missSet[state.collection[msi]]=1;
+  for(var mk in opByName){ if(opByName[mk].rarity===6&&!missSet[mk])miss6.push(mk); }
   h.push('<h4 class="sect">还差这些6★（'+miss6.length+'）</h4><button class="mini-btn" id="btnCopyMiss6">复制缺卡清单</button>');
   if(miss6.length){
     h.push('<div class="rateup">');

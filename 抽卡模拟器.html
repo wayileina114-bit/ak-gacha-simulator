@@ -93,8 +93,8 @@ header{
   color:#fff; vertical-align:1px;
 }
 .now-badge{display:inline-block; padding:1px 7px; border-radius:8px; font-size:10px; margin-left:6px; background:var(--gold); color:#000; font-weight:800; vertical-align:1px}
-.srcLink{color:var(--acc2); cursor:pointer; margin-right:2px}
-.srcLink:hover{text-decoration:underline}
+.srcLink{color:var(--acc2); cursor:pointer; margin-right:2px; text-decoration:none; border-bottom:1px dashed rgba(74,179,255,.35); transition:color .15s, border-color .15s}
+.srcLink:hover{text-decoration:none; color:#fff; border-bottom-color:var(--acc)}
 .drawerClose{display:none; float:right; cursor:pointer; color:var(--dim); font-size:15px}
 .drawerClose:hover{color:#fff}
 .favbtn{color:#3a4d75; cursor:pointer; font-size:14px; margin-left:8px; transition:.2s}
@@ -434,7 +434,7 @@ header{
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v6.0（心愿单+抽到提醒+历史跳转）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v6.1（随机池修复+UP次数统计）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -1181,7 +1181,7 @@ function openModal(opName){
   if(srcs&&srcs.length){
     var sl=[];
     for(var si=0;si<srcs.length;si++){ sl.push('<a class="srcLink" data-bid="'+srcs[si].id+'" data-full="'+esc(srcs[si].full)+'">'+esc(srcs[si].full)+'</a>'); }
-    h.push('<div class="kv"><b>UP卡池</b>'+sl.join('、')+'</div>');
+    h.push('<div class="kv"><b>UP卡池</b>'+sl.join('、')+'<span style="color:var(--gold)">（共 '+srcs.length+' 次UP）</span></div>');
   } else { h.push('<div class="kv"><b>UP卡池</b>—</div>'); }
   h.push('</div></div>');
   h.push('<div class="mdesc">立绘来源于 bilibili Wiki 与 PRTS，仅供娱乐参考。<a href="'+esc(o.art||'#')+'" target="_blank" rel="noopener">查看高清原图</a></div>');
@@ -1321,7 +1321,9 @@ function resetFilters(){
 function randomBanner(){
   var bs=DATA.banners;
   if(!bs.length)return;
-  var r=bs[Math.floor(Math.random()*bs.length)];
+  var good=bs.filter(function(x){return x.six&&x.six.length;}).filter(function(x){return x.id!==state.cur;});
+  if(!good.length)good=bs;
+  var r=good[Math.floor(Math.random()*good.length)];
   state.cur=r.id; save();
   renderBannerList(); renderBannerInfo(); renderStats();
   toast('🎲 随机到：'+esc(r.full));
@@ -1606,7 +1608,9 @@ function openStats(){
   for(i=0;i<Math.min(8,sixList.length);i++){ var s6=sixList[i], o6=opOf(s6.op); h.push('<div class="hitem r6"><span class="star">★★★★★★</span><span>'+esc(o6?o6.name:s6.op)+'</span></div>'); }
   if(!sixList.length)h.push('<div class="hitem" style="color:#5a6c8e">还没有六星干员，快去抽卡！</div>');
   var miss6=[];
-  for(var mk in opByName){ if(opByName[mk].rarity===6&&state.collection.indexOf(mk)<0)miss6.push(mk); }
+  var missSet={}, msi;
+  for(msi=0;msi<state.collection.length;msi++)missSet[state.collection[msi]]=1;
+  for(var mk in opByName){ if(opByName[mk].rarity===6&&!missSet[mk])miss6.push(mk); }
   h.push('<h4 class="sect">还差这些6★（'+miss6.length+'）</h4><button class="mini-btn" id="btnCopyMiss6">复制缺卡清单</button>');
   if(miss6.length){
     h.push('<div class="rateup">');
