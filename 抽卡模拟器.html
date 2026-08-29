@@ -28,9 +28,10 @@ body::before{
 #app{position:relative; z-index:1; max-width:1500px; margin:0 auto; padding:14px}
 header{
   display:flex; align-items:center; gap:14px; flex-wrap:wrap;
-  padding:12px 16px; background:linear-gradient(90deg,#16233d,#101a2b);
+  padding:12px 16px; background:linear-gradient(90deg,#1a2a4a 0%,#16233d 55%,#241a3d 100%); position:relative; overflow:hidden;
   border:1px solid var(--line); border-radius:12px; margin-bottom:12px;
   box-shadow:0 4px 20px rgba(0,0,0,.35);
+header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; height:200px; border-radius:50%; background:radial-gradient(circle, rgba(255,184,77,.12), transparent 70%); pointer-events:none}
 }
 .logo{font-size:22px; font-weight:800; letter-spacing:2px; color:#fff}
 .logo span{color:var(--acc); font-weight:600; font-size:14px; letter-spacing:4px; margin-left:6px}
@@ -468,7 +469,7 @@ header{
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v8.4（卡池战绩显示）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v8.5（综合回归+标题栏美化）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
