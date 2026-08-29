@@ -78,6 +78,8 @@ function normalizeState(s){
   if(!Array.isArray(s.history))s.history=[];
   if(!Array.isArray(s.collection))s.collection=[];
   if(!Array.isArray(s.wish))s.wish=[];
+  var sk2;
+  for(sk2 in s.sel){ var sv=s.sel[sk2]; if(!sv||typeof sv!=='object'){ delete s.sel[sk2]; continue; } if(!Array.isArray(sv.six))sv.six=[]; if(!Array.isArray(sv.five))sv.five=[]; }
   return s;
 }
 function loadState(){
@@ -156,8 +158,8 @@ function minSel(b,rar){ if(b.type==='zjselect'&&rar===6)return 2; return 1; }
 function ensureDefaultSel(b){
   var s=getSel(b);
   var changed=false;
-  if(!s.six.length&&b.six.length){ s.six=b.six.slice(0,selMax(b,6)); changed=true; }
-  if(!s.five.length&&b.five.length){ s.five=b.five.slice(0,selMax(b,5)); changed=true; }
+  if(!s.six.length&&(b.six||[]).length){ s.six=b.six.slice(0,selMax(b,6)); changed=true; }
+  if(!s.five.length&&(b.five||[]).length){ s.five=b.five.slice(0,selMax(b,5)); changed=true; }
   if(changed)save();
   return s;
 }
@@ -1293,17 +1295,23 @@ function importSave(){
   }catch(e){ toast('存档格式无效'); }
 }
 function toggleSound(){ SOUND=!SOUND; try{ localStorage.setItem('akgacha_snd',SOUND?'1':'0'); }catch(e){} var b=$('btnSound'); if(b){ b.textContent=SOUND?'音效: 开':'音效: 关'; b.classList.toggle('on',SOUND); } }
-var opSort='cnt', opFilter='had', opSearch='';
+var opSort='cnt', opFilter='had', opSearch='', opProf='all';
 function openOpStats(){
   var h=[];
   h.push('<div class="opstats">');
   h.push('<div class="controls"><input id="opSearch" placeholder="搜索干员名称..."/><select id="opSort"><option value="cnt">按出货数</option><option value="rarity">按稀有度</option><option value="name">按名称</option></select></div>');
   h.push('<div class="filters" id="opChips"></div>');
+  h.push('<div class="filters" id="opProfChips"></div>');
   h.push('<div class="notice" id="opSum"></div>');
   h.push('<div id="opTable"></div>');
   h.push('</div>');
   $('mBody').innerHTML=h.join('');
   setChips($('opChips'),[['all','全部'],['had','出过'],['miss','未拥有'],['lim','限定'],['6','6★'],['5','5★'],['4','4★'],['3','3★']],opFilter,function(){ opFilter=$('opChips')._v; renderOpStatsTable(); });
+  var profSet={}, pk3;
+  for(pk3 in opByName){ if(opByName[pk3].prof)profSet[opByName[pk3].prof]=1; }
+  var profArr=[['all','职业:全部']];
+  for(pk3 in profSet)profArr.push([pk3,pk3]);
+  setChips($('opProfChips'),profArr,opProf,function(){ opProf=$('opProfChips')._v; renderOpStatsTable(); });
   var inp=$('opSearch'); if(inp){ var opT=null; inp.oninput=function(){ opSearch=this.value.trim(); clearTimeout(opT); opT=setTimeout(function(){ renderOpStatsTable(); },150); }; }
   var sel=$('opSort'); if(sel)sel.onchange=function(){ opSort=this.value; renderOpStatsTable(); };
   renderOpStatsTable();
@@ -1318,6 +1326,7 @@ function renderOpStatsTable(){
     if(opFilter==='had'&&cnt===0)continue;
     if(opFilter==='miss'&&cnt>0)continue;
     if(opFilter==='lim'&&!limitedOps[names[i]])continue;
+    if(opProf!=='all'&&o.prof!==opProf)continue;
     if(opFilter==='6'&&o.rarity!==6)continue;
     if(opFilter==='5'&&o.rarity!==5)continue;
     if(opFilter==='4'&&o.rarity!==4)continue;
