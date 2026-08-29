@@ -429,6 +429,8 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   }
   #rateNote{display:none}
   .barName{display:block; width:100%; text-align:center; font-size:11px; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.pityCount{display:none; position:fixed; bottom:76px; left:50%; transform:translateX(-50%); background:linear-gradient(90deg,rgba(255,93,58,.9),rgba(255,154,46,.9)); color:#fff; font-size:12px; font-weight:800; padding:6px 14px; border-radius:20px; box-shadow:0 4px 16px rgba(255,93,58,.4); z-index:40; animation:urgentpulse 1.6s infinite}
+.pityCount.show{display:block}
   .pull-btn{flex:1; max-width:200px; padding:12px 10px; font-size:15px}
   .pull-btn .cost{font-size:10px}
   #cards{grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:8px; min-height:148px}
@@ -483,7 +485,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
         <span class="notice" id="fortune"></span>
       </div>
       <div class="row">
-        <span class="barName" id="barBanner"></span>
+        <span class="barName" id="barBanner"></span><span class="pityCount" id="pityCount"></span>
         <button class="pull-btn single" id="btn1">单抽<span class="cost">快捷键 1</span></button>
         <button class="pull-btn ten" id="btn10">十连寻访<span class="cost">快捷键 2</span></button>
         <button class="pull-btn single" id="btnUntil6">抽到6★<span class="cost">连抽至出货 · 快捷键 3</span></button>
@@ -518,7 +520,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.2（历史按日分组）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.3（保底倒计时徽章）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -1044,6 +1046,8 @@ function updateRateNote(b){
   var p6=Math.min(0.02+Math.max(0,st.fails-49)*0.02,1);
   var msg='当前卡池：'+esc(b.full)+' · 距上次6★已抽 <b>'+st.fails+'</b> 抽 · 下次6★概率 <b>'+(p6*100).toFixed(1)+'%</b>';
   $('rateNote').innerHTML=msg;
+  var pc=$('pityCount');
+  if(pc){ if(st.fails>=85){ pc.textContent='⏳ 还剩 '+(100-st.fails)+' 抽必出6★'; pc.classList.add('show'); } else { pc.textContent=''; pc.classList.remove('show'); } }
 }
 function sparkExchange(cost){
   var b=bannerById(state.cur), tok=state.spark[b.id]||0;
