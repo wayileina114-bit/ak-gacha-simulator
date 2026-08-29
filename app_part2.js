@@ -1227,6 +1227,9 @@ function openStats(){
   var missSet={}, msi;
   for(msi=0;msi<state.collection.length;msi++)missSet[state.collection[msi]]=1;
   for(var mk in opByName){ if(opByName[mk].rarity===6&&!missSet[mk])miss6.push(mk); }
+  var missLim=[];
+  for(var mlk in limitedOps){ if(!missSet[mlk])missLim.push(mlk); }
+  if(missLim.length){ h.push('<h4 class="sect">还差这些限定（'+missLim.length+'）</h4><div class="rateup">'); for(i=0;i<Math.min(12,missLim.length);i++){ var ml6=opByName[missLim[i]]; if(ml6)h.push('<div class="rup-card r6" data-op="'+esc(missLim[i])+'"><img loading="lazy" src="'+esc(avUrl(ml6))+'"/><div class="rn">'+esc(ml6.name)+'</div><div class="rb lim">限定</div><div class="rr">'+stars(6)+'</div></div>'); } if(missLim.length>12)h.push('<div class="notice">……等共 '+missLim.length+' 名</div>'); h.push('</div>'); } else { h.push('<h4 class="sect">还差这些限定</h4><div class="notice">🎉 限定干员已全部集齐！</div>'); }
   h.push('<h4 class="sect">还差这些6★（'+miss6.length+'）</h4><button class="mini-btn" id="btnCopyMiss6">复制缺卡清单</button>');
   if(miss6.length){
     h.push('<div class="rateup">');
