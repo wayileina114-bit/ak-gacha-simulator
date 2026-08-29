@@ -633,7 +633,7 @@ function doPull(n){
   if(names6.length)msg='<b>★ 六星干员：'+names6.join('、')+' ★</b>';
   msg=enhancePullMsg(results,hadSet,msg);
   msg+='<br/>本次 '+n+' 抽：6★×'+c6+' · 5★×'+c5+' · 4★×'+c4+' · 3★×'+c3;
-  if(n>=50){ var batchRate=c6/n*100; var expRate=2.89; var diff=((batchRate-expRate)/expRate*100).toFixed(0); msg+='<br/><span class="batchrate">本批6★率 <b>'+(batchRate).toFixed(1)+'%</b>（期望 '+expRate+'% · '+(diff>=0?'+':'')+diff+'%）</span>'; }
+  if(n>=50){ var batchRate=c6/n*100; var expRate=2.89; var diff=((batchRate-expRate)/expRate*100).toFixed(0); msg+='<br/><span class="batchrate">本批6★率 <b>'+(batchRate).toFixed(1)+'%</b>（期望 '+expRate+'% · '+(diff>=0?'+':'')+diff+'%）</span>'; var limInBatch=0, lib; for(lib=0;lib<results.length;lib++){ if(results[lib].rar===6&&limitedOps[results[lib].op])limInBatch++; } if(limInBatch)msg+='<br/><span class="wishhit">👑 本批限定干员 ×'+limInBatch+'</span>'; }
   if(n>10&&!names6.length)msg+='（本次未出高星，展示最后10张）';
   lastBatch=results;
   renderCards(shown,msg,c6>0,names6,c5>0);
