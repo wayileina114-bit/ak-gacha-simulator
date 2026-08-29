@@ -268,6 +268,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .mbox .close:hover{color:#fff}
 .mhead{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px}
 .mart{width:220px; border-radius:12px; overflow:hidden; border:2px solid var(--line)}
+.artToggle{width:100%; font-size:11px; background:rgba(74,179,255,.1); border-color:rgba(74,179,255,.3); color:var(--acc2); border-radius:0 0 10px 10px; padding:4px 0}
 .mart img{width:100%; display:block}
 .minfo{flex:1; min-width:220px}
 .minfo h2{color:#fff; font-size:22px}
@@ -515,7 +516,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v10.7（Wiki折叠）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v10.8（立绘切换）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -1331,7 +1332,7 @@ function openModal(opName){
   var o=opOf(opName); if(!o)return;
   var h=[];
   h.push('<button class="mini-btn" id="btnFavOp" style="margin-bottom:8px">'+(state.favOps&&state.favOps[opName]?'⭐ 已收藏':'☆ 收藏干员')+'</button><button class="mini-btn" id="btnWiki" style="margin-bottom:8px;margin-left:8px">📊 Wiki数据</button><button class="mini-btn" id="btnSkins" style="margin-bottom:8px;margin-left:8px">🎨 皮肤</button><button class="mini-btn" id="btnWish" style="margin-bottom:8px;margin-left:8px">'+(state.wish&&state.wish.indexOf(opName)>=0?'💝 已心愿':'💝 心愿单')+'</button>');
-  h.push('<div class="mhead"><div class="mart" style="cursor:zoom-in"><img loading="lazy" id="martImg" src="'+esc(opArtT(o))+'" data-a="'+esc(o.art||'')+'" data-b="'+esc(avUrl(o))+'" alt=""/></div><div class="minfo">');
+  h.push('<div class="mhead"><div class="mart" style="cursor:zoom-in"><img loading="lazy" id="martImg" src="'+esc(opArtT(o))+'" data-a="'+esc(o.art||'')+'" data-b="'+esc(avUrl(o))+'" alt=""/><button class="mini-btn artToggle" id="artToggle" style="margin-top:4px;width:100%">🔄 切换立绘</button></div><div class="minfo">');
   h.push('<h2>'+esc(o.name)+'</h2>');
   h.push('<div class="stars">'+stars(o.rarity)+'</div>');
   h.push('<div class="kv"><b>职业</b>'+esc(o.prof||'—')+'</div>');
@@ -1359,6 +1360,11 @@ function openModal(opName){
   h.push('<div class="mdesc">立绘来源于 bilibili Wiki 与 PRTS，仅供娱乐参考。<a href="'+esc(o.art||'#')+'" target="_blank" rel="noopener">查看高清原图</a></div>');
   $('mBody').innerHTML=h.join('');
   var mi=$('martImg'); if(mi)mi.onclick=function(){ openLightbox(o.art||opArtT(o)); };
+  var atg=$('artToggle'); if(atg)atg.onclick=function(){
+    var img=$('martImg'); if(!img)return;
+    if(img._v===0){ img.src=opArtT(o); img._v=2; atg.textContent='🔄 切换立绘（当前：精二）'; }
+    else { img.src=thumbOf(o.art,o.name,'skin 0 0.png',480)||o.art||avUrl(o); img._v=0; atg.textContent='🔄 切换立绘（当前：初始）'; }
+  };
   var bfo=$('btnFavOp'); if(bfo)bfo.onclick=function(){
     if(!state.favOps)state.favOps={};
     if(state.favOps[opName]){ delete state.favOps[opName]; bfo.textContent='☆ 收藏干员'; }

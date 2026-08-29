@@ -804,7 +804,7 @@ function openModal(opName){
   var o=opOf(opName); if(!o)return;
   var h=[];
   h.push('<button class="mini-btn" id="btnFavOp" style="margin-bottom:8px">'+(state.favOps&&state.favOps[opName]?'⭐ 已收藏':'☆ 收藏干员')+'</button><button class="mini-btn" id="btnWiki" style="margin-bottom:8px;margin-left:8px">📊 Wiki数据</button><button class="mini-btn" id="btnSkins" style="margin-bottom:8px;margin-left:8px">🎨 皮肤</button><button class="mini-btn" id="btnWish" style="margin-bottom:8px;margin-left:8px">'+(state.wish&&state.wish.indexOf(opName)>=0?'💝 已心愿':'💝 心愿单')+'</button>');
-  h.push('<div class="mhead"><div class="mart" style="cursor:zoom-in"><img loading="lazy" id="martImg" src="'+esc(opArtT(o))+'" data-a="'+esc(o.art||'')+'" data-b="'+esc(avUrl(o))+'" alt=""/></div><div class="minfo">');
+  h.push('<div class="mhead"><div class="mart" style="cursor:zoom-in"><img loading="lazy" id="martImg" src="'+esc(opArtT(o))+'" data-a="'+esc(o.art||'')+'" data-b="'+esc(avUrl(o))+'" alt=""/><button class="mini-btn artToggle" id="artToggle" style="margin-top:4px;width:100%">🔄 切换立绘</button></div><div class="minfo">');
   h.push('<h2>'+esc(o.name)+'</h2>');
   h.push('<div class="stars">'+stars(o.rarity)+'</div>');
   h.push('<div class="kv"><b>职业</b>'+esc(o.prof||'—')+'</div>');
@@ -832,6 +832,11 @@ function openModal(opName){
   h.push('<div class="mdesc">立绘来源于 bilibili Wiki 与 PRTS，仅供娱乐参考。<a href="'+esc(o.art||'#')+'" target="_blank" rel="noopener">查看高清原图</a></div>');
   $('mBody').innerHTML=h.join('');
   var mi=$('martImg'); if(mi)mi.onclick=function(){ openLightbox(o.art||opArtT(o)); };
+  var atg=$('artToggle'); if(atg)atg.onclick=function(){
+    var img=$('martImg'); if(!img)return;
+    if(img._v===0){ img.src=opArtT(o); img._v=2; atg.textContent='🔄 切换立绘（当前：精二）'; }
+    else { img.src=thumbOf(o.art,o.name,'skin 0 0.png',480)||o.art||avUrl(o); img._v=0; atg.textContent='🔄 切换立绘（当前：初始）'; }
+  };
   var bfo=$('btnFavOp'); if(bfo)bfo.onclick=function(){
     if(!state.favOps)state.favOps={};
     if(state.favOps[opName]){ delete state.favOps[opName]; bfo.textContent='☆ 收藏干员'; }
