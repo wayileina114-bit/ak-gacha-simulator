@@ -1333,6 +1333,9 @@ function openStats(){
   var limGotN=0, lk3;
   for(lk3 in limitedOps){ if(state.collection.indexOf(lk3)>=0)limGotN++; }
   h.push('<div class="stat"><div class="v" style="color:#ff6ec7">'+limGotN+'/'+limitedTotal+'</div><div class="k">限定图鉴完成度</div><div class="statbar"><i style="width:'+(limitedTotal?Math.round(limGotN/limitedTotal*100):0)+'%"></i></div></div>');
+  var bestTen=0;
+  for(i=0;i<hist.length;i++){ var t10=0; for(var tj=i;tj<hist.length&&tj<i+10;tj++){ if(hist[tj].rar===6)t10++; } if(t10>bestTen)bestTen=t10; }
+  h.push('<div class="stat"><div class="v gold">'+bestTen+'</div><div class="k">最欧十连（最多6★）</div></div>');
   h.push('</div>');
   h.push('<div class="notice">欧气评分 = 实际6★数 ÷ 期望6★数 × 100（期望按保底机制约每 34.6 抽一只）</div>');
   h.push('<h4 class="sect">期望对比</h4><div class="chart">');
