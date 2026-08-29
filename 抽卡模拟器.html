@@ -254,6 +254,7 @@ header{
 .calcrow{display:flex; align-items:center; gap:8px; margin-top:8px; flex-wrap:wrap}
 .calcrow input{width:64px; padding:5px 8px; border-radius:8px; background:var(--bg2); border:1px solid var(--line); color:var(--txt); font-family:inherit; font-size:13px}
 .calcrow input:focus{outline:none; border-color:var(--acc2)}
+.galbar{display:flex; gap:8px; margin:8px 0; flex-wrap:wrap}
 .gallery{display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:8px; max-height:62vh; overflow-y:auto}
 .gal-item{position:relative; border-radius:10px; overflow:hidden; border:2px solid var(--line); cursor:pointer; background:var(--bg2); transition:.15s}
 .gal-item:hover{transform:translateY(-2px)}
@@ -422,7 +423,7 @@ header{
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v5.3（UP命中率统计）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v5.4（画廊精二/初始切换）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -1314,11 +1315,14 @@ function openPoolModal(){
   var cards=$('mBody').querySelectorAll('.rup-card');
   for(i=0;i<cards.length;i++){ cards[i].onclick=function(){ openModal(this.getAttribute('data-op')); }; }
 }
-var galF='all';
+var galF='all', galV=2;
+function galArt(o){ return thumbOf(o.art,o.name,'skin 0 '+(galV===0?0:2)+'.png',480)||o.art||avUrl(o); }
 function openGallery(){
-  var h=['<h4 class="sect" style="margin-top:0">立绘画廊</h4><div class="filters" id="galChips"></div><div class="gallery" id="galGrid"></div>'];
+  var h=['<h4 class="sect" style="margin-top:0">立绘画廊</h4><div class="filters" id="galChips"></div><div class="galbar"><button class="mini-btn" id="galV2"'+(galV===2?' style="border-color:var(--acc)"':'')+'>精二立绘</button><button class="mini-btn" id="galV0"'+(galV===0?' style="border-color:var(--acc)"':'')+'>初始立绘</button></div><div class="gallery" id="galGrid"></div>'];
   $('mBody').innerHTML=h.join('');
   setChips($('galChips'),[['all','全部'],['6','6★'],['5','5★'],['4','4★'],['3','3★']],galF,function(){ galF=$('galChips')._v; renderGallery(); });
+  var gv2=$('galV2'); if(gv2)gv2.onclick=function(){ galV=2; openGallery(); };
+  var gv0=$('galV0'); if(gv0)gv0.onclick=function(){ galV=0; openGallery(); };
   renderGallery();
   $('modal').classList.add('show');
 }
@@ -1328,7 +1332,7 @@ function renderGallery(){
   for(i=0;i<names.length;i++){
     o=opByName[names[i]];
     if(galF!=='all'&&String(o.rarity)!==galF)continue;
-    h.push('<div class="gal-item r'+o.rarity+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(opArtT(o))+'" alt=""/><div class="gal-nm">'+esc(o.name)+'</div><div class="gal-st">'+stars(o.rarity)+'</div></div>');
+    h.push('<div class="gal-item r'+o.rarity+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(galArt(o))+'" alt=""/><div class="gal-nm">'+esc(o.name)+'</div><div class="gal-st">'+stars(o.rarity)+'</div></div>');
   }
   if(!h.length)h.push('<div class="notice">暂无符合条件的干员</div>');
   $('galGrid').innerHTML=h.join('');

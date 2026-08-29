@@ -880,11 +880,14 @@ function openPoolModal(){
   var cards=$('mBody').querySelectorAll('.rup-card');
   for(i=0;i<cards.length;i++){ cards[i].onclick=function(){ openModal(this.getAttribute('data-op')); }; }
 }
-var galF='all';
+var galF='all', galV=2;
+function galArt(o){ return thumbOf(o.art,o.name,'skin 0 '+(galV===0?0:2)+'.png',480)||o.art||avUrl(o); }
 function openGallery(){
-  var h=['<h4 class="sect" style="margin-top:0">立绘画廊</h4><div class="filters" id="galChips"></div><div class="gallery" id="galGrid"></div>'];
+  var h=['<h4 class="sect" style="margin-top:0">立绘画廊</h4><div class="filters" id="galChips"></div><div class="galbar"><button class="mini-btn" id="galV2"'+(galV===2?' style="border-color:var(--acc)"':'')+'>精二立绘</button><button class="mini-btn" id="galV0"'+(galV===0?' style="border-color:var(--acc)"':'')+'>初始立绘</button></div><div class="gallery" id="galGrid"></div>'];
   $('mBody').innerHTML=h.join('');
   setChips($('galChips'),[['all','全部'],['6','6★'],['5','5★'],['4','4★'],['3','3★']],galF,function(){ galF=$('galChips')._v; renderGallery(); });
+  var gv2=$('galV2'); if(gv2)gv2.onclick=function(){ galV=2; openGallery(); };
+  var gv0=$('galV0'); if(gv0)gv0.onclick=function(){ galV=0; openGallery(); };
   renderGallery();
   $('modal').classList.add('show');
 }
@@ -894,7 +897,7 @@ function renderGallery(){
   for(i=0;i<names.length;i++){
     o=opByName[names[i]];
     if(galF!=='all'&&String(o.rarity)!==galF)continue;
-    h.push('<div class="gal-item r'+o.rarity+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(opArtT(o))+'" alt=""/><div class="gal-nm">'+esc(o.name)+'</div><div class="gal-st">'+stars(o.rarity)+'</div></div>');
+    h.push('<div class="gal-item r'+o.rarity+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(galArt(o))+'" alt=""/><div class="gal-nm">'+esc(o.name)+'</div><div class="gal-st">'+stars(o.rarity)+'</div></div>');
   }
   if(!h.length)h.push('<div class="notice">暂无符合条件的干员</div>');
   $('galGrid').innerHTML=h.join('');
