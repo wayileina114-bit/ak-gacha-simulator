@@ -278,11 +278,12 @@ document.addEventListener('error', function(e){
   t.src=PLACEHOLDER;
 }, true);
 
+var MAX_START=null;
+function getMaxStart(){ if(MAX_START===null){ var ms='', i2; for(i2=0;i2<DATA.banners.length;i2++){ if(DATA.banners[i2].start>ms)ms=DATA.banners[i2].start; } MAX_START=ms; } return MAX_START; }
 function renderBannerList(){
   var list=$('bannerList'), bs=DATA.banners, html=[], i, b;
   var yf=$('yearChips')._v, tf=$('typeChips')._v, q=($('searchBox').value||'').trim();
-  var maxStart='';
-  for(i=0;i<bs.length;i++){ if(bs[i].start>maxStart)maxStart=bs[i].start; }
+  var maxStart=getMaxStart();
   var matched=[];
   for(i=0;i<bs.length;i++){
     b=bs[i];
@@ -1001,6 +1002,7 @@ function openStats(){
   h.push('<div class="stat"><div class="v">'+c4+'</div><div class="k">4★（'+(total?(c4/total*100).toFixed(2):0)+'%）</div></div>');
   h.push('<div class="stat"><div class="v">'+c3+'</div><div class="k">3★（'+(total?(c3/total*100).toFixed(2):0)+'%）</div></div>');
   h.push('<div class="stat"><div class="v gold">'+score+'</div><div class="k">欧气评分：'+label+'</div></div>');
+  h.push('<div class="stat"><div class="v" style="color:var(--acc2)">'+(total*600).toLocaleString()+'</div><div class="k">等价合成玉（600/抽）</div></div>');
   h.push('</div>');
   h.push('<div class="notice">欧气评分 = 实际6★数 ÷ 期望6★数 × 100（期望按保底机制约每 34.6 抽一只）</div>');
   h.push('<h4 class="sect">六星间隔分布（相邻六星之间抽数）</h4><div class="chart">');
@@ -1264,11 +1266,12 @@ function exportBanners(){
 }
 function exportHistory(){
   var NL=String.fromCharCode(10);
-  var lines=['干员,稀有度,时间,卡池类型,距上次6★(抽)'];
+  var lines=['干员,稀有度,时间,卡池,卡池类型,距上次6★(抽)'];
   var last6i=-1;
+  function csvEsc(v){ v=String(v==null?'':v); return v.indexOf(',')>=0||v.indexOf('"')>=0?'"'+v.split('"').join('""')+'"':v; }
   for(var i=0;i<state.history.length;i++){ var r=state.history[i], o=opOf(r.op), dt=new Date(r.t||Date.now()); var gapTxt='';
     if(r.rar===6){ gapTxt=last6i>=0?String(i-last6i-1):'首个6★'; last6i=i; }
-    lines.push((o?o.name:r.op)+','+r.rar+'星,'+dt.getFullYear()+'-'+(dt.getMonth()+1)+'-'+dt.getDate()+' '+dt.getHours()+':'+(dt.getMinutes()<10?'0':'')+dt.getMinutes()+','+(r.type||'event')+','+gapTxt); }
+    lines.push(csvEsc(o?o.name:r.op)+','+r.rar+'星,'+dt.getFullYear()+'-'+(dt.getMonth()+1)+'-'+dt.getDate()+' '+dt.getHours()+':'+(dt.getMinutes()<10?'0':'')+dt.getMinutes()+','+csvEsc(r.bn||'')+','+(r.type||'event')+','+gapTxt); }
   var text=String.fromCharCode(0xFEFF)+lines.join(NL);
   try{
     if(typeof Blob==='undefined')throw new Error('no blob');
@@ -1287,6 +1290,8 @@ function clearHistory(){
   state.collection=[];
   state.pity={};
   state.spark={};
+  state.opCnt={};
+  state.cnt={};
   save();
   renderStats(); renderHistory(); renderCollection(); renderBannerInfo();
   toast('已清空记录');
