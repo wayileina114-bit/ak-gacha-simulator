@@ -763,7 +763,8 @@ function openModal(opName){
   var srcs=opBanners[opName];
   if(srcs&&srcs.length){
     var sl=[];
-    for(var si=0;si<srcs.length;si++){ sl.push('<a class="srcLink" data-bid="'+srcs[si].id+'" data-full="'+esc(srcs[si].full)+'">'+esc(srcs[si].full)+'</a>'); }
+    var nowS=new Date(); var todayStr=nowS.getFullYear()+'-'+(nowS.getMonth()<9?'0':'')+(nowS.getMonth()+1)+'-'+(nowS.getDate()<10?'0':'')+nowS.getDate();
+    for(var si=0;si<srcs.length;si++){ var sbl=bannerById(srcs[si].id); var active=sbl&&sbl.start<=todayStr&&sbl.end>=todayStr; sl.push('<a class="srcLink'+(active?' active':'')+'" data-bid="'+srcs[si].id+'" data-full="'+esc(srcs[si].full)+'">'+esc(srcs[si].full)+(active?' <b style="color:var(--gold)">●进行中</b>':'')+'</a>'); }
     h.push('<div class="kv"><b>UP卡池</b>'+sl.join('、')+'<span style="color:var(--gold)">（共 '+srcs.length+' 次UP）</span></div>');
   } else { h.push('<div class="kv"><b>UP卡池</b>—</div>'); }
   h.push('</div></div>');
