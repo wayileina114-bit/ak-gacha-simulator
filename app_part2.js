@@ -1021,26 +1021,6 @@ function jsonp(url,cb,timeout){
   sc.src=url+'&format=json&callback='+nm;
   document.body.appendChild(sc);
 }
-function openSkins(opName){
-  var o=opOf(opName); if(!o)return;
-  var name=o.name;
-  var cache=skinCache[name];
-  if(cache&&Date.now()-cache.t<600000){ renderSkins(name,cache.skins); return; }
-  $('mBody').innerHTML='<div class="notice">正在加载 '+esc(name)+' 的皮肤…（需联网）</div>';
-  openModalBox();
-  jsonp(skinListUrl(name),function(data){
-    var skins=[];
-    if(data&&data.query&&data.query.allimages){
-      for(var i=0;i<data.query.allimages.length;i++){
-        var it=data.query.allimages[i];
-        var m=it.name.match(/skin_(\d+)\.png$/);
-        if(m&&parseInt(m[1],10)>=1){ skins.push({name:it.name,url:it.url,no:m[1]}); }
-      }
-    }
-    skinCache[name]={t:Date.now(),skins:skins};
-    renderSkins(name,skins);
-  },12000);
-}
 function renderWikiData(name,data){
   function parseMatsLine(line){
     var parts=String(line||'').split('}}').map(function(x){x=x.trim(); if(x.indexOf('材料消耗|')>=0){ var seg=x.split('材料消耗|')[1]; return seg; } return '';}).filter(function(x){return x;});
@@ -1141,9 +1121,10 @@ function renderSkins(name,skins){
   if(!skins.length){ h.push('<div class="notice">该干员暂无皮肤，或加载失败（需联网访问 bilibili Wiki）</div>'); }
   else {
     h.push('<div class="skingrid">');
+    var avf=esc(avUrl(o)||'');
     for(var i=0;i<skins.length;i++){
       var s=skins[i];
-      h.push('<div class="skin-item" data-url="'+esc(s.url)+'"><img loading="lazy" src="'+esc(skinThumb(s,480))+'"/><div class="skin-nm">皮肤 '+s.no+'</div></div>');
+      h.push('<div class="skin-item" data-url="'+esc(s.url)+'"><img loading="lazy" src="'+esc(skinThumb(s,480))+'" onerror="this.onerror=null;this.src=this.dataset.fb" data-fb="'+avf+'"/><div class="skin-nm">皮肤 '+s.no+'</div></div>');
     }
     h.push('</div><div class="notice">点击皮肤查看高清原图</div>');
   }
@@ -1154,6 +1135,8 @@ function renderSkins(name,skins){
   openModalBox();
 }
 function jumpBanner(id){
+  buildBannerIndex();
+  if(!BID_INDEX[id]){ toast('该卡池数据不存在（可能已随数据更新移除）'); return; }
   state.cur=id; save(); closeModal();
   renderBannerList(); renderBannerInfo(); renderStats();
   if(isMobile())closeDrawer();
@@ -1336,15 +1319,21 @@ function renderGallery(){
   for(i=0;i<items.length;i++){ (function(it){ it.onclick=function(){ if(galMode==='skin'){ openSkins(it.getAttribute('data-op')); } else { openModal(it.getAttribute('data-op')); } }; })(items[i]); }
   var gm=$('galMore'); if(gm)gm.onclick=function(){ GAL_N+=120; renderGallery(); };
 }
+var ACH_CACHE=null, ACH_KEY='';
 function calcAch(){
   var hist=state.history, i, last6=-1, maxG=0;
-  var first=hist.length>0, first6=false, double6=false, extreme=false, bigDrought=false, early6=false, c5all=0;
+  var first=hist.length>0, first6=false, double6=false, triple6=false, extreme=false, bigDrought=false, early6=false, night6=false, c5all=0;
+  var lastH=hist[0], lastKey=lastH?(lastH.op+':'+lastH.rar+':'+lastH.t):'';
+  var key=hist.length+':'+state.collection.length+':'+limitedTotal+':'+lastKey;
+  if(ACH_CACHE&&ACH_KEY===key)return ACH_CACHE;
   for(i=0;i<hist.length;i++){ if(hist[i].rar===5)c5all++;
     if(hist[i].rar===6){
       first6=true;
       var cnt=0, j;
       for(j=i;j<hist.length&&j<i+10;j++){ if(hist[j].rar===6)cnt++; }
       if(cnt>=2)double6=true;
+      if(cnt>=3)triple6=true;
+      if(hist[i].t){ var nh2=new Date(hist[i].t).getHours(); if(nh2>=23||nh2<5)night6=true; }
       if(last6>=0){ var g=i-last6-1; if(g>maxG)maxG=g; if(g>=90)extreme=true; }
       last6=i;
     }
@@ -1356,13 +1345,17 @@ function calcAch(){
   for(csi2=0;csi2<state.collection.length;csi2++)colSet2[state.collection[csi2]]=1;
   for(lk2 in limitedOps){ if(colSet2[lk2])limCol++; }
   var totalOpsN=Object.keys(opByName).length;
-  return { list:[
+  var res={ list:[
     {name:'初来乍到',desc:'完成第一次抽卡',icon:'🌱',done:first,prog:''},
     {name:'初见六星',desc:'抽到第一只六星干员',icon:'⭐',done:first6,prog:''},
+    {name:'百抽初啼',desc:'累计抽卡≥100',icon:'🎈',done:hist.length>=100,prog:hist.length+' / 100'},
     {name:'十连双黄',desc:'10抽内出2只以上六星',icon:'🌈',done:double6,prog:''},
+    {name:'十连三黄',desc:'10抽内出3只以上六星',icon:'🎆',done:triple6,prog:''},
     {name:'极限保底',desc:'90抽以上才出六星',icon:'⏳',done:extreme,prog:''},
     {name:'非酋之王',desc:'最长非酋纪录≥70抽',icon:'☔',done:bigDrought,prog:''},
     {name:'欧皇降临',desc:'最早10抽内出六星',icon:'✨',done:early6,prog:''},
+    {name:'深夜玄学',desc:'凌晨23点-5点出过六星',icon:'🌙',done:night6,prog:''},
+    {name:'五百抽老手',desc:'累计抽卡≥500',icon:'🎯',done:hist.length>=500,prog:hist.length+' / 500'},
     {name:'图鉴收藏家',desc:'已拥有干员≥200',icon:'📚',done:state.collection.length>=200,prog:state.collection.length+' / 200'},
     {name:'千抽达人',desc:'总抽数≥1000',icon:'🎰',done:hist.length>=1000,prog:hist.length+' / 1000'},
     {name:'五星常客',desc:'累计抽到50名5★干员',icon:'💠',done:c5all>=50,prog:c5all+' / 50'},
@@ -1370,6 +1363,8 @@ function calcAch(){
     {name:'限定收藏家',desc:'集齐所有限定干员（'+limitedTotal+'）',icon:'👑',done:limCol>=limitedTotal&&limitedTotal>0,prog:limCol+' / '+limitedTotal},
     {name:'全图鉴',desc:'拥有全部干员（'+totalOpsN+'）',icon:'🏅',done:state.collection.length>=totalOpsN,prog:state.collection.length+' / '+totalOpsN}
   ]};
+  ACH_KEY=key; ACH_CACHE=res;
+  return res;
 }
 function achCount(){ var r=calcAch(), n=0, i; for(i=0;i<r.list.length;i++){ if(r.list[i].done)n++; } return n; }
 function achDoneSet(){ var r=calcAch(), s={}, i; for(i=0;i<r.list.length;i++){ if(r.list[i].done)s[r.list[i].name]=1; } return s; }
@@ -1390,7 +1385,10 @@ function copyAch(){
   ta.remove();
 }
 function openAch(){
-  var r=calcAch(), h=['<h4 class="sect" style="margin-top:0">成就系统（'+achCount()+' / '+r.list.length+'）</h4><button class="mini-btn" id="btnCopyAch">复制成就状态</button><div class="achgrid">'], i;
+  var r=calcAch(), acn=achCount();
+  var h=['<h4 class="sect" style="margin-top:0">成就系统（'+acn+' / '+r.list.length+'）</h4>'];
+  h.push('<div class="achhead"><div class="statbar"><i style="width:'+Math.round(acn/r.list.length*100)+'%"></i></div><span class="notice">完成度 '+acn+' / '+r.list.length+' · 继续抽卡解锁更多成就</span></div><button class="mini-btn" id="btnCopyAch">复制成就状态</button><div class="achgrid">');
+  var i;
   for(i=0;i<r.list.length;i++){ var a=r.list[i];
     var bar='';
     if(a.prog){
