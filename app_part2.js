@@ -286,7 +286,8 @@ function sixBurst(names){
   try{ if(typeof navigator!=='undefined'&&navigator.vibrate)navigator.vibrate([80,50,120]); }catch(e){}
 }
 function toast(msg){
-  var t=$('toast'); t.innerHTML=msg; t.style.display='block';
+  var t=$('toast'); if(!t)return;
+  t.innerHTML=msg; t.style.display='block';
   clearTimeout(t._h); t._h=setTimeout(function(){ t.style.display='none'; },2200);
 }
 var PLACEHOLDER='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="400"><rect width="300" height="400" fill="#101a2b"/><text x="150" y="200" fill="#4a5c80" font-size="16" text-anchor="middle">图片加载失败</text></svg>');
@@ -327,8 +328,8 @@ function renderBannerList(){
     html.push('<div class="bcard'+(state.cur===b.id?' on':'')+'" data-id="'+b.id+'">');
     html.push('<div class="thumb">');
     var shown=b.six.slice(0,2);
-    for(var j=0;j<shown.length;j++){ var o=opOf(shown[j]); if(o)html.push('<img loading="lazy" src="'+esc(avUrl(o))+'" alt="" onerror="this.remove()"/>'); }
-    html.push('</div>');
+    if(i<40){ for(var j=0;j<shown.length;j++){ var o=opOf(shown[j]); if(o)html.push('<img loading="lazy" src="'+esc(avUrl(o))+'" alt="" onerror="this.remove()"/>'); }
+     }html.push('</div>');
     html.push('<div class="meta"><div class="name">'+esc(b.name)+(b.start===maxStart?'<span class="now-badge">当前</span>':'')+'<span class="badge" style="background:'+b.color+'">'+esc(b.label)+'</span><span class="favbtn'+(state.fav[b.id]?' on':'')+'" data-id="'+b.id+'" title="收藏/取消收藏">★</span></div>');
     var cnt=(state.cnt||{})[b.id]||0;
     html.push('<div class="sub">'+esc(b.start)+' ~ '+esc(b.end)+(cnt>0?' · 已抽 <b style="color:var(--gold)">'+cnt+'</b> 抽':'')+'</div></div>');
@@ -1073,6 +1074,9 @@ function openStats(){
   h.push('<div class="stat"><div class="v">'+c3+'</div><div class="k">3★（'+(total?(c3/total*100).toFixed(2):0)+'%）</div></div>');
   h.push('<div class="stat"><div class="v gold">'+score+'</div><div class="k">欧气评分：'+label+'</div></div>');
   h.push('<div class="stat"><div class="v" style="color:var(--acc2)">'+(total*600).toLocaleString()+'</div><div class="k">等价合成玉（600/抽）</div></div>');
+  var limGotN=0, lk3;
+  for(lk3 in limitedOps){ if(state.collection.indexOf(lk3)>=0)limGotN++; }
+  h.push('<div class="stat"><div class="v" style="color:#ff6ec7">'+limGotN+'/'+limitedTotal+'</div><div class="k">限定图鉴完成度</div><div class="statbar"><i style="width:'+(limitedTotal?Math.round(limGotN/limitedTotal*100):0)+'%"></i></div></div>');
   h.push('</div>');
   h.push('<div class="notice">欧气评分 = 实际6★数 ÷ 期望6★数 × 100（期望按保底机制约每 34.6 抽一只）</div>');
   h.push('<h4 class="sect">六星间隔分布（相邻六星之间抽数）</h4><div class="chart">');
