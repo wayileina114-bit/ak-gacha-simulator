@@ -984,9 +984,16 @@ function renderWikiData(name,data){
     for(var smi=0;smi<sml.length;smi++){ var sl2=sml[smi].trim(); if(sl2.indexOf('|')===0&&sl2.indexOf('=')>=0){ var kv3=sl2.slice(1).split('='); var lvName=kv3[0]; var info=parseMatsLine(kv3[1]||''); if(info)smLines.push('<div class="wrow"><b>'+esc(lvName.replace(/^一/,'专精'))+'</b><span>'+esc(info)+'</span></div>'); } }
     if(smLines.length){ h.push('<div class="wikisec"><h4>📚 技能升级材料</h4><div class="wikirows">'+smLines.join('')+'</div></div>'); }
   }
-  h.push('<div class="notice">数据来源：PRTS Wiki（实时同步）</div>');
+  h.push('<div class="notice">数据来源：PRTS Wiki（实时同步）· 点击板块标题可折叠</div>');
   $('mBody').innerHTML=h.join('');
   var wb=$('wikiBack'); if(wb)wb.onclick=function(){ openModal(name); };
+  var wsecs=$('mBody').querySelectorAll('.wikisec');
+  for(var wsi=0;wsi<wsecs.length;wsi++){
+    (function(ws){
+      var h4=ws.querySelector('h4');
+      if(h4)h4.onclick=function(){ var body=ws.querySelectorAll('div'); for(var bi5=0;bi5<body.length;bi5++){ if(body[bi5]!==h4){ body[bi5].style.display=(body[bi5].style.display==='none')?'':'none'; } } ws.classList.toggle('collapsed'); };
+    })(wsecs[wsi]);
+  }
   openModalBox();
 }
 function openSkins(opName){
