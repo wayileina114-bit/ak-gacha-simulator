@@ -287,6 +287,9 @@ header{
 .cv.luck-lo{color:var(--dim)}
 .gal-item.r5{border-color:var(--r5)}
 .colbar{height:6px; background:#0a1220; border-radius:3px; overflow:hidden; margin-bottom:8px}
+.colrar{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; font-size:11px}
+.colrar .cr{background:var(--bg2); border:1px solid var(--line); border-radius:6px; padding:2px 8px; color:var(--dim)}
+.colrar .cr b{color:var(--gold); margin-left:4px}
 .colbar i{display:block; height:100%; background:linear-gradient(90deg,var(--acc2),var(--gold)); width:0%; transition:.3s}
 .achgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px}
 .ach{background:var(--bg2); border:1px solid var(--line); border-radius:10px; padding:12px; text-align:center}
@@ -437,6 +440,7 @@ header{
       <div id="history"></div>
       <div class="sectbar"><h4>干员图鉴</h4><span class="notice" id="colCount" style="margin-left:4px"></span><select id="colSortSel"><option value="fav">收藏置顶</option><option value="rarity">按稀有度</option><option value="name">按名称</option><option value="prof">按职业</option></select><button class="mini-btn" id="btnGallery">立绘画廊</button></div>
       <div class="colbar" id="colBar"></div>
+      <div id="colRarity"></div>
       <div class="filters" id="colChips"></div>
       <div class="filters" id="colProfChips"></div>
       <input id="colSearch" placeholder="搜索干员名称..."/>
@@ -445,7 +449,7 @@ header{
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v6.9（sel修复+职业筛选）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v7.0（清空修复+委托优化+稀有度进度）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -1184,11 +1188,12 @@ function renderCollection(){
   }
   $('collection').innerHTML=h.join('');
   var cc=$('colCount'); if(cc)cc.textContent='已拥有 '+state.collection.length+' / '+totalOps()+' · 未拥有 '+(totalOps()-state.collection.length);
+  var cc2=$('colRarity'); if(cc2){ var rk=[6,5,4,3], rh=['<div class="colrar">'], rn, rt, rgot;
+    for(rn=0;rn<rk.length;rn++){ rt=rk[rn]; rgot=0; var rcnt=0; for(var rk2 in opByName){ if(opByName[rk2].rarity===rt){ rcnt++; if(colSet[rk2])rgot++; } } rh.push('<span class="cr">'+rt+'★<b>'+rgot+'/'+rcnt+'</b></span>'); }
+    rh.push('</div>'); cc2.innerHTML=rh.join(''); }
   var cb=$('colBar'); if(cb)cb.innerHTML='<i style="width:'+(totalOps()?Math.round(state.collection.length/totalOps()*100):0)+'%"></i>';
-  var cops=$('collection').querySelectorAll('.cop');
-  for(i=0;i<cops.length;i++){
-    cops[i].onclick=function(){ openModal(this.getAttribute('data-op')); };
-  }
+  var colWrap=$('collection');
+  if(colWrap&&!colWrap._delegated){ colWrap._delegated=true; colWrap.onclick=function(e){ var t=e.target; while(t&&t!==this){ if(t.classList&&t.classList.contains('cop')){ openModal(t.getAttribute('data-op')); return; } t=t.parentNode; } }; }
 }
 function openModal(opName){
   var o=opOf(opName); if(!o)return;
@@ -1870,6 +1875,7 @@ function clearHistory(){
   state.spark={};
   state.opCnt={};
   state.cnt={};
+  state.wish=[];
   save();
   renderStats(); renderHistory(); renderCollection(); renderBannerInfo();
   toast('已清空记录');

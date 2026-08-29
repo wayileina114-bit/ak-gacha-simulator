@@ -727,11 +727,12 @@ function renderCollection(){
   }
   $('collection').innerHTML=h.join('');
   var cc=$('colCount'); if(cc)cc.textContent='已拥有 '+state.collection.length+' / '+totalOps()+' · 未拥有 '+(totalOps()-state.collection.length);
+  var cc2=$('colRarity'); if(cc2){ var rk=[6,5,4,3], rh=['<div class="colrar">'], rn, rt, rgot;
+    for(rn=0;rn<rk.length;rn++){ rt=rk[rn]; rgot=0; var rcnt=0; for(var rk2 in opByName){ if(opByName[rk2].rarity===rt){ rcnt++; if(colSet[rk2])rgot++; } } rh.push('<span class="cr">'+rt+'★<b>'+rgot+'/'+rcnt+'</b></span>'); }
+    rh.push('</div>'); cc2.innerHTML=rh.join(''); }
   var cb=$('colBar'); if(cb)cb.innerHTML='<i style="width:'+(totalOps()?Math.round(state.collection.length/totalOps()*100):0)+'%"></i>';
-  var cops=$('collection').querySelectorAll('.cop');
-  for(i=0;i<cops.length;i++){
-    cops[i].onclick=function(){ openModal(this.getAttribute('data-op')); };
-  }
+  var colWrap=$('collection');
+  if(colWrap&&!colWrap._delegated){ colWrap._delegated=true; colWrap.onclick=function(e){ var t=e.target; while(t&&t!==this){ if(t.classList&&t.classList.contains('cop')){ openModal(t.getAttribute('data-op')); return; } t=t.parentNode; } }; }
 }
 function openModal(opName){
   var o=opOf(opName); if(!o)return;
@@ -1413,6 +1414,7 @@ function clearHistory(){
   state.spark={};
   state.opCnt={};
   state.cnt={};
+  state.wish=[];
   save();
   renderStats(); renderHistory(); renderCollection(); renderBannerInfo();
   toast('已清空记录');
