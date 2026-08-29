@@ -377,7 +377,7 @@ function selBoxHtml(b,rar){
   var max=selMax(b,rar);
   var h=['<div class="selbox"><div class="seltitle">选择UP干员（'+(rar===6?'6★':'5★')+' · 最多'+max+'位 · 已选'+Math.min(sel.length,max)+'/'+max+'）</div><div class="selgrid">'];
   var i,o;
-  for(i=0;i<showN;i++){
+  for(i=0;i<list.length;i++){
     o=opOf(list[i]); if(!o)continue;
     var on=sel.indexOf(list[i])>=0;
     h.push('<div class="selop'+(on?' on':' off')+'" data-op="'+esc(list[i])+'" data-rar="'+rar+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/><div class="sn">'+esc(o.name)+'</div></div>');
@@ -414,6 +414,8 @@ function bannerInfoHtml(b){
   h.push('</div>');
   var poolB=getPool(b);
   h.push('<button class="mini-btn" id="btnPool">查看完整卡池（6★ '+poolB.p6.length+' · 5★ '+poolB.p5.length+'）</button>');
+  var bkCnt=(state.cnt||{})[b.id]||0, bk6=B_STAT&&B_STAT[b.id]?B_STAT[b.id].s6:0;
+  if(bkCnt>0)h.push('<div class="notice" style="color:var(--gold)">本池战绩：已抽 <b>'+bkCnt+'</b> 抽 · 出 6★ <b>'+bk6+'</b> 只'+(bkCnt>0?' · 6★率 <b>'+(bk6/bkCnt*100).toFixed(1)+'%</b>':'')+'</div>');
   h.push('<div class="notice">6★出率 <b>2%</b>（51抽起每抽+2%，100抽必出）· 5★出率 <b>8%</b>（十连保底5★以上）· 4★ 50% · 3★ 40%');
   var ups6=isSelect(b)?selUps(b,6):b.six;
   if(ups6.length===1)h.push(' · 当期6★占6★出率的 <b>50%</b>');
