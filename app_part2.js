@@ -513,6 +513,7 @@ function updateRateNote(b){
   var st=state.pity[pityKey(b)]||{fails:0};
   var p6=Math.min(0.02+Math.max(0,st.fails-49)*0.02,1);
   var msg='当前卡池：'+esc(b.full)+' · 距上次6★已抽 <b>'+st.fails+'</b> 抽 · 下次6★概率 <b>'+(p6*100).toFixed(1)+'%</b>';
+  if(st.fails>=85)msg+='<br/><b style="color:var(--red)">⏳ 还剩 '+(100-st.fails)+' 抽必出6★！</b>';
   $('rateNote').innerHTML=msg;
   var pc=$('pityCount');
   if(pc){ if(st.fails>=85){ pc.textContent='⏳ 还剩 '+(100-st.fails)+' 抽必出6★'; pc.classList.add('show'); } else { pc.textContent=''; pc.classList.remove('show'); } }
