@@ -846,10 +846,13 @@ function copyBatch(){
 }
 function openAllResults(){
   var res=lastBatch||[], h=['<h4 class="sect" style="margin-top:0">本次抽卡结果（'+res.length+' 抽）</h4><button class="mini-btn" id="btnCopyBatch">复制本次结果</button><div id="allResList">'], i, rr, oo;
-  for(i=0;i<res.length;i++){ rr=res[i]; oo=opOf(rr.op); h.push('<div class="hitem r'+rr.rar+' ares" data-op="'+esc(rr.op)+'"><span class="star">'+stars(rr.rar)+'</span><span>'+esc(oo?oo.name:rr.op)+'</span></div>'); }
+  var RES_N=window.__RES_N||200, resShow=Math.min(res.length,RES_N);
+  for(i=0;i<resShow;i++){ rr=res[i]; oo=opOf(rr.op); h.push('<div class="hitem r'+rr.rar+' ares" data-op="'+esc(rr.op)+'"><span class="star">'+stars(rr.rar)+'</span><span>'+esc(oo?oo.name:rr.op)+'</span></div>'); }
+  if(res.length>resShow)h.push('<button class="mini-btn" id="resMore" style="margin:6px auto;display:block">加载更多（'+(res.length-resShow)+'）</button>');
   h.push('</div>');
   $('mBody').innerHTML=h.join('');
   var cbb=$('btnCopyBatch'); if(cbb)cbb.onclick=copyBatch;
+  var rm=$('resMore'); if(rm)rm.onclick=function(){ window.__RES_N=(window.__RES_N||200)+200; openAllResults(); };
   var ares=$('mBody').querySelectorAll('.ares');
   for(i=0;i<ares.length;i++){ ares[i].onclick=function(){ openModal(this.getAttribute('data-op')); }; }
   openModalBox();
@@ -1156,6 +1159,15 @@ function openStats(){
   h.push('<h4 class="sect">按卡池类型分布</h4><div class="chart">');
   var tkeys=Object.keys(typeCnt);
   for(i=0;i<tkeys.length;i++){ var t2=tkeys[i]; var rate6=typeCnt[t2]?((type6[t2]||0)/typeCnt[t2]*100).toFixed(1)+'%':'0%'; h.push('<div class="crow"><span class="cl">'+(TCN[t2]||t2)+'</span><div class="cbar"><i style="width:'+Math.max(2,Math.round(typeCnt[t2]/total*100))+'%"></i></div><span class="cv">'+typeCnt[t2]+'抽 · 6★率 '+rate6+'</span></div>'); }
+  h.push('</div>');
+  h.push('<h4 class="sect">每月统计</h4><div class="chart">');
+  var monMap={}, mmkey, mmv;
+  for(i=0;i<hist.length;i++){ if(!hist[i].t)continue; var mdt=new Date(hist[i].t); var mk2=mdt.getFullYear()+'-'+(mdt.getMonth()+1); if(!monMap[mk2])monMap[mk2]={n:0,s6:0}; monMap[mk2].n++; if(hist[i].rar===6)monMap[mk2].s6++; }
+  var mkeys=Object.keys(monMap).sort();
+  var mmax=1;
+  for(mmkey in monMap){ if(monMap[mmkey].n>mmax)mmax=monMap[mmkey].n; }
+  for(i=0;i<mkeys.length;i++){ mmv=monMap[mkeys[i]]; h.push('<div class="crow"><span class="cl">'+mkeys[i]+'</span><div class="cbar"><i style="width:'+Math.max(2,Math.round(mmv.n/mmax*100))+'%"></i></div><span class="cv'+(mmv.s6?' luck-hi':'')+'">'+mmv.n+'抽'+(mmv.s6?' · <b style="color:var(--gold)">6★×'+mmv.s6+'</b>':'')+'</span></div>'); }
+  if(!mkeys.length)h.push('<div class="notice">暂无数据</div>');
   h.push('</div>');
   h.push('<h4 class="sect">UP命中率（6★出货中当期UP占比）</h4><div class="chart">');
   var upHit=0, upTot=0, upRows={};
