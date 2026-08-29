@@ -121,7 +121,8 @@ function thumbOf(art,name,variant,w){
   return 'https://patchwiki.biligame.com/images/arknights/thumb/'+m[1]+'/'+m[2]+'/'+m[3]+'/'+w+'px-'+encodeURIComponent(fn.split(' ').join('_'));
 }
 function avUrl(o){ return o.av?('https://media.prts.wiki/'+o.av+'/'+encodeURIComponent('头像_'+o.name+'.png')):(o.art||''); }
-function opArtT(o){ return thumbOf(o.art,o.name,'skin 0 '+(o.artV||2)+'.png',480)||o.art||avUrl(o); }
+var ART_CACHE={};
+function opArtT(o){ if(!o)return ''; var k=o.name+':'+(o.artV||2); if(ART_CACHE[k])return ART_CACHE[k]; return ART_CACHE[k]=thumbOf(o.art,o.name,'skin 0 '+(o.artV||2)+'.png',480)||o.art||avUrl(o); }
 function pityKey(b){ return b.type==='standard'?'std':(b.type==='zhongjian'?'zj':b.id); }
 function calcPity(fails,n){
   var pNo=1, exp=0, i, p;
@@ -407,6 +408,7 @@ function bannerInfoHtml(b){
     o=opOf(ups[i]); if(!o)continue;
     var lim=b.limitedSix.indexOf(ups[i])>=0;
     h.push('<div class="rup-card r'+o.rarity+'" data-op="'+esc(ups[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/>');
+    h.push('<div class="ot'+(state.collection.indexOf(ups[i])>=0?' have':' new')+'">'+(state.collection.indexOf(ups[i])>=0?'✓ 已有':'NEW')+'</div>');
     h.push('<div class="rn">'+esc(o.name)+'</div>');
     h.push('<div class="rb">'+(lim?'限定':'UP')+'</div>');
     h.push('<div class="rr">'+stars(o.rarity)+'</div></div>');
@@ -415,6 +417,7 @@ function bannerInfoHtml(b){
   for(j=0;j<ups5.length;j++){
     o=opOf(ups5[j]); if(!o)continue;
     h.push('<div class="rup-card r'+o.rarity+'" data-op="'+esc(ups5[j])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/>');
+    h.push('<div class="ot'+(state.collection.indexOf(ups5[j])>=0?' have':' new')+'">'+(state.collection.indexOf(ups5[j])>=0?'✓ 已有':'NEW')+'</div>');
     h.push('<div class="rn">'+esc(o.name)+'</div><div class="rb">UP</div><div class="rr">'+stars(o.rarity)+'</div></div>');
   }
   var ups4=(b.four||[]).slice(0,3);
@@ -700,6 +703,49 @@ function openPityMap(){
   for(var pi2=0;pi2<pcs.length;pi2++){
     (function(pc){ pc.onclick=function(){ state.cur=pc.getAttribute('data-bid'); save(); renderBannerList(); renderBannerInfo(); renderStats(); closeModal(); }; })(pcs[pi2]);
   }
+}
+function simulatePull(){
+  var b=bannerById(state.cur); if(!b)return;
+  var h=['<h4 class="sect" style="margin-top:0">🧪 模拟抽卡 · '+esc(b.full)+'</h4>'];
+  h.push('<div class="notice">在独立保底进度上模拟 N 抽，展示 6★ 分布与保底触发情况，不影响真实存档与统计</div>');
+  h.push('<div class="controls" style="margin-bottom:8px"><span class="notice">模拟抽数：</span><select id="simN"><option value="100">100</option><option value="500">500</option><option value="1000" selected>1000</option><option value="5000">5000</option></select><button class="mini-btn" id="simGo">开始模拟</button></div><div id="simOut"></div>');
+  $('mBody').innerHTML=h.join('');
+  openModalBox();
+  var sg=$('simGo'); if(sg)sg.onclick=function(){ runSim(b, parseInt($('simN').value,10)||1000); };
+}
+function runSim(b, n){
+  var st={fails:0,batch:[]}, c6=0,c5=0,gaps=[],trig=0,i,j2,rar;
+  for(i=0;i<n;i++){
+    var p6=Math.min(0.02+Math.max(0,st.fails-49)*0.02,1);
+    if(st.batch.length===9){
+      var has5=false;
+      for(j2=0;j2<st.batch.length;j2++){ if(st.batch[j2]>=5)has5=true; }
+      rar=has5?rollRar(p6):(Math.random()<p6?6:5);
+    }else rar=rollRar(p6);
+    if(rar===6){ c6++; if(st.fails>=99)trig++; gaps.push(st.fails+1); st.fails=0; }
+    else if(rar===5)c5++;
+    else st.fails++;
+    st.batch.push(rar);
+    if(st.batch.length===10)st.batch=[];
+  }
+  var rate6=n?(c6/n*100):0, sumG=0, avgG=0, maxG=0, minG=9999;
+  for(i=0;i<gaps.length;i++){ sumG+=gaps[i]; if(gaps[i]>maxG)maxG=gaps[i]; if(gaps[i]<minG)minG=gaps[i]; }
+  if(gaps.length)avgG=sumG/gaps.length;
+  var lv=rate6>=3.4?5:(rate6>=3.1?4:(rate6>=2.6?3:(rate6>=2.2?2:1)));
+  var h=['<div class="luckbadge lv'+lv+'"><div class="lb-score">'+rate6.toFixed(2)+'%</div><div class="lb-label">模拟 '+n+' 抽 · 6★出率（期望 2.89%）</div></div>'];
+  h.push('<div class="stats-grid">');
+  h.push('<div class="stat"><div class="v red">'+c6+'</div><div class="k">6★总数</div></div>');
+  h.push('<div class="stat"><div class="v gold">'+c5+'</div><div class="k">5★总数（'+(n?(c5/n*100).toFixed(1):0)+'%）</div></div>');
+  h.push('<div class="stat"><div class="v'+(trig>0?' red':'')+'">'+trig+'</div><div class="k">保底触发（≥99抽）</div></div>');
+  h.push('<div class="stat"><div class="v">'+(gaps.length?avgG.toFixed(1):'—')+'</div><div class="k">平均间隔（期望34.6）</div></div>');
+  h.push('<div class="stat"><div class="v">'+(gaps.length?minG+' ~ '+maxG:'—')+'</div><div class="k">最短 ~ 最长间隔</div></div>');
+  h.push('<div class="stat"><div class="v">'+(gaps.length?Math.round(34.6/avgG*100):'—')+'</div><div class="k">间隔效率（%）</div></div>');
+  h.push('</div>');
+  var diffTxt=rate6>=2.89?('高于期望 '+(n?(c6-Math.round(n*0.0289)):0)+' 只'):('低于期望 '+(n?Math.round(n*0.0289)-c6:0)+' 只');
+  h.push('<div class="notice">6★率'+diffTxt+' · 本次模拟未写入存档 · 结果随每次模拟浮动</div>');
+  h.push('<button class="mini-btn" id="simAgain" style="margin:6px auto;display:block">🔁 再来一次</button>');
+  $('simOut').innerHTML=h.join('');
+  var sa=$('simAgain'); if(sa)sa.onclick=function(){ runSim(b, n); };
 }
 function renderStats(){
   var b=bannerById(state.cur), st=state.pity[pityKey(b)]||{fails:0}, p6=Math.min(0.02+Math.max(0,st.fails-49)*0.02,1);
@@ -1231,7 +1277,7 @@ function openPoolModal(){
     var p6n=Math.min(p6l.length,POOL_N);
     for(i=0;i<p6n;i++){
       o=opOf(p6l[i]); if(!o)continue;
-      h.push('<div class="rup-card r6" data-op="'+esc(p6l[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/><div class="rn">'+esc(o.name)+'</div><div class="rb">6★</div><div class="rr">'+stars(6)+'</div></div>');
+      h.push('<div class="rup-card r6" data-op="'+esc(p6l[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/><div class="ot'+(state.collection.indexOf(p6l[i])>=0?' have':' new')+'">'+(state.collection.indexOf(p6l[i])>=0?'✓ 已有':'NEW')+'</div><div class="rn">'+esc(o.name)+'</div><div class="rb">6★</div><div class="rr">'+stars(6)+'</div></div>');
     }
     h.push('</div>');
   }
@@ -1240,7 +1286,7 @@ function openPoolModal(){
     var p5n=Math.min(p5l.length,POOL_N);
     for(i=0;i<p5n;i++){
       o=opOf(p5l[i]); if(!o)continue;
-      h.push('<div class="rup-card r5" data-op="'+esc(p5l[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/><div class="rn">'+esc(o.name)+'</div><div class="rb">5★</div><div class="rr">'+stars(5)+'</div></div>');
+      h.push('<div class="rup-card r5" data-op="'+esc(p5l[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/><div class="ot'+(state.collection.indexOf(p5l[i])>=0?' have':' new')+'">'+(state.collection.indexOf(p5l[i])>=0?'✓ 已有':'NEW')+'</div><div class="rn">'+esc(o.name)+'</div><div class="rb">5★</div><div class="rr">'+stars(5)+'</div></div>');
     }
     h.push('</div>');
   }
@@ -1502,7 +1548,7 @@ function openStats(){
   var upHit=0, upTot=0, upRows={};
   for(i=0;i<hist.length;i++){
     var hr=hist[i]; if(hr.rar!==6)continue;
-    if(hr.type==='standard'||hr.type==='zhongjian'||hr.type==='joint')continue;
+    if(hr.type==='standard'||hr.type==='zhongjian'||hr.type==='joint'||hr.type==='direct'||hr.type==='zjselect')continue;
     var hbb=hr.bid?bannerById(hr.bid):(hr.bn?bannerByFull(hr.bn):null);
     if(!hbb||hbb.type==='standard'||hbb.type==='zhongjian')continue;
     upTot++;
@@ -1799,6 +1845,7 @@ function init(){
   wire('btn200',function(){ doPull(200); });
   wire('btnStats',openStats);
   wire('btnPityMap',openPityMap);
+  wire('btnSim',simulatePull);
   wire('btnOpStats',openOpStats);
   wire('btnCopyStats',copyStats);
   wire('btnRules',openRules);
