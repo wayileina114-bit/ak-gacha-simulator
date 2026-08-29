@@ -61,7 +61,7 @@ var opByName={}, ops4=[], ops3=[], opBanners={}, limitedOps={}, limitedTotal=0;
 })();
 var LS_KEY='akgacha_v2';
 var LS_OLD='akgacha_v1';
-function defaultState(){ return { cur:null, jade:60000, pity:{}, spark:{}, sel:{}, cnt:{}, opCnt:{}, fav:{}, favOps:{}, history:[], collection:[] }; }
+function defaultState(){ return { cur:null, jade:60000, pity:{}, spark:{}, sel:{}, cnt:{}, opCnt:{}, fav:{}, favOps:{}, wish:[], history:[], collection:[] }; }
 function normalizeState(s){
   if(!s||typeof s!=='object')return defaultState();
   if(typeof s.jade!=='number')s.jade=60000;
@@ -77,6 +77,7 @@ function normalizeState(s){
   }
   if(!Array.isArray(s.history))s.history=[];
   if(!Array.isArray(s.collection))s.collection=[];
+  if(!Array.isArray(s.wish))s.wish=[];
   return s;
 }
 function loadState(){
@@ -594,8 +595,10 @@ function doPull(n){
   var msg='';
   if(names6.length)msg='<b>★ 六星干员：'+names6.join('、')+' ★</b>';
   var newNames=[];
-  for(i=0;i<results.length;i++){ var nx=results[i]; if(!hadSet[nx.op]&&state.collection.indexOf(nx.op)>=0)newNames.push(opOf(nx.op).name); }
+  var wishHit=[];
+  for(i=0;i<results.length;i++){ var nx=results[i]; if(!hadSet[nx.op]&&state.collection.indexOf(nx.op)>=0)newNames.push(opOf(nx.op).name); if(state.wish&&state.wish.indexOf(nx.op)>=0)wishHit.push(opOf(nx.op).name); }
   if(newNames.length)msg+='<br/><span class="newline">🆕 新干员：'+newNames.join('、')+'</span>';
+  if(wishHit.length){ msg+='<br/><span class="wishhit">💝 心愿达成：'+wishHit.join('、')+'</span>'; if(state.wish)state.wish=state.wish.filter(function(w){return wishHit.indexOf(opOf(w)?opOf(w).name:w)<0;}); save(); }
   msg+='<br/>本次 '+n+' 抽：6★×'+c6+' · 5★×'+c5+' · 4★×'+c4+' · 3★×'+c3;
   if(n>10&&!names6.length)msg+='（本次未出高星，展示最后10张）';
   lastBatch=results;
@@ -701,7 +704,7 @@ function renderCollection(){
     if(colSearch&&o.name.indexOf(colSearch)<0)continue;
     var pul=(newPulse[names[i]]&&(Date.now()-newPulse[names[i]])<20000);
     var ocnt=(state.opCnt||{})[names[i]]||0;
-    h.push('<div class="cop'+(got?'':' miss')+(pul?' new':'')+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/>'+(state.favOps&&state.favOps[names[i]]?'<div class="favstar">★</div>':'')+'<div class="cs">'+esc(o.name)+'</div>'+(ocnt>1?'<div class="cdup">×'+ocnt+'</div>':'')+'<div class="nb"></div></div>');
+    h.push('<div class="cop'+(got?'':' miss')+(pul?' new':'')+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/>'+(state.favOps&&state.favOps[names[i]]?'<div class="favstar">★</div>':'')+(state.wish&&state.wish.indexOf(names[i])>=0?'<div class="wishmark">💝</div>':'')+'<div class="cs">'+esc(o.name)+'</div>'+(ocnt>1?'<div class="cdup">×'+ocnt+'</div>':'')+'<div class="nb"></div></div>');
   }
   $('collection').innerHTML=h.join('');
   var cc=$('colCount'); if(cc)cc.textContent='已拥有 '+state.collection.length+' / '+totalOps()+' · 未拥有 '+(totalOps()-state.collection.length);
@@ -714,7 +717,7 @@ function renderCollection(){
 function openModal(opName){
   var o=opOf(opName); if(!o)return;
   var h=[];
-  h.push('<button class="mini-btn" id="btnFavOp" style="margin-bottom:8px">'+(state.favOps&&state.favOps[opName]?'⭐ 已收藏':'☆ 收藏干员')+'</button><button class="mini-btn" id="btnSkins" style="margin-bottom:8px;margin-left:8px">🎨 皮肤</button>');
+  h.push('<button class="mini-btn" id="btnFavOp" style="margin-bottom:8px">'+(state.favOps&&state.favOps[opName]?'⭐ 已收藏':'☆ 收藏干员')+'</button><button class="mini-btn" id="btnSkins" style="margin-bottom:8px;margin-left:8px">🎨 皮肤</button><button class="mini-btn" id="btnWish" style="margin-bottom:8px;margin-left:8px">'+(state.wish&&state.wish.indexOf(opName)>=0?'💝 已心愿':'💝 心愿单')+'</button>');
   h.push('<div class="mhead"><div class="mart" style="cursor:zoom-in"><img loading="lazy" id="martImg" src="'+esc(opArtT(o))+'" data-a="'+esc(o.art||'')+'" data-b="'+esc(avUrl(o))+'" alt=""/></div><div class="minfo">');
   h.push('<h2>'+esc(o.name)+'</h2>');
   h.push('<div class="stars">'+stars(o.rarity)+'</div>');
@@ -745,6 +748,15 @@ function openModal(opName){
     save();
   };
   var bsk=$('btnSkins'); if(bsk)bsk.onclick=function(){ openSkins(opName); };
+  var bwh=$('btnWish'); if(bwh)bwh.onclick=function(){
+    if(!state.wish)state.wish=[];
+    var wi=state.wish.indexOf(opName);
+    if(wi>=0){ state.wish.splice(wi,1); toast('已移出心愿单'); }
+    else { state.wish.push(opName); toast('💝 已加入心愿单，抽到会提醒！'); }
+    save();
+    bwh.textContent=wi>=0?'💝 心愿单':'💝 已心愿';
+    renderCollection();
+  };
   var links=$('mBody').querySelectorAll('.srcLink');
   for(var li=0;li<links.length;li++){ links[li].onclick=function(){ jumpBanner(this.getAttribute('data-bid')); }; }
   $('modal').classList.add('show');
