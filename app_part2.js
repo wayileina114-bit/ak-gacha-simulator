@@ -259,7 +259,7 @@ function pick4(){ return rnd(ops4); }
 function pick3(){ return rnd(ops3); }
 function isNew(op){ return state.collection.indexOf(op)<0; }
 var newPulse={};
-function addCol(op){ if(state.collection.indexOf(op)<0){ state.collection.push(op); newPulse[op]=Date.now(); save(); return true; } return false; }
+function addCol(op){ if(state.collection.indexOf(op)<0){ state.collection.push(op); newPulse[op]=Date.now(); if(Object.keys(newPulse).length>50){ var cutoff=Date.now()-20000, kk2; for(kk2 in newPulse){ if(newPulse[kk2]<cutoff)delete newPulse[kk2]; } } save(); return true; } return false; }
 function copyBannerInfo(b){
   var NL=String.fromCharCode(10);
   var ups6=b.six.map(function(n){var o=opOf(n);return o?o.name:n;}).join('、')||'无';
@@ -550,10 +550,22 @@ function renderCards(results,msg,has6,names6,has5){
   }
   setTimeout(function(){
     if(lastBatch.length>10)msg+='<br/><button class="mini-btn" id="btnAllRes">查看全部 '+lastBatch.length+' 抽结果</button>';
+    if(has6&&names6&&names6.length){
+      var big6=[], bi2;
+      for(bi2=0;bi2<results.length;bi2++){ if(results[bi2].rar===6)big6.push(results[bi2]); }
+      if(big6.length&&big6.length<=3){
+        var bh=['<div class="sixstrip">'];
+        for(bi2=0;bi2<big6.length;bi2++){ var bo6=opOf(big6[bi2].op); if(bo6)bh.push('<div class="sixcard" data-op="'+esc(big6[bi2].op)+'"><img loading="lazy" src="'+esc(opArtT(bo6))+'"/><div class="sn6">'+esc(bo6.name)+'</div></div>'); }
+        bh.push('</div>');
+        msg=bh.join('')+msg;
+      }
+    }
     $('resultMsg').innerHTML=msg||'';
     if(has6&&names6&&names6.length){ toast('恭喜！获得六星干员：'+names6.join('、')); sixBurst(names6); var first6=wrap.querySelector('.card.r6'); if(first6&&first6.scrollIntoView){ try{ first6.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){ first6.scrollIntoView(); } } }
     if(has5&&!has6){ var f5=$('flash'); if(f5){ f5.style.background='radial-gradient(ellipse at center, rgba(245,185,74,.32), transparent 70%)'; f5.style.transition='opacity .8s'; f5.style.opacity='1'; setTimeout(function(){ f5.style.opacity='0'; f5.style.background=''; }, 750); } try{ if(typeof navigator!=='undefined'&&navigator.vibrate)navigator.vibrate(50); }catch(e){} }
     if(lastBatch.length>10){ var ab=$('btnAllRes'); if(ab)ab.onclick=openAllResults; }
+    var sixcards=$('resultMsg').querySelectorAll('.sixcard');
+    for(var si6=0;si6<sixcards.length;si6++){ (function(sc){ sc.onclick=function(){ openModal(sc.getAttribute('data-op')); }; })(sixcards[si6]); }
     playResult(has6||false,has5||false);
   }, 100+results.length*SPEED);
 }

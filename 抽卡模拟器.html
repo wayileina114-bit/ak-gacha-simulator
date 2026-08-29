@@ -193,6 +193,11 @@ header{
   50%{box-shadow:0 0 40px rgba(255,157,46,.85)}
 }
 #resultMsg{text-align:center; font-size:14px; color:var(--dim); margin-top:10px; min-height:20px}
+.sixstrip{display:flex; justify-content:center; gap:10px; margin:6px 0 10px; flex-wrap:wrap}
+.sixcard{width:110px; border-radius:10px; overflow:hidden; border:2px solid var(--r6); box-shadow:0 0 16px rgba(255,93,58,.4); cursor:pointer; transition:transform .15s}
+.sixcard:hover{transform:translateY(-3px) scale(1.03)}
+.sixcard img{width:100%; height:130px; object-fit:cover; object-position:top; display:block}
+.sixcard .sn6{font-size:11px; text-align:center; color:#ffd7b0; padding:3px 0; background:linear-gradient(180deg,rgba(60,10,10,.8),rgba(30,8,14,.95)); font-weight:800}
 #resultMsg .newline{color:var(--acc); font-weight:800; font-size:15px; text-shadow:0 0 12px rgba(74,179,255,.4)}
 #resultMsg .wishhit{color:#ff6ec7; font-weight:800; font-size:15px; text-shadow:0 0 12px rgba(255,110,199,.45)}
 .cop .wishmark{position:absolute; top:10px; left:1px; font-size:9px; z-index:2}
@@ -438,7 +443,7 @@ header{
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v6.7（结果分页+每月统计）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v6.8（6星大图展示+内存清理）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -709,7 +714,7 @@ function pick4(){ return rnd(ops4); }
 function pick3(){ return rnd(ops3); }
 function isNew(op){ return state.collection.indexOf(op)<0; }
 var newPulse={};
-function addCol(op){ if(state.collection.indexOf(op)<0){ state.collection.push(op); newPulse[op]=Date.now(); save(); return true; } return false; }
+function addCol(op){ if(state.collection.indexOf(op)<0){ state.collection.push(op); newPulse[op]=Date.now(); if(Object.keys(newPulse).length>50){ var cutoff=Date.now()-20000, kk2; for(kk2 in newPulse){ if(newPulse[kk2]<cutoff)delete newPulse[kk2]; } } save(); return true; } return false; }
 function copyBannerInfo(b){
   var NL=String.fromCharCode(10);
   var ups6=b.six.map(function(n){var o=opOf(n);return o?o.name:n;}).join('、')||'无';
@@ -1000,10 +1005,22 @@ function renderCards(results,msg,has6,names6,has5){
   }
   setTimeout(function(){
     if(lastBatch.length>10)msg+='<br/><button class="mini-btn" id="btnAllRes">查看全部 '+lastBatch.length+' 抽结果</button>';
+    if(has6&&names6&&names6.length){
+      var big6=[], bi2;
+      for(bi2=0;bi2<results.length;bi2++){ if(results[bi2].rar===6)big6.push(results[bi2]); }
+      if(big6.length&&big6.length<=3){
+        var bh=['<div class="sixstrip">'];
+        for(bi2=0;bi2<big6.length;bi2++){ var bo6=opOf(big6[bi2].op); if(bo6)bh.push('<div class="sixcard" data-op="'+esc(big6[bi2].op)+'"><img loading="lazy" src="'+esc(opArtT(bo6))+'"/><div class="sn6">'+esc(bo6.name)+'</div></div>'); }
+        bh.push('</div>');
+        msg=bh.join('')+msg;
+      }
+    }
     $('resultMsg').innerHTML=msg||'';
     if(has6&&names6&&names6.length){ toast('恭喜！获得六星干员：'+names6.join('、')); sixBurst(names6); var first6=wrap.querySelector('.card.r6'); if(first6&&first6.scrollIntoView){ try{ first6.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){ first6.scrollIntoView(); } } }
     if(has5&&!has6){ var f5=$('flash'); if(f5){ f5.style.background='radial-gradient(ellipse at center, rgba(245,185,74,.32), transparent 70%)'; f5.style.transition='opacity .8s'; f5.style.opacity='1'; setTimeout(function(){ f5.style.opacity='0'; f5.style.background=''; }, 750); } try{ if(typeof navigator!=='undefined'&&navigator.vibrate)navigator.vibrate(50); }catch(e){} }
     if(lastBatch.length>10){ var ab=$('btnAllRes'); if(ab)ab.onclick=openAllResults; }
+    var sixcards=$('resultMsg').querySelectorAll('.sixcard');
+    for(var si6=0;si6<sixcards.length;si6++){ (function(sc){ sc.onclick=function(){ openModal(sc.getAttribute('data-op')); }; })(sixcards[si6]); }
     playResult(has6||false,has5||false);
   }, 100+results.length*SPEED);
 }
