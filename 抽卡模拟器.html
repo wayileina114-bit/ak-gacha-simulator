@@ -512,7 +512,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v10.3（精英化材料）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v10.4（综合回归+抽到占比）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -1335,7 +1335,8 @@ function openModal(opName){
   h.push('<div class="kv"><b>阵营</b>'+esc(o.nation||'—')+'</div>');
   h.push('<div class="kv"><b>标签</b>'+esc(o.tag||'—')+'</div>');
   h.push('<div class="kv"><b>获取</b>'+(state.collection.indexOf(opName)>=0?'已拥有':'未获得')+'</div>');
-  h.push('<div class="kv"><b>已抽到</b>'+(state.opCnt&&state.opCnt[opName]?state.opCnt[opName]:0)+' 次</div>');
+  var opC=(state.opCnt&&state.opCnt[opName])||0;
+  h.push('<div class="kv"><b>已抽到</b>'+opC+' 次'+(opC&&state.history.length?'（占全部 '+(opC/state.history.length*100).toFixed(1)+'%）':'')+'</div>');
   var gotIdx=state.collection.indexOf(opName);
   if(gotIdx>=0)h.push('<div class="kv"><b>获得顺序</b>第 '+(gotIdx+1)+' 个</div>');
   var firstT=null;

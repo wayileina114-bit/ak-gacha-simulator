@@ -811,7 +811,8 @@ function openModal(opName){
   h.push('<div class="kv"><b>阵营</b>'+esc(o.nation||'—')+'</div>');
   h.push('<div class="kv"><b>标签</b>'+esc(o.tag||'—')+'</div>');
   h.push('<div class="kv"><b>获取</b>'+(state.collection.indexOf(opName)>=0?'已拥有':'未获得')+'</div>');
-  h.push('<div class="kv"><b>已抽到</b>'+(state.opCnt&&state.opCnt[opName]?state.opCnt[opName]:0)+' 次</div>');
+  var opC=(state.opCnt&&state.opCnt[opName])||0;
+  h.push('<div class="kv"><b>已抽到</b>'+opC+' 次'+(opC&&state.history.length?'（占全部 '+(opC/state.history.length*100).toFixed(1)+'%）':'')+'</div>');
   var gotIdx=state.collection.indexOf(opName);
   if(gotIdx>=0)h.push('<div class="kv"><b>获得顺序</b>第 '+(gotIdx+1)+' 个</div>');
   var firstT=null;
