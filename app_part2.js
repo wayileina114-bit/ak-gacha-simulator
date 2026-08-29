@@ -545,7 +545,7 @@ function doPull(n){
     r=pullOne(b);
     results.push(r);
     if(isNew(r.op))addCol(r.op);
-    state.history.unshift({op:r.op,rar:r.rar,t:Date.now(),type:b.type});
+    state.history.unshift({op:r.op,rar:r.rar,t:Date.now(),type:b.type,bn:b.full});
   }
   if(state.history.length>2000)state.history.length=2000;
   sessPulls+=n;
@@ -634,7 +634,7 @@ function renderHistory(){
   var h=[],r,o;
   for(i=0;i<show.length;i++){
     r=show[i]; o=opOf(r.op);
-    h.push('<div class="hitem r'+r.rar+'"><span class="star">'+stars(r.rar)+'</span><span>'+esc(o?o.name:r.op)+'</span><span class="ht">'+relTime(r.t)+'</span></div>');
+    h.push('<div class="hitem r'+r.rar+'"><span class="star">'+stars(r.rar)+'</span><span>'+esc(o?o.name:r.op)+'</span>'+(r.bn?'<span class="hbn">'+esc(r.bn)+'</span>':'')+'<span class="ht">'+relTime(r.t)+'</span></div>');
   }
   var fc6=0,fc5=0;
   for(var fi2=0;fi2<list.length;fi2++){ if(list[fi2].rar===6)fc6++; else if(list[fi2].rar===5)fc5++; }
@@ -839,7 +839,7 @@ function doUntil6(){
     var r=pullOne(b);
     results.push(r);
     if(isNew(r.op))addCol(r.op);
-    state.history.unshift({op:r.op,rar:r.rar,t:Date.now(),type:b.type});
+    state.history.unshift({op:r.op,rar:r.rar,t:Date.now(),type:b.type,bn:b.full});
     if(r.rar===6)break;
   }
   if(state.history.length>2000)state.history.length=2000;
@@ -953,7 +953,13 @@ function copyAch(){
 function openAch(){
   var r=calcAch(), h=['<h4 class="sect" style="margin-top:0">成就系统（'+achCount()+' / '+r.list.length+'）</h4><button class="mini-btn" id="btnCopyAch">复制成就状态</button><div class="achgrid">'], i;
   for(i=0;i<r.list.length;i++){ var a=r.list[i];
-    h.push('<div class="ach'+(a.done?'':' miss')+'"><div class="aic">'+a.icon+'</div><div class="an">'+a.name+'</div><div class="ad">'+a.desc+'</div>'+(a.prog?'<div class="ap">'+a.prog+'</div>':'')+'<div class="ast">'+(a.done?'✓ 已达成':'未达成')+'</div></div>');
+    var bar='';
+    if(a.prog){
+      var ps=a.prog.split(' / '), pv=parseInt(ps[0],10)||0, pt=parseInt(ps[1],10)||1;
+      var pw=Math.min(100,Math.round(pv/pt*100));
+      bar='<div class="ap">'+a.prog+'</div><div class="apbar"><i style="width:'+pw+'%"></i></div>';
+    }
+    h.push('<div class="ach'+(a.done?'':' miss')+'"><div class="aic">'+a.icon+'</div><div class="an">'+a.name+'</div><div class="ad">'+a.desc+'</div>'+bar+'<div class="ast">'+(a.done?'✓ 已达成':'未达成')+'</div></div>');
   }
   h.push('</div>');
   $('mBody').innerHTML=h.join('');
@@ -1086,18 +1092,6 @@ function openStats(){
   $('mBody').innerHTML=h.join('');
   var mc=$('mBody').querySelectorAll('.rup-card');
   for(i=0;i<mc.length;i++){ mc[i].onclick=function(){ openModal(this.getAttribute('data-op')); }; }
-  var bm=$('btnCopyMiss6');
-  if(bm)bm.onclick=function(){
-    var NL=String.fromCharCode(10);
-    var nml=miss6.map(function(x){return opByName[x]?opByName[x].name:x;});
-    var text='还差这些6★（'+nml.length+'）：'+NL+nml.join('、');
-    var ta=document.createElement('textarea');
-    ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
-    document.body.appendChild(ta); ta.select();
-    try{ document.execCommand('copy'); toast('缺卡清单已复制'); }
-    catch(e){ window.prompt('复制以下内容：', text); }
-    ta.remove();
-  };
   var bm=$('btnCopyMiss6');
   if(bm)bm.onclick=function(){
     var NL=String.fromCharCode(10);
