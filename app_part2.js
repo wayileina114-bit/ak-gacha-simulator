@@ -1315,19 +1315,33 @@ function resetAll(){
 }
 function exportSave(){
   var s=JSON.stringify(state);
-  var ta=document.createElement('textarea');
-  ta.value=s; ta.style.position='fixed'; ta.style.opacity='0';
-  document.body.appendChild(ta); ta.select();
-  try{ document.execCommand('copy'); toast('存档已复制到剪贴板'); }
-  catch(e){ window.prompt('复制以下存档内容：', s); }
-  ta.remove();
+  try{
+    if(typeof Blob==='undefined')throw new Error('no blob');
+    var blob=new Blob([s],{type:'application/json;charset=utf-8'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='抽卡模拟器存档_'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ try{ URL.revokeObjectURL(a.href); }catch(e){} a.remove(); },1000);
+    toast('存档已下载（JSON 文件）');
+  }catch(e){
+    var ta=document.createElement('textarea');
+    ta.value=s; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); toast('存档已复制到剪贴板'); }
+    catch(e2){ window.prompt('复制以下存档内容：', s); }
+    ta.remove();
+  }
 }
 function importSave(){
   var s=window.prompt('粘贴存档JSON（从导出功能获得）：');
   if(!s)return;
   try{
     var ns=JSON.parse(s);
-    if(ns&&typeof ns==='object'&&ns.jade!=null&&ns.history&&ns.collection){ state=normalizeState(ns); save(); location.reload(); }
+    if(ns&&typeof ns==='object'&&ns.jade!=null&&ns.history&&ns.collection){
+      try{ localStorage.setItem('akgacha_backup',JSON.stringify(state)); toast('已自动备份当前存档'); }catch(e){}
+      state=normalizeState(ns); save(); location.reload();
+    }
     else toast('存档格式无效');
   }catch(e){ toast('存档格式无效'); }
 }
