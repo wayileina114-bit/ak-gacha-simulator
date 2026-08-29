@@ -333,10 +333,17 @@ function renderBannerList(){
     }
     matched.push(b);
   }
-  matched.sort(function(a,b2){ return (state.fav[b2.id]?1:0)-(state.fav[a.id]?1:0); });
+  if(!window.__todayStr)window.__todayStr=(function(){ var d=new Date(); return d.getFullYear()+'-'+(d.getMonth()<9?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate(); })(); var todayStrB=window.__todayStr;
+  matched.sort(function(a,b2){
+    var aAct=a.start<=todayStrB&&a.end>=todayStrB?1:0, bAct=b2.start<=todayStrB&&b2.end>=todayStrB?1:0;
+    if(aAct!==bAct)return bAct-aAct;
+    var fa=state.fav[a.id]?1:0, fb=state.fav[b2.id]?1:0;
+    if(fa!==fb)return fb-fa;
+    return (b2.start||'').localeCompare(a.start||'');
+  });
   for(i=0;i<matched.length;i++){
     b=matched[i];
-    html.push('<div class="bcard'+(state.cur===b.id?' on':'')+'" data-id="'+b.id+'">');
+    html.push('<div class="bcard'+(state.cur===b.id?' on':'')+((b.start<=todayStrB&&b.end>=todayStrB)?' active':'')+'" data-id="'+b.id+'">');
     html.push('<div class="thumb">');
     var shown=b.six.slice(0,2);
     if(i<40){ for(var j=0;j<shown.length;j++){ var o=opOf(shown[j]); if(o)html.push('<img loading="lazy" src="'+esc(avUrl(o))+'" alt="" onerror="this.remove()"/>'); }
