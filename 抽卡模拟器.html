@@ -46,6 +46,7 @@ header{
 .mini-btn:hover{border-color:var(--acc2); color:#fff}
 .mini-btn.warn{color:var(--red)}
 .mini-btn.warn:hover{border-color:var(--red)}
+.mini-btn:focus-visible{outline:2px solid var(--acc); outline-offset:2px}
 .mini-btn.on{background:var(--acc2); border-color:var(--acc2); color:#fff}
 .mini-btn.off{background:rgba(120,140,180,.15); border-color:var(--line); color:var(--dim)}
 #layout{display:grid; grid-template-columns:340px 1fr; gap:12px; align-items:start}
@@ -456,7 +457,7 @@ header{
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v7.2（兑换进度提示）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v7.3（首次引导+焦点样式）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -1788,8 +1789,10 @@ function openOpStats(){
   openModalBox();
 }
 var OP_N=200;
+var OP_NAMES=null;
 function renderOpStatsTable(){
-  var names=Object.keys(opByName), i, o, cnt, list=[], maxN=1;
+  if(!OP_NAMES)OP_NAMES=Object.keys(opByName);
+  var names=OP_NAMES, i, o, cnt, list=[], maxN=1;
   var total=0, had=0;
   for(i=0;i<names.length;i++){
     o=opByName[names[i]]; cnt=(state.opCnt||{})[names[i]]||0;
@@ -1902,6 +1905,7 @@ function toggleSpeed(){
 function init(){
   var bs=DATA.banners, i;
   if(!state.cur||!bannerById(state.cur))state.cur=bs[0].id;
+  if(!state.history.length&&!state.collection.length){ setTimeout(function(){ toast('👋 欢迎！选择卡池后点击抽卡开始 · 快捷键 1/2/3 · ←/→ 切换卡池'); }, 800); }
   initFilters();
   renderBannerList();
   renderBannerInfo();

@@ -1320,8 +1320,10 @@ function openOpStats(){
   openModalBox();
 }
 var OP_N=200;
+var OP_NAMES=null;
 function renderOpStatsTable(){
-  var names=Object.keys(opByName), i, o, cnt, list=[], maxN=1;
+  if(!OP_NAMES)OP_NAMES=Object.keys(opByName);
+  var names=OP_NAMES, i, o, cnt, list=[], maxN=1;
   var total=0, had=0;
   for(i=0;i<names.length;i++){
     o=opByName[names[i]]; cnt=(state.opCnt||{})[names[i]]||0;
@@ -1434,6 +1436,7 @@ function toggleSpeed(){
 function init(){
   var bs=DATA.banners, i;
   if(!state.cur||!bannerById(state.cur))state.cur=bs[0].id;
+  if(!state.history.length&&!state.collection.length){ setTimeout(function(){ toast('👋 欢迎！选择卡池后点击抽卡开始 · 快捷键 1/2/3 · ←/→ 切换卡池'); }, 800); }
   initFilters();
   renderBannerList();
   renderBannerInfo();
