@@ -11,6 +11,16 @@
   --r3:#9aa7b8; --r4:#4a9bf5; --r5:#f5b94a; --r6:#ff5d3a;
   --gold:#ffd76a; --red:#ff4d4d;
 }
+body.theme-blue{
+  --bg:#081120; --bg2:#0c1a30; --panel:#10243c; --panel2:#15304e;
+  --line:#1e3f60; --txt:#dcebff; --dim:#7fa3cc; --acc:#8fd8ff; --acc2:#4ab3ff;
+}
+body.theme-blue header{background:linear-gradient(90deg,#0d2440 0%,#112c4d 55%,#163a5e 100%)}
+body.theme-amber{
+  --bg:#17100a; --bg2:#20160b; --panel:#2b1d0f; --panel2:#392a16;
+  --line:#5c4528; --txt:#f3e6d2; --dim:#c0a888; --acc:#ffb45e; --acc2:#ff9a2e;
+}
+body.theme-amber header{background:linear-gradient(90deg,#2c1a08 0%,#36220c 55%,#402d14 100%)}
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%}
 body{
@@ -208,6 +218,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   50%{box-shadow:0 0 40px rgba(255,157,46,.85)}
 }
 #resultMsg{text-align:center; font-size:14px; color:var(--dim); margin-top:10px; min-height:20px}
+.notice b{color:var(--acc)}
 #fortune.busy{color:var(--gold); font-weight:700; animation:urgentpulse 1s infinite}
 .sixstrip{display:flex; justify-content:center; gap:10px; margin:6px 0 10px; flex-wrap:wrap}
 .sixcard{width:110px; border-radius:10px; overflow:hidden; border:2px solid var(--r6); box-shadow:0 0 16px rgba(255,93,58,.4); cursor:pointer; transition:transform .15s; position:relative}
@@ -455,6 +466,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   <div class="hright">
     <button class="mini-btn" id="utilToggle">⚙ 工具</button>
     <div class="utilbar" id="utilBar">
+      <button class="mini-btn" id="btnTheme">🎨 默认黑金</button>
       <button class="mini-btn" id="btnSound">音效: 开</button>
       <button class="mini-btn" id="btnSpeed">动画: 慢速</button>
       <button class="mini-btn" id="btnExport">💾 导出存档(文件)</button>
@@ -522,7 +534,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.7（保底提示适配）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.8（主题切换·卡池搜索修复）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>

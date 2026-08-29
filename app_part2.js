@@ -61,7 +61,7 @@ var opByName={}, ops4=[], ops3=[], opBanners={}, limitedOps={}, limitedTotal=0;
 })();
 var LS_KEY='akgacha_v2';
 var LS_OLD='akgacha_v1';
-function defaultState(){ return { cur:null, jade:60000, pity:{}, spark:{}, sel:{}, cnt:{}, opCnt:{}, fav:{}, favOps:{}, wish:[], history:[], collection:[] }; }
+function defaultState(){ return { cur:null, jade:60000, theme:'default', pity:{}, spark:{}, sel:{}, cnt:{}, opCnt:{}, fav:{}, favOps:{}, wish:[], history:[], collection:[] }; }
 function normalizeState(s){
   if(!s||typeof s!=='object')return defaultState();
   if(typeof s.jade!=='number')s.jade=60000;
@@ -78,6 +78,7 @@ function normalizeState(s){
   if(!Array.isArray(s.history))s.history=[];
   if(!Array.isArray(s.collection))s.collection=[];
   if(!Array.isArray(s.wish))s.wish=[];
+  if(!s.theme)s.theme='default';
   var sk2;
   for(sk2 in s.sel){ var sv=s.sel[sk2]; if(!sv||typeof sv!=='object'){ delete s.sel[sk2]; continue; } if(!Array.isArray(sv.six))sv.six=[]; if(!Array.isArray(sv.five))sv.five=[]; }
   return s;
@@ -699,9 +700,14 @@ function renderHistory(){
   var dayS=new Date(nowH.getFullYear(),nowH.getMonth(),nowH.getDate()).getTime();
   var weekS=dayS-7*86400000;
   var monthS=new Date(nowH.getFullYear(),nowH.getMonth(),1).getTime();
-  // 预计算每条的距上次6★间隔（按时间排序后倒推）
+  // 在完整抽卡序列上预计算"距上次6★"间隔（history 头=最新；gapArr[i]=all[i] 距更早方向最近6★的抽数，其后无6★则为-1）
+  // 先算间隔再过滤，保证筛选（稀有度/卡池/搜索）不会扭曲间隔数值
+  var gapArr=[], gi6=-1, gi;
+  for(gi=all.length-1;gi>=0;gi--){
+    if(all[gi].rar===6){ gi6=gi; gapArr[gi]=0; }
+    else gapArr[gi]=(gi6>=0)?(gi6-gi):-1;
+  }
   var list=[], i;
-  // history 数组头=最新。先收集匹配，再算间隔
   for(i=0;i<all.length;i++){
     var hh=all[i];
     if(histF!=='all'&&String(hh.rar)!==histF)continue;
@@ -717,14 +723,7 @@ function renderHistory(){
       if(hay.indexOf(histSearch)<0)continue;
     }
     list.push(hh);
-  }
-  // 计算间隔：list[0]=最新。gap[i] = list[i] 到下一个6★(更旧方向)的抽数
-  // 实际意义：这条记录距离上一次出6★隔了多少抽
-  var last6pos=-1;
-  for(i=0;i<list.length;i++){ list[i]._gap=-1; }
-  for(i=list.length-1;i>=0;i--){
-    if(list[i].rar===6){ last6pos=i; list[i]._gap=0; }
-    else if(last6pos>=0){ list[i]._gap=last6pos-i; }
+    list[list.length-1]._gap=gapArr[i];
   }
   // 间隔筛选
   if(histGap!=='all'){
@@ -756,6 +755,7 @@ function renderHistory(){
   h.push('<div class="hitem" style="justify-content:center">');
   if(show.length<list.length)h.push('<button class="mini-btn" id="histMore">加载更多（'+list.length+'条，已显示'+show.length+'）</button>');
   else if(list.length)h.push('<span style="color:#5a6c8e">共 '+list.length+' 条记录（6★×'+fc6+' · 5★×'+fc5+' · 6★率 '+(list.length?(fc6/list.length*100).toFixed(1):0)+'%）</span>');
+  else if(histF!=='all'||histRar!=='all'||histT!=='all'||histTime!=='all'||histOp||histSearch||histGap!=='all')h.push('<span style="color:#5a6c8e">没有符合条件的记录</span>');
   else h.push('<span style="color:#5a6c8e">暂无记录，开始抽卡吧</span>');
   h.push('</div>');
   if(list.length>=30){
@@ -1169,23 +1169,30 @@ function openPoolModal(){
   var b=bannerById(state.cur); if(!b)return;
   var pool=getPool(b);
   var h=['<h4 class="sect" style="margin-top:0">'+esc(b.full)+' 完整卡池</h4><input id="poolSearch" placeholder="搜索池内干员..." value="'+esc(POOL_Q)+'"/>'];
-  var i,o;
-  h.push('<div class="notice">6★干员（'+pool.p6.length+'）</div><div class="rateup">');
-  var p6n=Math.min(pool.p6.length,POOL_N);
-  for(i=0;i<p6n;i++){
-    o=opOf(pool.p6[i]); if(!o)continue;
-    if(POOL_Q&&o.name.indexOf(POOL_Q)<0)continue;
-    h.push('<div class="rup-card r6" data-op="'+esc(pool.p6[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/><div class="rn">'+esc(o.name)+'</div><div class="rb">6★</div><div class="rr">'+stars(6)+'</div></div>');
+  var i,o,q=POOL_Q,p6l=[],p5l=[];
+  for(i=0;i<pool.p6.length;i++){ o=opOf(pool.p6[i]); if(o&&(!q||o.name.indexOf(q)>=0))p6l.push(pool.p6[i]); }
+  for(i=0;i<pool.p5.length;i++){ o=opOf(pool.p5[i]); if(o&&(!q||o.name.indexOf(q)>=0))p5l.push(pool.p5[i]); }
+  if(q)h.push('<div class="notice">搜索「'+esc(q)+'」命中：<b>6★×'+p6l.length+'</b> · <b>5★×'+p5l.length+'</b></div>');
+  if(p6l.length){
+    h.push('<div class="notice">6★干员（'+(q?p6l.length+'/'+pool.p6.length:pool.p6.length)+'）</div><div class="rateup">');
+    var p6n=Math.min(p6l.length,POOL_N);
+    for(i=0;i<p6n;i++){
+      o=opOf(p6l[i]); if(!o)continue;
+      h.push('<div class="rup-card r6" data-op="'+esc(p6l[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/><div class="rn">'+esc(o.name)+'</div><div class="rb">6★</div><div class="rr">'+stars(6)+'</div></div>');
+    }
+    h.push('</div>');
   }
-  h.push('</div><div class="notice">5★干员（'+pool.p5.length+'）</div><div class="rateup">');
-  var p5n=Math.min(pool.p5.length,POOL_N);
-  for(i=0;i<p5n;i++){
-    o=opOf(pool.p5[i]); if(!o)continue;
-    if(POOL_Q&&o.name.indexOf(POOL_Q)<0)continue;
-    h.push('<div class="rup-card r5" data-op="'+esc(pool.p5[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/><div class="rn">'+esc(o.name)+'</div><div class="rb">5★</div><div class="rr">'+stars(5)+'</div></div>');
+  if(p5l.length){
+    h.push('<div class="notice">5★干员（'+(q?p5l.length+'/'+pool.p5.length:pool.p5.length)+'）</div><div class="rateup">');
+    var p5n=Math.min(p5l.length,POOL_N);
+    for(i=0;i<p5n;i++){
+      o=opOf(p5l[i]); if(!o)continue;
+      h.push('<div class="rup-card r5" data-op="'+esc(p5l[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/><div class="rn">'+esc(o.name)+'</div><div class="rb">5★</div><div class="rr">'+stars(5)+'</div></div>');
+    }
+    h.push('</div>');
   }
-  if(pool.p6.length>POOL_N||pool.p5.length>POOL_N)h.push('<button class="mini-btn" id="poolMore" style="margin:8px auto;display:block">加载更多卡池干员</button>');
-  h.push('</div>');
+  if(!p6l.length&&!p5l.length)h.push('<div class="notice">没有匹配「'+esc(q)+'」的干员，换个关键词试试</div>');
+  if(p6l.length>POOL_N||p5l.length>POOL_N)h.push('<button class="mini-btn" id="poolMore" style="margin:8px auto;display:block">加载更多卡池干员</button>');
   $('mBody').innerHTML=h.join('');
   openModalBox();
   var cards=$('mBody').querySelectorAll('.rup-card');
@@ -1211,17 +1218,16 @@ var GAL_N=120;
 function renderGallery(){
   var names=Object.keys(opByName).sort(function(a,b){return opByName[b].rarity-opByName[a].rarity||a.localeCompare(b,'zh');});
   var h=[],i,o;
-  var shown=0;
+  var shown=0,totalMatch=0;
   for(i=0;i<names.length;i++){
     o=opByName[names[i]];
     if(galF!=='all'&&String(o.rarity)!==galF)continue;
     if(galSearch&&o.name.indexOf(galSearch)<0)continue;
+    totalMatch++;
     if(shown>=GAL_N)break;
     shown++;
     h.push('<div class="gal-item r'+o.rarity+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(galArt(o))+'" alt=""/><div class="gal-nm">'+esc(o.name)+'</div><div class="gal-st">'+stars(o.rarity)+'</div></div>');
   }
-  var totalMatch=0;
-  for(var gi2=0;gi2<names.length;gi2++){ var g2=opByName[names[gi2]]; if((galF==='all'||String(g2.rarity)===galF)&&(!galSearch||g2.name.indexOf(galSearch)>=0))totalMatch++; }
   if(totalMatch>shown)h.push('<button class="mini-btn" id="galMore" style="margin:8px auto;display:block">加载更多（'+(totalMatch-shown)+'）</button>');
   if(!h.length)h.push('<div class="notice">暂无符合条件的干员</div>');
   $('galGrid').innerHTML=h.join('');
@@ -1556,6 +1562,18 @@ function importSave(){
   }catch(e){ toast('存档格式无效'); }
 }
 function toggleSound(){ SOUND=!SOUND; try{ localStorage.setItem('akgacha_snd',SOUND?'1':'0'); }catch(e){} var b=$('btnSound'); if(b){ b.textContent=SOUND?'音效: 开':'音效: 关'; b.classList.toggle('on',SOUND); } }
+var THEME_NAMES={default:'默认黑金',blue:'深空蓝',amber:'龙门暖'};
+function applyTheme(){
+  var t=state.theme||'default';
+  try{ document.body.className=(t==='default')?'':'theme-'+t; }catch(e){}
+  var b=$('btnTheme'); if(b)b.textContent='🎨 '+THEME_NAMES[t];
+}
+function nextTheme(){
+  var keys=['default','blue','amber'];
+  var cur=keys.indexOf(state.theme||'default');
+  state.theme=keys[(cur+1)%keys.length];
+  save(); applyTheme(); toast('已切换主题：'+THEME_NAMES[state.theme]);
+}
 var opSort='cnt', opFilter='had', opSearch='', opProf='all';
 function openOpStats(){
   var h=[];
@@ -1728,6 +1746,8 @@ function init(){
   wire('utilToggle',function(){ var ub=$('utilBar'); if(ub)ub.classList.toggle('show'); });
   wire('btnSpeed',toggleSpeed);
   wire('btnSound',toggleSound);
+  wire('btnTheme',nextTheme);
+  applyTheme();
   wire('btnExport',exportSave);
   wire('btnImport',importSave);
   wire('btnReset',resetAll);
@@ -1766,7 +1786,7 @@ function init(){
   });
   var cs=$('colSortSel'); if(cs)cs.onchange=function(){ colSort=this.value; renderCollection(); };
   setChips($('histChips'),[['all','全部'],['6','6★'],['5','5★'],['4','4★'],['3','3★']],'all',function(){
-    histF=$('histChips')._v; histN=60; renderHistory();
+    histF=$('histChips')._v; histRar='all'; var hrs0=$('histRarSel'); if(hrs0)hrs0.value='all'; histN=60; renderHistory();
   });
   setChips($('histTypeChips'),[['all','池:全部'],['limited','限定'],['event','活动'],['standard','标准'],['zhongjian','中坚'],['joint','联合行动'],['direct','定向甄选'],['zjselect','中坚甄选'],['special','特殊']],'all',function(){
     histT=$('histTypeChips')._v; histN=60; renderHistory();
@@ -1777,6 +1797,6 @@ function init(){
   var hs=$('histSearch'); if(hs){ var hsDl=null; hs.oninput=function(){ histSearch=this.value.trim(); histN=60; clearTimeout(hsDl); hsDl=setTimeout(function(){ renderHistory(); },180); }; }
   var hcs=$('histClearSearch'); if(hcs)hcs.onclick=function(){ histSearch=''; var hs2=$('histSearch'); if(hs2)hs2.value=''; histN=60; renderHistory(); };
   var hgs=$('histGapSel'); if(hgs)hgs.onchange=function(){ histGap=this.value; histN=60; renderHistory(); };
-  var hrs=$('histRarSel'); if(hrs)hrs.onchange=function(){ histRar=this.value; histN=60; renderHistory(); };
+  var hrs=$('histRarSel'); if(hrs)hrs.onchange=function(){ histRar=this.value; histF='all'; var hc0=$('histChips'); if(hc0){ hc0._v='all'; var cbs0=hc0.querySelectorAll('.chip'); for(var cbi0=0;cbi0<cbs0.length;cbi0++)cbs0[cbi0].classList.remove('on'); if(cbs0.length)cbs0[0].classList.add('on'); } histN=60; renderHistory(); };
 }
 init();
