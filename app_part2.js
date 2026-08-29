@@ -17,7 +17,23 @@ var BUSY=false;
 var lastBatch=[];
 var sessPulls=0;
 var FORTUNES=['罗德岛今日运势：大吉，宜抽卡','博士，稳住心态，保底总会来的','今日出货率 +1%（心理作用加成）','非酋之光保佑你','好运正在路上，再抽亿发','罗德岛随时欢迎你回家','听说凌晨3点玄学出货率高','你的第六感在发光，抽吧'];
-function setFortune(){ var f=$('fortune'); if(f)f.textContent=FORTUNES[Math.floor(Math.random()*FORTUNES.length)]; }
+var FORTUNE_DETAILS=['今天适合十连：据罗德岛统计，十连出5★以上的概率更高（其实都一样，开心就好）','玄学提示：先单抽垫2发再十连，据说能提高出货率（信则有）','今日宜抽卡：博士的运势曲线正处于上升期，抓住机会','避坑提醒：抽卡前先去基建收个菜，转换一下运气','占卜结果：你与六星干员的缘分正在接近，保持耐心','幸运色：金色。建议把界面调成金色主题再抽','今日不宜：凌晨抽卡。早点睡，明天保底见','神秘信号：抽卡前心里默念想要的名字，会有奇效'];
+function setFortune(){
+  var f=$('fortune'); if(!f)return;
+  var idx=Math.floor(Math.random()*FORTUNES.length);
+  f.textContent=FORTUNES[idx];
+  f.style.cursor='pointer';
+  f.title='点击查看今日运势详解';
+  f.onclick=function(){ openFortune(idx); };
+}
+function openFortune(idx){
+  var h=['<h4 class="sect" style="margin-top:0">🍀 今日运势</h4>'];
+  h.push('<div class="notice" style="font-size:15px; line-height:2">'+esc(FORTUNES[idx])+'</div>');
+  h.push('<div class="notice" style="color:var(--gold)">'+esc(FORTUNE_DETAILS[idx]||FORTUNE_DETAILS[0])+'</div>');
+  h.push('<div class="notice">玄学仅供参考，出货率与运势无关 😄</div>');
+  $('mBody').innerHTML=h.join('');
+  $('modal').classList.add('show');
+}
 var opByName={}, ops4=[], ops3=[], opBanners={}, limitedOps={}, limitedTotal=0;
 (function(){
   var k,o;
@@ -653,15 +669,17 @@ var colF='all', colP='all', colSort='rarity', colSearch='';
 function renderCollection(){
   var names=Object.keys(opByName).sort(function(a,b){return opByName[b].rarity-opByName[a].rarity||a.localeCompare(b,'zh');});
   var h=[],i,o;
+  var colSet={}, csi;
+  for(csi=0;csi<state.collection.length;csi++)colSet[state.collection[csi]]=1;
   for(i=0;i<names.length;i++){
     o=opOf(names[i]); if(!o)continue;
+    var got=colSet[names[i]]?1:0;
     if(colF==='miss'&&got)continue;
     if(colF==='lim'&&!limitedOps[names[i]])continue;
     if(colF==='favop'&&!(state.favOps&&state.favOps[names[i]]))continue;
     if(colF!=='all'&&colF!=='miss'&&colF!=='lim'&&colF!=='favop'&&String(o.rarity)!==colF)continue;
     if(colP!=='all'&&o.prof!==colP)continue;
     if(colSearch&&o.name.indexOf(colSearch)<0)continue;
-    var got=state.collection.indexOf(names[i])>=0;
     var pul=(newPulse[names[i]]&&(Date.now()-newPulse[names[i]])<20000);
     var ocnt=(state.opCnt||{})[names[i]]||0;
     h.push('<div class="cop'+(got?'':' miss')+(pul?' new':'')+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/><div class="cs">'+esc(o.name)+'</div>'+(ocnt>1?'<div class="cdup">×'+ocnt+'</div>':'')+'<div class="nb"></div></div>');
