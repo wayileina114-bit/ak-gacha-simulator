@@ -1143,6 +1143,13 @@ function openStats(){
   h.push('<div class="stat"><div class="v" style="color:#ff6ec7">'+limGotN+'/'+limitedTotal+'</div><div class="k">限定图鉴完成度</div><div class="statbar"><i style="width:'+(limitedTotal?Math.round(limGotN/limitedTotal*100):0)+'%"></i></div></div>');
   h.push('</div>');
   h.push('<div class="notice">欧气评分 = 实际6★数 ÷ 期望6★数 × 100（期望按保底机制约每 34.6 抽一只）</div>');
+  h.push('<h4 class="sect">期望对比</h4><div class="chart">');
+  var expC=c6>0?exp6:0;
+  var diffN=Math.round(c6-exp6);
+  h.push('<div class="crow"><span class="cl">实际6★</span><div class="cbar"><i style="width:'+Math.min(100,Math.max(2,(exp6?c6/exp6*50:2)))+'%"></i></div><span class="cv">'+c6+' 只</span></div>');
+  h.push('<div class="crow"><span class="cl">期望6★</span><div class="cbar"><i style="width:50%"></i></div><span class="cv">'+exp6.toFixed(1)+' 只</span></div>');
+  h.push('<div class="notice">'+(total?'比期望 '+(diffN>=0?'多':'少')+' <b style="color:'+(diffN>=0?'var(--acc)':'var(--red)')+'">'+Math.abs(diffN)+'</b> 只6★'+(diffN<0?' · 理论上再抽 '+Math.round(Math.abs(diffN)*34.6)+' 抽可追上期望':'')+'':'暂无数据')+'</div>');
+  h.push('</div>');
   h.push('<h4 class="sect">六星间隔分布（相邻六星之间抽数）</h4><div class="chart">');
   for(i=0;i<10;i++){ h.push('<div class="crow"><span class="cl">'+(i*10)+'-'+(i*10+9)+'</span><div class="cbar"><i style="width:'+Math.max(2,Math.round(buckets[i]/bmax*100))+'%"></i></div><span class="cv">'+buckets[i]+'</span></div>'); }
   h.push('</div>');
