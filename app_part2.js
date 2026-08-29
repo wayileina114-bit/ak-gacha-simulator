@@ -865,12 +865,12 @@ function openWiki(opName){
   openModalBox();
   var ck=name;
   if(wikiCache[ck]&&Date.now()-wikiCache[ck].t<600000){ renderWikiData(name,wikiCache[ck]); return; }
-  var secs=[3,5,7], got={};
+  var secs=[3,5,7,9], got={};
   var pending=secs.length;
   function done(){
     if(--pending>0)return;
     if(!got[3]&&!got[7]){ $('mBody').innerHTML='<h4 class="sect" style="margin-top:0">📊 '+esc(name)+' · Wiki数据</h4><div class="notice">同步失败：无法连接 PRTS Wiki（需联网）</div>'; return; }
-    wikiCache[ck]={t:Date.now(),attr:got[3]||'',talents:got[5]||'',skills:got[7]||''};
+    wikiCache[ck]={t:Date.now(),attr:got[3]||'',talents:got[5]||'',skills:got[7]||'',mats:got[9]||''};
     renderWikiData(name,wikiCache[ck]);
   }
   for(var si=0;si<secs.length;si++){
@@ -955,6 +955,17 @@ function renderWikiData(name,data){
     var blocks=skills.split(/'''技能[0-9]+（/);
     for(var bi=1;bi<blocks.length;bi++){ var blk=blocks[bi]; var endNm=blk.indexOf("'''"); var nm=endNm>=0?blk.slice(0,endNm):''; h.push('<div class="wskill"><div class="wskillname">'+esc(stripWiki(nm))+'</div>'); var sm=blk.match(/技能名=(.*?)(\n|$)/); if(sm)h.push('<div class="wskillnm">'+esc(stripWiki(sm[1]))+'</div>'); var lv7m=blk.match(/技能7描述=(.*?)(\n|$)/); if(lv7m)h.push('<div class="wskilldesc">'+esc(wikiColor(stripWiki(lv7m[1])))+'</div>'); var m1=blk.match(/技能专精1描述=(.*?)(\n|$)/); if(m1)h.push('<div class="wskilldesc m">专精1：'+esc(wikiColor(stripWiki(m1[1])))+'</div>'); h.push('</div>'); }
     h.push('</div>');
+  }
+  if(data&&data.mats){
+    var matsLines=[];
+    var matsTxt=String(data.mats||'');
+    function parseMatsLine(line){
+      var parts=line.split('}}').map(function(x){x=x.trim(); if(x.indexOf('材料消耗|')>=0){ var seg=x.split('材料消耗|')[1]; return seg; } return '';}).filter(function(x){return x;});
+      return parts.map(function(x){ return x.split('|').join(' '); }).join(' + ');
+    }
+    var ml=matsTxt.split('\n');
+    for(var mi2=0;mi2<ml.length;mi2++){ var l2=ml[mi2].trim(); if(l2.indexOf('|精')>=0&&l2.indexOf('=')>=0){ var kv2=l2.split('='); var matsInfo=parseMatsLine(kv2[1]||''); if(matsInfo)matsLines.push('<div class="wrow"><b>'+(kv2[0].indexOf('精1')>=0?'精1':'精2')+'</b><span>'+esc(matsInfo)+'</span></div>'); } }
+    if(matsLines.length){ h.push('<div class="wikisec"><h4>🧱 精英化材料</h4><div class="wikirows">'+matsLines.join('')+'</div></div>'); }
   }
   h.push('<div class="notice">数据来源：PRTS Wiki（实时同步）</div>');
   $('mBody').innerHTML=h.join('');
