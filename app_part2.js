@@ -745,6 +745,16 @@ function renderHistory(){
   else if(list.length)h.push('<span style="color:#5a6c8e">共 '+list.length+' 条记录（6★×'+fc6+' · 5★×'+fc5+' · 6★率 '+(list.length?(fc6/list.length*100).toFixed(1):0)+'%）</span>');
   else h.push('<span style="color:#5a6c8e">暂无记录，开始抽卡吧</span>');
   h.push('</div>');
+  if(list.length>=30){
+    var segN=Math.ceil(list.length/50), segR=[], si7;
+    for(si7=0;si7<segN;si7++)segR.push(0);
+    for(si7=0;si7<list.length;si7++){ if(list[si7].rar===6)segR[Math.floor(si7/50)]++; }
+    var segMax=1;
+    for(si7=0;si7<segR.length;si7++){ if(segR[si7]>segMax)segMax=segR[si7]; }
+    h.push('<div class="histtrend"><span class="ht-label">6★率趋势（每50抽）</span><div class="ht-bars">');
+    for(si7=segR.length-1;si7>=0;si7--){ var luck2=segR[si7]/2.89*100; h.push('<div class="ht-cell"><i style="height:'+Math.max(4,Math.round(segR[si7]/segMax*100))+'%" class="'+(luck2>=130?'hi':(luck2<60?'lo':''))+'"></i><b>'+(segR[si7]||'')+'</b></div>'); }
+    h.push('</div></div>');
+  }
   $('history').innerHTML=h.join('');
   var hm=$('histMore');
   if(hm)hm.onclick=function(){ histN+=60; renderHistory(); };

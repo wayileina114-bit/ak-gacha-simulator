@@ -299,6 +299,14 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .hq-label{color:var(--dim)}
 .hitem .hgap{font-size:10px; color:var(--acc2); background:rgba(74,179,255,.08); border-radius:4px; padding:1px 6px; margin-left:6px; white-space:nowrap}
 .hitem .hgap.six{color:#ffd700; background:rgba(255,215,0,.12); border:1px solid rgba(255,215,0,.3)}
+.histtrend{margin-top:10px; background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:10px; padding:10px}
+.ht-label{font-size:12px; color:var(--dim); display:block; margin-bottom:6px}
+.ht-bars{display:flex; gap:4px; align-items:flex-end; height:60px}
+.ht-cell{flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; height:100%; justify-content:flex-end}
+.ht-cell i{display:block; width:100%; min-height:3px; background:linear-gradient(180deg,var(--acc),var(--acc2)); border-radius:3px 3px 0 0; opacity:.85}
+.ht-cell i.hi{background:linear-gradient(180deg,#ffd700,#ff9a2e)}
+.ht-cell i.lo{background:linear-gradient(180deg,#5a6c8e,#3a4a6a)}
+.ht-cell b{font-size:9px; color:var(--dim)}
 .hitem .hopname{cursor:pointer; transition:color .15s}
 .hitem .hopname:hover{color:var(--acc)}
 .hitem .hopname.on{color:var(--acc); font-weight:800; text-decoration:underline}
@@ -504,7 +512,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v10.1（Wiki性能+成长幅度）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v10.2（6星率趋势图）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -1261,6 +1269,16 @@ function renderHistory(){
   else if(list.length)h.push('<span style="color:#5a6c8e">共 '+list.length+' 条记录（6★×'+fc6+' · 5★×'+fc5+' · 6★率 '+(list.length?(fc6/list.length*100).toFixed(1):0)+'%）</span>');
   else h.push('<span style="color:#5a6c8e">暂无记录，开始抽卡吧</span>');
   h.push('</div>');
+  if(list.length>=30){
+    var segN=Math.ceil(list.length/50), segR=[], si7;
+    for(si7=0;si7<segN;si7++)segR.push(0);
+    for(si7=0;si7<list.length;si7++){ if(list[si7].rar===6)segR[Math.floor(si7/50)]++; }
+    var segMax=1;
+    for(si7=0;si7<segR.length;si7++){ if(segR[si7]>segMax)segMax=segR[si7]; }
+    h.push('<div class="histtrend"><span class="ht-label">6★率趋势（每50抽）</span><div class="ht-bars">');
+    for(si7=segR.length-1;si7>=0;si7--){ var luck2=segR[si7]/2.89*100; h.push('<div class="ht-cell"><i style="height:'+Math.max(4,Math.round(segR[si7]/segMax*100))+'%" class="'+(luck2>=130?'hi':(luck2<60?'lo':''))+'"></i><b>'+(segR[si7]||'')+'</b></div>'); }
+    h.push('</div></div>');
+  }
   $('history').innerHTML=h.join('');
   var hm=$('histMore');
   if(hm)hm.onclick=function(){ histN+=60; renderHistory(); };
