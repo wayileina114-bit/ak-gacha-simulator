@@ -291,6 +291,14 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 #sixBanner.show{animation:sixpop 2.4s ease forwards}
 @keyframes sixpop{0%{opacity:0; transform:translate(-50%,-50%) scale(.4)}10%{opacity:1; transform:translate(-50%,-50%) scale(1.14)}22%{transform:translate(-50%,-50%) scale(1)}72%{opacity:1}100%{opacity:0; transform:translate(-50%,-50%) scale(1.04)}}
 .hitem .ht{color:var(--dim); font-size:11px; margin-left:auto}
+.histsearch{display:flex; gap:6px; margin-bottom:8px}
+.histsearch input{flex:1; padding:6px 10px; border-radius:8px; background:var(--bg2); border:1px solid var(--line); color:var(--txt); font-family:inherit; font-size:13px}
+.histsearch input:focus{outline:none; border-color:var(--acc2)}
+.histquery{display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:8px; font-size:12px}
+.histquery select{padding:5px 8px; border-radius:8px; background:var(--bg2); border:1px solid var(--line); color:var(--txt); font-family:inherit; font-size:12px}
+.hq-label{color:var(--dim)}
+.hitem .hgap{font-size:10px; color:var(--acc2); background:rgba(74,179,255,.08); border-radius:4px; padding:1px 6px; margin-left:6px; white-space:nowrap}
+.hitem .hgap.six{color:#ffd700; background:rgba(255,215,0,.12); border:1px solid rgba(255,215,0,.3)}
 .hitem .hopname{cursor:pointer; transition:color .15s}
 .hitem .hopname:hover{color:var(--acc)}
 .hitem .hopname.on{color:var(--acc); font-weight:800; text-decoration:underline}
@@ -461,6 +469,13 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
       <div class="sectbar"><h4>抽卡统计</h4><button class="mini-btn" id="btnAch">🏆 成就</button><button class="mini-btn" id="btnStats">详细统计</button><button class="mini-btn" id="btnOpStats">干员统计</button><button class="mini-btn" id="btnCopyStats">复制总结</button><button class="mini-btn" id="btnRules">规则说明</button><button class="mini-btn" id="btnReset2">清空记录</button></div>
       <div class="stats-grid" id="statsGrid"></div>
       <div class="sectbar"><h4>寻访记录</h4><button class="mini-btn" id="btnExportHist">导出记录</button></div>
+      <div class="histsearch"><input id="histSearch" placeholder="搜索干员/卡池..."/><button class="mini-btn" id="histClearSearch">✕</button></div>
+      <div class="histquery">
+        <span class="hq-label">距上次6★：</span>
+        <select id="histGapSel"><option value="all">全部</option><option value="gap1">0-20抽</option><option value="gap2">21-49抽</option><option value="gap3">50-89抽</option><option value="gap4">90-99抽</option><option value="gap5">100抽+</option></select>
+        <span class="hq-label" style="margin-left:8px">稀有度：</span>
+        <select id="histRarSel"><option value="all">全部</option><option value="6">6★</option><option value="5">5★</option><option value="4">4★</option><option value="3">3★</option></select>
+      </div>
       <div class="filters" id="histChips"></div>
       <div class="filters" id="histTypeChips"></div>
       <div class="filters" id="histTimeChips"></div>
@@ -476,7 +491,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v9.2（期望对比板块）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v10.0（查询重做+Wiki数据+画廊搜索）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -1170,34 +1185,67 @@ function renderStats(){
   $('statsGrid').innerHTML=h.join('');
 }
 function totalOps(){ return Object.keys(opByName).length; }
-var histF='all', histT='all', histTime='all', histN=60, histOp='';
+var histF='all', histT='all', histTime='all', histN=60, histOp='', histSearch='', histGap='all', histRar='all';
 function renderHistory(){
   var all=state.history;
   var nowH=new Date();
   var dayS=new Date(nowH.getFullYear(),nowH.getMonth(),nowH.getDate()).getTime();
   var weekS=dayS-7*86400000;
   var monthS=new Date(nowH.getFullYear(),nowH.getMonth(),1).getTime();
-  var list=[];
-  for(var i=0;i<all.length;i++){
-    if(histF!=='all'&&String(all[i].rar)!==histF)continue;
-    if(histT!=='all'&&(all[i].type||'event')!==histT)continue;
-    if(histTime==='today'&&(!all[i].t||all[i].t<dayS))continue;
-    if(histTime==='week'&&(!all[i].t||all[i].t<weekS))continue;
-    if(histTime==='month'&&(!all[i].t||all[i].t<monthS))continue;
-    if(histOp&&all[i].op!==histOp)continue;
-    list.push(all[i]);
+  // 预计算每条的距上次6★间隔（按时间排序后倒推）
+  var list=[], i;
+  // history 数组头=最新。先收集匹配，再算间隔
+  for(i=0;i<all.length;i++){
+    var hh=all[i];
+    if(histF!=='all'&&String(hh.rar)!==histF)continue;
+    if(histRar!=='all'&&String(hh.rar)!==histRar)continue;
+    if(histT!=='all'&&(hh.type||'event')!==histT)continue;
+    if(histTime==='today'&&(!hh.t||hh.t<dayS))continue;
+    if(histTime==='week'&&(!hh.t||hh.t<weekS))continue;
+    if(histTime==='month'&&(!hh.t||hh.t<monthS))continue;
+    if(histOp&&hh.op!==histOp)continue;
+    if(histSearch){
+      var o0=opOf(hh.op);
+      var hay=(o0?o0.name:hh.op)+' '+(hh.bn||'');
+      if(hay.indexOf(histSearch)<0)continue;
+    }
+    list.push(hh);
+  }
+  // 计算间隔：list[0]=最新。gap[i] = list[i] 到下一个6★(更旧方向)的抽数
+  // 实际意义：这条记录距离上一次出6★隔了多少抽
+  var last6pos=-1;
+  for(i=0;i<list.length;i++){ list[i]._gap=-1; }
+  for(i=list.length-1;i>=0;i--){
+    if(list[i].rar===6){ last6pos=i; list[i]._gap=0; }
+    else if(last6pos>=0){ list[i]._gap=last6pos-i; }
+  }
+  // 间隔筛选
+  if(histGap!=='all'){
+    var filtered=[];
+    for(i=0;i<list.length;i++){
+      var g=list[i]._gap;
+      if(histGap==='gap1'&&g>=0&&g<=20)filtered.push(list[i]);
+      else if(histGap==='gap2'&&g>=21&&g<=49)filtered.push(list[i]);
+      else if(histGap==='gap3'&&g>=50&&g<=89)filtered.push(list[i]);
+      else if(histGap==='gap4'&&g>=90&&g<=99)filtered.push(list[i]);
+      else if(histGap==='gap5'&&g>=100)filtered.push(list[i]);
+    }
+    list=filtered;
   }
   var show=list.slice(0,histN);
   var h=[],r,o;
   for(i=0;i<show.length;i++){
     r=show[i]; o=opOf(r.op);
-    h.push('<div class="hitem r'+r.rar+'"><span class="star">'+stars(r.rar)+'</span><span class="hopname'+(histOp===r.op?' on':'')+'" data-op="'+esc(r.op)+'">'+esc(o?o.name:r.op)+'</span>'+(r.bid?'<span class="hbn jump" data-bid="'+esc(r.bid)+'">'+esc(r.bn||'')+'</span>':'')+'<span class="ht">'+relTime(r.t)+'</span></div>');
+    var gapTxt='';
+    if(r._gap===0)gapTxt='<span class="hgap six">🎯 6★</span>';
+    else if(r._gap>0)gapTxt='<span class="hgap">距上次6★ '+r._gap+' 抽</span>';
+    h.push('<div class="hitem r'+r.rar+'"><span class="star">'+stars(r.rar)+'</span><span class="hopname'+(histOp===r.op?' on':'')+'" data-op="'+esc(r.op)+'">'+esc(o?o.name:r.op)+'</span>'+gapTxt+(r.bid?'<span class="hbn jump" data-bid="'+esc(r.bid)+'">'+esc(r.bn||'')+'</span>':'')+'<span class="ht">'+relTime(r.t)+'</span></div>');
   }
   var fc6=0,fc5=0;
   for(var fi2=0;fi2<list.length;fi2++){ if(list[fi2].rar===6)fc6++; else if(list[fi2].rar===5)fc5++; }
   h.push('<div class="hitem" style="justify-content:center">');
   if(show.length<list.length)h.push('<button class="mini-btn" id="histMore">加载更多（'+list.length+'条，已显示'+show.length+'）</button>');
-  else if(list.length)h.push('<span style="color:#5a6c8e">共 '+list.length+' 条记录（6★×'+fc6+' · 5★×'+fc5+'）</span>');
+  else if(list.length)h.push('<span style="color:#5a6c8e">共 '+list.length+' 条记录（6★×'+fc6+' · 5★×'+fc5+' · 6★率 '+(list.length?(fc6/list.length*100).toFixed(1):0)+'%）</span>');
   else h.push('<span style="color:#5a6c8e">暂无记录，开始抽卡吧</span>');
   h.push('</div>');
   $('history').innerHTML=h.join('');
@@ -1248,7 +1296,7 @@ function renderCollection(){
 function openModal(opName){
   var o=opOf(opName); if(!o)return;
   var h=[];
-  h.push('<button class="mini-btn" id="btnFavOp" style="margin-bottom:8px">'+(state.favOps&&state.favOps[opName]?'⭐ 已收藏':'☆ 收藏干员')+'</button><button class="mini-btn" id="btnSkins" style="margin-bottom:8px;margin-left:8px">🎨 皮肤</button><button class="mini-btn" id="btnWish" style="margin-bottom:8px;margin-left:8px">'+(state.wish&&state.wish.indexOf(opName)>=0?'💝 已心愿':'💝 心愿单')+'</button>');
+  h.push('<button class="mini-btn" id="btnFavOp" style="margin-bottom:8px">'+(state.favOps&&state.favOps[opName]?'⭐ 已收藏':'☆ 收藏干员')+'</button><button class="mini-btn" id="btnWiki" style="margin-bottom:8px;margin-left:8px">📊 Wiki数据</button><button class="mini-btn" id="btnSkins" style="margin-bottom:8px;margin-left:8px">🎨 皮肤</button><button class="mini-btn" id="btnWish" style="margin-bottom:8px;margin-left:8px">'+(state.wish&&state.wish.indexOf(opName)>=0?'💝 已心愿':'💝 心愿单')+'</button>');
   h.push('<div class="mhead"><div class="mart" style="cursor:zoom-in"><img loading="lazy" id="martImg" src="'+esc(opArtT(o))+'" data-a="'+esc(o.art||'')+'" data-b="'+esc(avUrl(o))+'" alt=""/></div><div class="minfo">');
   h.push('<h2>'+esc(o.name)+'</h2>');
   h.push('<div class="stars">'+stars(o.rarity)+'</div>');
@@ -1294,7 +1342,38 @@ function openModal(opName){
   };
   var links=$('mBody').querySelectorAll('.srcLink');
   for(var li=0;li<links.length;li++){ links[li].onclick=function(){ jumpBanner(this.getAttribute('data-bid')); }; }
+  var bwk=$('btnWiki'); if(bwk)bwk.onclick=function(){ openWiki(opName); };
   openModalBox();
+}
+function prtsApiUrl(page, section){
+  return 'https://prts.wiki/api.php?action=parse&page='+encodeURIComponent(page)+'&prop=wikitext&format=json&section='+section;
+}
+function stripWiki(t){ return String(t||'').replace(/\{\{[^{}]*\}\}/g,'').replace(/\[\[[^\]]*\|?([^\]|]*)\]\]/g,'$1').replace(/'''/g,'').replace(/<br\/>/g,' ').trim(); }
+function wikiColor(t){ return String(t||'').replace(/\{\{color\|#[0-9A-Fa-f]{6}\|([^}]*)\}\}/g,'$1').replace(/\{\{术语\|[^|]*\|([^}]*)\}\}/g,'$1'); }
+var wikiCache={};
+function openWiki(opName){
+  var o=opOf(opName); if(!o)return;
+  var name=o.name;
+  $('mBody').innerHTML='<h4 class="sect" style="margin-top:0">📊 '+esc(name)+' · Wiki数据</h4><div class="notice">正在从 PRTS Wiki 同步数据…（需联网）</div>';
+  openModalBox();
+  var ck=name;
+  if(wikiCache[ck]&&Date.now()-wikiCache[ck].t<600000){ renderWikiData(name,wikiCache[ck]); return; }
+  var secs=[3,5,7], got={};
+  var pending=secs.length;
+  function done(){
+    if(--pending>0)return;
+    if(!got[3]&&!got[7]){ $('mBody').innerHTML='<h4 class="sect" style="margin-top:0">📊 '+esc(name)+' · Wiki数据</h4><div class="notice">同步失败：无法连接 PRTS Wiki（需联网）</div>'; return; }
+    wikiCache[ck]={t:Date.now(),attr:got[3]||'',talents:got[5]||'',skills:got[7]||''};
+    renderWikiData(name,wikiCache[ck]);
+  }
+  for(var si=0;si<secs.length;si++){
+    (function(sec){
+      jsonp(prtsApiUrl(name,sec),function(data){
+        try{ if(data&&data.parse&&data.parse.wikitext){ got[sec]=data.parse.wikitext['*']||''; } }catch(e){}
+        done();
+      },10000);
+    })(secs[si]);
+  }
 }
 var skinCache={};
 function skinListUrl(name){
@@ -1315,6 +1394,61 @@ function jsonp(url,cb,timeout){
   if(timeout)setTimeout(function(){ if(done)return; done=true; cleanup(); cb(null); },timeout);
   sc.src=url+'&format=json&callback='+nm;
   document.body.appendChild(sc);
+}
+function openSkins(opName){
+  var o=opOf(opName); if(!o)return;
+  var name=o.name;
+  var cache=skinCache[name];
+  if(cache&&Date.now()-cache.t<600000){ renderSkins(name,cache.skins); return; }
+  $('mBody').innerHTML='<div class="notice">正在加载 '+esc(name)+' 的皮肤…（需联网）</div>';
+  openModalBox();
+  jsonp(skinListUrl(name),function(data){
+    var skins=[];
+    if(data&&data.query&&data.query.allimages){
+      for(var i=0;i<data.query.allimages.length;i++){
+        var it=data.query.allimages[i];
+        var m=it.name.match(/skin_(\d+)\.png$/);
+        if(m&&parseInt(m[1],10)>=1){ skins.push({name:it.name,url:it.url,no:m[1]}); }
+      }
+    }
+    skinCache[name]={t:Date.now(),skins:skins};
+    renderSkins(name,skins);
+  },12000);
+}
+function renderWikiData(name,data){
+  var h=['<h4 class="sect" style="margin-top:0">📊 '+esc(name)+' · Wiki数据</h4><button class="mini-btn" id="wikiBack">← 返回干员详情</button>'];
+  var o=opOf(name);
+  if(data&&data.attr){
+    var attr=data.attr;
+    function kv(k){ var m=attr.match(new RegExp('\\|'+k+'=(.*?)(\\n|$)')); return m?m[1].trim():''; }
+    h.push('<div class="wikisec"><h4>📈 属性数值（PRTS）</h4>');
+    var rows=[['再部署',kv('再部署')],['部署费用',kv('部署费用')],['阻挡数',kv('阻挡数')],['攻击速度',kv('攻击速度')]];
+    h.push('<div class="wikirows">');
+    for(var ri=0;ri<rows.length;ri++){ if(rows[ri][1])h.push('<div class="wrow"><b>'+rows[ri][0]+'</b><span>'+esc(rows[ri][1])+'</span></div>'); }
+    h.push('</div>');
+    var stages=[['精英0·1级','精英0_1级'],['精英0·满级','精英0_满级'],['精英1·满级','精英1_满级'],['精英2·满级','精英2_满级']];
+    h.push('<div class="wikitbl"><table><tr><th>阶段</th><th>生命</th><th>攻击</th><th>防御</th><th>法抗</th></tr>');
+    for(ri=0;ri<stages.length;ri++){ var st=stages[ri]; var hp=kv(st[1]+'_生命上限'), atk=kv(st[1]+'_攻击'), df=kv(st[1]+'_防御'), mr=kv(st[1]+'_法术抗性'); if(hp||atk)h.push('<tr><td>'+st[0]+'</td><td>'+esc(hp)+'</td><td>'+esc(atk)+'</td><td>'+esc(df)+'</td><td>'+esc(mr)+'</td></tr>'); }
+    h.push('</table></div>');
+    var tr=kv('信赖加成_生命上限'), ta=kv('信赖加成_攻击'), td=kv('信赖加成_防御');
+    if(tr||ta||td)h.push('<div class="notice">❤️ 信赖加成：生命 +'+esc(tr||'0')+' · 攻击 +'+esc(ta||'0')+' · 防御 +'+esc(td||'0')+'</div>');
+    h.push('</div>');
+  }
+  if(data&&data.talents){
+    var talTxt=wikiColor(stripWiki(data.talents));
+    h.push('<div class="wikisec"><h4>✨ 天赋</h4><div class="notice" style="white-space:pre-wrap;line-height:2">'+esc(talTxt)+'</div></div>');
+  }
+  if(data&&data.skills){
+    h.push('<div class="wikisec"><h4>⚔️ 技能详情</h4>');
+    var skills=data.skills;
+    var blocks=skills.split(/'''技能[0-9]+（/);
+    for(var bi=1;bi<blocks.length;bi++){ var blk=blocks[bi]; var endNm=blk.indexOf("'''"); var nm=endNm>=0?blk.slice(0,endNm):''; h.push('<div class="wskill"><div class="wskillname">'+esc(stripWiki(nm))+'</div>'); var sm=blk.match(/技能名=(.*?)(\n|$)/); if(sm)h.push('<div class="wskillnm">'+esc(stripWiki(sm[1]))+'</div>'); var lv7m=blk.match(/技能7描述=(.*?)(\n|$)/); if(lv7m)h.push('<div class="wskilldesc">'+esc(wikiColor(stripWiki(lv7m[1])))+'</div>'); var m1=blk.match(/技能专精1描述=(.*?)(\n|$)/); if(m1)h.push('<div class="wskilldesc m">专精1：'+esc(wikiColor(stripWiki(m1[1])))+'</div>'); h.push('</div>'); }
+    h.push('</div>');
+  }
+  h.push('<div class="notice">数据来源：PRTS Wiki（实时同步）</div>');
+  $('mBody').innerHTML=h.join('');
+  var wb=$('wikiBack'); if(wb)wb.onclick=function(){ openModal(name); };
+  openModalBox();
 }
 function openSkins(opName){
   var o=opOf(opName); if(!o)return;
@@ -1494,15 +1628,17 @@ function openPoolModal(){
   var pm=$('poolMore'); if(pm)pm.onclick=function(){ POOL_N+=36; openPoolModal(); };
   var ps=$('poolSearch'); if(ps){ var pst=null; ps.oninput=function(){ POOL_Q=this.value.trim(); POOL_N=36; clearTimeout(pst); pst=setTimeout(function(){ openPoolModal(); },180); }; }
 }
-var galF='all', galV=2;
+var galF='all', galV=2, galMode='art', galSearch='';
 var GAL_ART_CACHE={};
 function galArt(o){ if(!o||!o.name)return ''; var ck=o.name+':'+galV; if(GAL_ART_CACHE[ck])return GAL_ART_CACHE[ck]; return GAL_ART_CACHE[ck]=thumbOf(o.art,o.name,'skin 0 '+(galV===0?0:2)+'.png',480)||o.art||avUrl(o); }
 function openGallery(){
-  var h=['<h4 class="sect" style="margin-top:0">立绘画廊</h4><div class="filters" id="galChips"></div><div class="galbar"><button class="mini-btn" id="galV2"'+(galV===2?' style="border-color:var(--acc)"':'')+'>精二立绘</button><button class="mini-btn" id="galV0"'+(galV===0?' style="border-color:var(--acc)"':'')+'>初始立绘</button></div><div class="gallery" id="galGrid"></div>'];
+  var h=['<h4 class="sect" style="margin-top:0">立绘画廊</h4><input id="galSearch" placeholder="搜索干员..." value="'+esc(galSearch)+'"/><div class="filters" id="galChips"></div><div class="galbar"><button class="mini-btn" id="galV2"'+(galV===2?' style="border-color:var(--acc)"':'')+'>精二立绘</button><button class="mini-btn" id="galV0"'+(galV===0?' style="border-color:var(--acc)"':'')+'>初始立绘</button><button class="mini-btn" id="galSkin"'+(galMode==='skin'?' style="border-color:var(--acc)"':'')+'>🎨 皮肤模式</button></div><div class="gallery" id="galGrid"></div>'];
   $('mBody').innerHTML=h.join('');
   setChips($('galChips'),[['all','全部'],['6','6★'],['5','5★'],['4','4★'],['3','3★']],galF,function(){ galF=$('galChips')._v; renderGallery(); });
-  var gv2=$('galV2'); if(gv2)gv2.onclick=function(){ galV=2; openGallery(); };
-  var gv0=$('galV0'); if(gv0)gv0.onclick=function(){ galV=0; openGallery(); };
+  var gv2=$('galV2'); if(gv2)gv2.onclick=function(){ galV=2; galMode='art'; openGallery(); };
+  var gv0=$('galV0'); if(gv0)gv0.onclick=function(){ galV=0; galMode='art'; openGallery(); };
+  var gsk=$('galSkin'); if(gsk)gsk.onclick=function(){ galMode=(galMode==='skin')?'art':'skin'; openGallery(); };
+  var gsr=$('galSearch'); if(gsr){ var gst=null; gsr.oninput=function(){ galSearch=this.value.trim(); GAL_N=120; clearTimeout(gst); gst=setTimeout(function(){ renderGallery(); },180); }; }
   renderGallery();
   openModalBox();
 }
@@ -1514,17 +1650,18 @@ function renderGallery(){
   for(i=0;i<names.length;i++){
     o=opByName[names[i]];
     if(galF!=='all'&&String(o.rarity)!==galF)continue;
+    if(galSearch&&o.name.indexOf(galSearch)<0)continue;
     if(shown>=GAL_N)break;
     shown++;
     h.push('<div class="gal-item r'+o.rarity+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(galArt(o))+'" alt=""/><div class="gal-nm">'+esc(o.name)+'</div><div class="gal-st">'+stars(o.rarity)+'</div></div>');
   }
   var totalMatch=0;
-  for(var gi2=0;gi2<names.length;gi2++){ if(galF==='all'||String(opByName[names[gi2]].rarity)===galF)totalMatch++; }
+  for(var gi2=0;gi2<names.length;gi2++){ var g2=opByName[names[gi2]]; if((galF==='all'||String(g2.rarity)===galF)&&(!galSearch||g2.name.indexOf(galSearch)>=0))totalMatch++; }
   if(totalMatch>shown)h.push('<button class="mini-btn" id="galMore" style="margin:8px auto;display:block">加载更多（'+(totalMatch-shown)+'）</button>');
   if(!h.length)h.push('<div class="notice">暂无符合条件的干员</div>');
   $('galGrid').innerHTML=h.join('');
   var items=$('galGrid').querySelectorAll('.gal-item');
-  for(i=0;i<items.length;i++){ items[i].onclick=function(){ openModal(this.getAttribute('data-op')); }; }
+  for(i=0;i<items.length;i++){ (function(it){ it.onclick=function(){ if(galMode==='skin'){ openSkins(it.getAttribute('data-op')); } else { openModal(it.getAttribute('data-op')); } }; })(items[i]); }
   var gm=$('galMore'); if(gm)gm.onclick=function(){ GAL_N+=120; renderGallery(); };
 }
 function calcAch(){
@@ -2068,6 +2205,10 @@ function init(){
   setChips($('histTimeChips'),[['all','时间:全部'],['today','今天'],['week','本周'],['month','本月']],'all',function(){
     histTime=$('histTimeChips')._v; histN=60; renderHistory();
   });
+  var hs=$('histSearch'); if(hs){ var hsDl=null; hs.oninput=function(){ histSearch=this.value.trim(); histN=60; clearTimeout(hsDl); hsDl=setTimeout(function(){ renderHistory(); },180); }; }
+  var hcs=$('histClearSearch'); if(hcs)hcs.onclick=function(){ histSearch=''; var hs2=$('histSearch'); if(hs2)hs2.value=''; histN=60; renderHistory(); };
+  var hgs=$('histGapSel'); if(hgs)hgs.onchange=function(){ histGap=this.value; histN=60; renderHistory(); };
+  var hrs=$('histRarSel'); if(hrs)hrs.onchange=function(){ histRar=this.value; histN=60; renderHistory(); };
 }
 init();
 </script></body></html>

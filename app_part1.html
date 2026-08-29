@@ -291,6 +291,14 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 #sixBanner.show{animation:sixpop 2.4s ease forwards}
 @keyframes sixpop{0%{opacity:0; transform:translate(-50%,-50%) scale(.4)}10%{opacity:1; transform:translate(-50%,-50%) scale(1.14)}22%{transform:translate(-50%,-50%) scale(1)}72%{opacity:1}100%{opacity:0; transform:translate(-50%,-50%) scale(1.04)}}
 .hitem .ht{color:var(--dim); font-size:11px; margin-left:auto}
+.histsearch{display:flex; gap:6px; margin-bottom:8px}
+.histsearch input{flex:1; padding:6px 10px; border-radius:8px; background:var(--bg2); border:1px solid var(--line); color:var(--txt); font-family:inherit; font-size:13px}
+.histsearch input:focus{outline:none; border-color:var(--acc2)}
+.histquery{display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:8px; font-size:12px}
+.histquery select{padding:5px 8px; border-radius:8px; background:var(--bg2); border:1px solid var(--line); color:var(--txt); font-family:inherit; font-size:12px}
+.hq-label{color:var(--dim)}
+.hitem .hgap{font-size:10px; color:var(--acc2); background:rgba(74,179,255,.08); border-radius:4px; padding:1px 6px; margin-left:6px; white-space:nowrap}
+.hitem .hgap.six{color:#ffd700; background:rgba(255,215,0,.12); border:1px solid rgba(255,215,0,.3)}
 .hitem .hopname{cursor:pointer; transition:color .15s}
 .hitem .hopname:hover{color:var(--acc)}
 .hitem .hopname.on{color:var(--acc); font-weight:800; text-decoration:underline}
@@ -461,6 +469,13 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
       <div class="sectbar"><h4>抽卡统计</h4><button class="mini-btn" id="btnAch">🏆 成就</button><button class="mini-btn" id="btnStats">详细统计</button><button class="mini-btn" id="btnOpStats">干员统计</button><button class="mini-btn" id="btnCopyStats">复制总结</button><button class="mini-btn" id="btnRules">规则说明</button><button class="mini-btn" id="btnReset2">清空记录</button></div>
       <div class="stats-grid" id="statsGrid"></div>
       <div class="sectbar"><h4>寻访记录</h4><button class="mini-btn" id="btnExportHist">导出记录</button></div>
+      <div class="histsearch"><input id="histSearch" placeholder="搜索干员/卡池..."/><button class="mini-btn" id="histClearSearch">✕</button></div>
+      <div class="histquery">
+        <span class="hq-label">距上次6★：</span>
+        <select id="histGapSel"><option value="all">全部</option><option value="gap1">0-20抽</option><option value="gap2">21-49抽</option><option value="gap3">50-89抽</option><option value="gap4">90-99抽</option><option value="gap5">100抽+</option></select>
+        <span class="hq-label" style="margin-left:8px">稀有度：</span>
+        <select id="histRarSel"><option value="all">全部</option><option value="6">6★</option><option value="5">5★</option><option value="4">4★</option><option value="3">3★</option></select>
+      </div>
       <div class="filters" id="histChips"></div>
       <div class="filters" id="histTypeChips"></div>
       <div class="filters" id="histTimeChips"></div>
@@ -476,7 +491,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v9.3（获得时间完善）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v10.0（查询重做+Wiki数据+画廊搜索）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
