@@ -155,7 +155,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .bcard{transition:transform .18s, border-color .18s, box-shadow .18s}
 .bcard:hover{transform:translateY(-2px); box-shadow:0 6px 16px rgba(0,0,0,.3)}
 .cop{transition:transform .15s, border-color .15s}
-.cop:hover{transform:translateY(-2px); border-color:var(--acc2)}
+.cop:hover{transform:translateY(-2px); border-color:var(--acc2); box-shadow:0 4px 14px rgba(74,179,255,.18)}
 .hitem{transition:background .15s}
 .hitem:hover{background:rgba(74,179,255,.06)}
 #bannerInfo .row1{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
@@ -287,7 +287,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 *{-webkit-tap-highlight-color:transparent}
 .wishgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; max-height:58vh; overflow-y:auto}
 .wish-item{position:relative; border-radius:10px; overflow:hidden; border:2px solid var(--line); cursor:pointer; background:var(--bg2); transition:transform .15s, border-color .15s}
-.wish-item:hover{transform:translateY(-2px); border-color:var(--acc2)}
+.wish-item:hover{transform:translateY(-2px); border-color:var(--acc2); box-shadow:0 6px 16px rgba(74,179,255,.2)}
 .wish-item img{width:100%; height:120px; object-fit:cover; object-position:top; display:block}
 .wish-item .wn{font-size:12px; font-weight:700; padding:4px 6px 2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .wish-item .wr{font-size:10px; padding:0 6px 4px; color:var(--dim)}
@@ -420,7 +420,8 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .stats-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:10px}
 .statbar{height:5px; background:var(--bg); border-radius:3px; overflow:hidden; margin-top:6px}
 .statbar i{display:block; height:100%; background:linear-gradient(90deg,#ff6ec7,#c96ab6); border-radius:3px}
-.stat{background:var(--bg2); border:1px solid var(--line); border-radius:10px; padding:10px; text-align:center}
+.stat{background:var(--bg2); border:1px solid var(--line); border-radius:10px; padding:10px; text-align:center; transition:transform .15s, border-color .15s, box-shadow .15s}
+.stat:hover{transform:translateY(-2px); border-color:var(--acc2); box-shadow:0 6px 16px rgba(74,179,255,.18)}}
 .stat .v{font-size:22px; font-weight:800; color:var(--acc2)}
 .stat .k{font-size:11px; color:var(--dim); margin-top:2px}
 .stat .v.gold{color:var(--gold)}
@@ -512,7 +513,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .gal-count{margin-left:auto; align-self:center; font-size:11px; color:var(--dim)}
 .gallery{display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:8px; max-height:62vh; overflow-y:auto}
 .gal-item{position:relative; border-radius:10px; overflow:hidden; border:2px solid var(--line); cursor:pointer; background:var(--bg2); transition:.15s}
-.gal-item:hover{transform:translateY(-2px)}
+.gal-item:hover{transform:translateY(-2px); box-shadow:0 6px 16px rgba(74,179,255,.2)}
 .gal-item img{width:100%; height:150px; object-fit:contain; object-position:center; display:block; background:#0d1526}
 .gal-item .gal-nm{position:absolute; left:0; right:0; bottom:0; padding:14px 4px 4px; text-align:center; font-size:11px; font-weight:700; color:#fff; background:linear-gradient(transparent,rgba(0,0,0,.85))}
 .gal-item .gal-st{position:absolute; top:4px; left:4px; font-size:10px; color:var(--gold)}
@@ -739,7 +740,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员/Wiki数据，更新至 2026-08-29）· bilibili Wiki（精二立绘/皮肤/材料图标与掉落）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.66（倒计时小时·皮肤缓存·界面美化）</b>
+  数据来源：PRTS Wiki（卡池/干员/Wiki数据，更新至 2026-08-29）· bilibili Wiki（精二立绘/皮肤/材料图标与掉落）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.67（清空重置领取·批量性能·卡片美化）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
