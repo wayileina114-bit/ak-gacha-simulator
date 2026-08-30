@@ -28,8 +28,8 @@ for (const o of ops) {
 }
 
 const limitedSet = new Set();
-for (const b of banners) for (const s of b.six) if (s.limited) limitedSet.add(s.name);
-for (const b of banners) for (const s of b.five) if (s.limited) limitedSet.add(s.name);
+for (const b of banners) for (const s of b.six) if (s.limited) limitedSet.add(ALIAS[s.name] || s.name);
+for (const b of banners) for (const s of b.five) if (s.limited) limitedSet.add(ALIAS[s.name] || s.name);
 const std6 = ops.filter(o => o.rarity === 6 && !limitedSet.has(o.name)).map(o => o.name);
 const std5 = ops.filter(o => o.rarity === 5 && !limitedSet.has(o.name)).map(o => o.name);
 
@@ -62,6 +62,7 @@ for (const b of banners) {
     year: (b.start || '').slice(0, 4) || '—',
     six: f6, five: f5, four: f4,
     limitedSix: sixAll.filter(s => s.limited && opMap[s.name] && opMap[s.name].rarity >= 6).map(s => s.name),
+    lim5: fiveAll.filter(s => s.limited && opMap[s.name] && opMap[s.name].rarity === 5).map(s => s.name),
     rate6: f6.length >= 2 ? 35 : 50,
     spark: type === 'limited' || isCollab,
   });
