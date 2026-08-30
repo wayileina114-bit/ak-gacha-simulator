@@ -1301,7 +1301,8 @@ function renderHistory(){
   if(hm)hm.onclick=function(){ histN+=60; renderHistory(); };
   var hc=$('history'); if(hc)hc.onclick=function(e){ var t=e.target; if(t&&t.classList){ if(t.classList.contains('hopname')){ histOp=(histOp===t.getAttribute('data-op'))?'':t.getAttribute('data-op'); histN=60; renderHistory(); } else if(t.classList.contains('jump')){ jumpBanner(t.getAttribute('data-bid')); } } };
 }
-var colF='all', colP='all', colSort='rarity', colSearch='';
+var colF='all', colP='all', colSort='rarity', colSearch='', colNation='all';
+var NATION_CN={'rhodes':'罗德岛','lungmen':'龙门','ursus':'乌萨斯','victoria':'维多利亚','yan':'炎国','columbia':'哥伦比亚','leithania':'莱塔尼亚','sargon':'萨尔贡','kjerag':'谢拉格','sami':'萨米','siracusa':'叙拉古','bolivar':'玻利瓦尔','rim':'雷姆必拓','laterano':'拉特兰','iberia':'伊比利亚','minos':'米诺斯','aegir':'阿戈尔','higashi':'东国','kazimierz':'卡西米尔','gaul':'高卢','durin':'杜林','abyssal':'深海猎人','sui':'岁','karlan':'卡兰','siracusa2':'叙拉古','?':'未知'};
 var COL_SORT_CACHE=null, COL_SORT_KEY='';
 function renderCollection(){
   var names;
@@ -1328,6 +1329,7 @@ function renderCollection(){
     if(colF==='wish'&&!(state.wish&&state.wish.indexOf(names[i])>=0))continue;
     if(colF!=='all'&&colF!=='miss'&&colF!=='lim'&&colF!=='favop'&&colF!=='wish'&&String(o.rarity)!==colF)continue;
     if(colP!=='all'&&o.prof!==colP)continue;
+    if(colNation!=='all'){ var natName=NATION_CN[o.nation]||o.nation||'未知'; if(natName!==colNation)continue; }
     if(colSearch&&o.name.indexOf(colSearch)<0)continue;
     var pul=(newPulse[names[i]]&&(nowCol-newPulse[names[i]])<20000);
     var ocnt=(state.opCnt||{})[names[i]]||0;
@@ -1635,8 +1637,14 @@ function wikiMatTab(name,data){
   function farmHtml(matName){
     var mn=String(matName||'').split(' ')[0].trim();
     var f=MAT_FARM_DB[mn]||MAT_FARM_DB[String(matName||'').trim()];
-    if(f)return ' <em class="farm" title="参考刷取">📌 '+esc(f.stage)+(f.ap<1?' · 理智效率极高':' · ~'+f.ap+'理智/个')+(f.note?'（'+esc(f.note)+'）':'')+'</em>';
-    return '';
+    if(!f||!f.stages||!f.stages.length)return '';
+    var h=' <em class="farm">📌';
+    for(var fi3=0;fi3<f.stages.length;fi3++){
+      var st=f.stages[fi3];
+      h+=' <b>'+esc(st.stage)+'</b>（'+(st.ap<1?'效率极高':st.ap.toFixed(1)+'理智/个')+(st.drops&&st.drops.length?' · 掉'+st.drops.map(function(x){return esc(x);}).join('/'):'')+'）';
+    }
+    h+='</em>';
+    return h;
   }
   if(data&&data.mats){
     var matsLines=[];
@@ -2242,45 +2250,44 @@ var MTL_ICON={
  "固源岩":"MTL_SL_G2",
  "固源岩组":"MTL_SL_G3",
  "提纯源岩":"MTL_SL_G4",
- "酯原料":"MTL_PA_P1",
- "聚酸酯":"MTL_PA_P2",
- "聚酸酯组":"MTL_PA_P3",
- "聚酸酯块":"MTL_PA_P4",
- "糖":"MTL_SM_S1",
- "糖组":"MTL_SM_S2",
- "糖聚块":"MTL_SM_S3",
- "异铁":"MTL_IR_I1",
- "异铁组":"MTL_IR_I2",
- "异铁块":"MTL_IR_I3",
- "酮凝集":"MTL_OR_O1",
- "酮凝集组":"MTL_OR_O2",
- "酮阵列":"MTL_OR_O3",
- "研磨石":"MTL_GR_G1",
- "五水研磨石":"MTL_GR_G2",
- "扭转醇":"MTL_CN_C1",
- "白马醇":"MTL_CN_C2",
- "轻锰矿":"MTL_MN_M1",
- "三水锰矿":"MTL_MN_M2",
- "凝胶":"MTL_GL_G1",
- "聚合凝胶":"MTL_GL_G2",
- "炽合金":"MTL_HT_H1",
- "炽合金块":"MTL_HT_H2",
- "RMA70-12":"MTL_RM_R1",
- "RMA70-24":"MTL_RM_R2",
- "晶体元件":"MTL_EL_E1",
- "晶体电路":"MTL_EL_E2",
- "晶体电子单元":"MTL_EL_E3",
- "双极纳米片":"MTL_DN_D1",
- "聚合剂":"MTL_PG_P1",
- "D32钢":"MTL_D32_D1",
- "技巧概要·卷1":"MTL_SK1",
- "技巧概要·卷2":"MTL_SK2",
- "技巧概要·卷3":"MTL_SK3",
- "装置":"MTL_PA_A1",
- "全新装置":"MTL_PA_A2",
- "改量装置":"MTL_PA_A3",
- "褐素纤维":"MTL_FI_H1",
- "紫薯":"MTL_FI_S1",
+ "酯原料":"MTL_SL_RUSH1",
+ "聚酸酯":"MTL_SL_RUSH2",
+ "聚酸酯组":"MTL_SL_RUSH3",
+ "聚酸酯块":"MTL_SL_RUSH4",
+ "糖":"MTL_SL_STRG2",
+ "糖组":"MTL_SL_STRG3",
+ "糖聚块":"MTL_SL_STRG4",
+ "异铁":"MTL_SL_IRON2",
+ "异铁组":"MTL_SL_IRON3",
+ "异铁块":"MTL_SL_IRON4",
+ "酮凝集":"MTL_SL_KETONE2",
+ "酮凝集组":"MTL_SL_KETONE3",
+ "酮阵列":"MTL_SL_KETONE4",
+ "研磨石":"MTL_SL_PG1",
+ "五水研磨石":"MTL_SL_PG2",
+ "扭转醇":"MTL_SL_ALCOHOL1",
+ "白马醇":"MTL_SL_ALCOHOL2",
+ "轻锰矿":"MTL_SL_MANGANESE1",
+ "三水锰矿":"MTL_SL_MANGANESE2",
+ "凝胶":"MTL_SL_PGEL3",
+ "聚合凝胶":"MTL_SL_PGEL4",
+ "炽合金":"MTL_SL_IAM3",
+ "炽合金块":"MTL_SL_IAM4",
+ "RMA70-12":"MTL_SL_RMA7012",
+ "RMA70-24":"MTL_SL_RMA7024",
+ "晶体元件":"MTL_SL_OC3",
+ "晶体电路":"MTL_SL_OC4",
+ "晶体电子单元":"MTL_SL_OEU",
+ "双极纳米片":"MTL_SL_BN",
+ "聚合剂":"MTL_SL_PP",
+ "D32钢":"MTL_SL_DS",
+ "技巧概要·卷1":"MTL_SKILL1",
+ "技巧概要·卷2":"MTL_SKILL2",
+ "技巧概要·卷3":"MTL_SKILL3",
+ "装置":"MTL_SL_BOSS2",
+ "全新装置":"MTL_SL_BOSS3",
+ "改量装置":"MTL_SL_BOSS4",
+ "褐素纤维":"MTL_SL_XW",
 };
 function chapterOf(stage){ var k=String(stage||'').match(/^[A-Z]?\d+-/); return (k&&CHAPTER_MAP[k[0]])?CHAPTER_MAP[k[0]].ch:''; }
 function matIconUrl(mn){ var id=MTL_ICON[String(mn||'').trim()]; return id?('https://torappu.prts.wiki/assets/item_icon/'+id+'.png'):''; }
@@ -2936,6 +2943,7 @@ function init(){
     colP=$('colProfChips')._v; renderCollection();
   });
   var cs=$('colSortSel'); if(cs)cs.onchange=function(){ colSort=this.value; renderCollection(); };
+  var cns=$('colNationSel'); if(cns)cns.onchange=function(){ colNation=this.value; renderCollection(); };
   setChips($('histChips'),[['all','全部'],['6','6★'],['5','5★'],['4','4★'],['3','3★']],'all',function(){
     histF=$('histChips')._v; histRar='all'; var hrs0=$('histRarSel'); if(hrs0)hrs0.value='all'; histN=60; renderHistory();
   });
