@@ -529,6 +529,8 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .wikitbl table{width:100%; border-collapse:collapse; font-size:12px; margin-top:6px}
 .wikitbl th,.wikitbl td{border:1px solid var(--line); padding:4px 8px; text-align:center; white-space:nowrap}
 .wikitbl th{background:rgba(74,179,255,.1); color:var(--acc)}
+.imp-drop{border:2px dashed var(--line); border-radius:10px; padding:22px 12px; text-align:center; color:var(--dim); font-size:13px; cursor:pointer; margin-bottom:8px; transition:.15s; background:var(--bg2)}
+.imp-drop:hover,.imp-drop.over{border-color:var(--acc2); color:var(--acc2); background:rgba(74,179,255,.06)}
 .wikisuggest{display:flex; flex-direction:column; gap:3px; margin:-4px 0 8px}
 .wikisuggest-item{display:flex; align-items:center; gap:8px; background:var(--bg2); border:1px solid var(--line); border-radius:8px; padding:6px 10px; cursor:pointer; font-size:12px; transition:.12s}
 .wikisuggest-item:hover{border-color:var(--acc2); background:rgba(74,179,255,.08); transform:translateX(2px)}
@@ -684,7 +686,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.30（模拟10次统计·源石绿主题·缓存防抖）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.31（存档导入升级·文件拖拽·备份恢复）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -3862,16 +3864,70 @@ function exportSave(){
   }
 }
 function importSave(){
-  var s=window.prompt('粘贴存档JSON（从导出功能获得）：');
-  if(!s)return;
+  var hasBk=false;
+  try{ hasBk=!!localStorage.getItem('akgacha_backup'); }catch(e){}
+  var h=['<h4 class="sect" style="margin-top:0">📥 导入存档</h4>'];
+  h.push('<div class="wikihint">支持两种方式：<b>选择 JSON 文件</b>（推荐，可拖拽到下方区域）或<b>粘贴存档文本</b>。导入前会自动备份当前存档。</div>');
+  h.push('<div id="impDrop" class="imp-drop">📂 点击选择文件 · 或将 .json 拖拽到此处</div>');
+  h.push('<input type="file" id="impFile" accept=".json,application/json" style="display:none"/>');
+  h.push('<textarea id="impText" placeholder="或直接粘贴存档 JSON 文本…" style="min-height:90px"></textarea>');
+  h.push('<div class="wikisearch"><button class="mini-btn" id="impGo">✅ 导入</button><button class="mini-btn" id="impBk"'+(hasBk?'':' disabled')+'>↩️ 恢复上次备份</button></div>');
+  h.push('<div id="impOut"></div>');
+  $('mBody').innerHTML=h.join('');
+  openModalBox();
+  var drop=$('impDrop'), fileIn=$('impFile'), txt=$('impText');
+  function impMsg(msg,isErr){ var o=$('impOut'); if(o)o.innerHTML='<div class="notice" style="color:'+(isErr?'var(--red)':'var(--acc2)')+'">'+esc(msg)+'</div>'; }
+  if(drop)drop.onclick=function(){ try{ fileIn.click(); }catch(e){} };
+  if(fileIn)fileIn.onchange=function(){
+    var f=fileIn.files&&fileIn.files[0];
+    if(!f)return;
+    if(f.size>10*1024*1024){ impMsg('文件过大（>10MB）',true); return; }
+    if(typeof FileReader==='undefined'){ impMsg('当前环境不支持文件读取，请改用粘贴',true); return; }
+    var rd=new FileReader();
+    rd.onload=function(){ try{ txt.value=String(rd.result||''); impMsg('已读取 '+f.name+'（'+f.size+' 字节）· 点击「导入」确认'); }catch(e){} };
+    rd.onerror=function(){ impMsg('文件读取失败',true); };
+    rd.readAsText(f);
+  };
   try{
-    var ns=JSON.parse(s);
-    if(ns&&typeof ns==='object'&&ns.jade!=null&&ns.history&&ns.collection){
-      try{ localStorage.setItem('akgacha_backup',JSON.stringify(state)); toast('已自动备份当前存档'); }catch(e){}
-      state=normalizeState(ns); save(); location.reload();
+    var dz=$('mBody');
+    if(dz&&dz.addEventListener){
+      dz.addEventListener('dragover',function(e){ try{e.preventDefault();}catch(x){} if(drop)drop.classList.add('over'); });
+      dz.addEventListener('dragleave',function(){ if(drop)drop.classList.remove('over'); });
+      dz.addEventListener('drop',function(e){
+        try{e.preventDefault();}catch(x){}
+        if(drop)drop.classList.remove('over');
+        var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
+        if(!f||typeof FileReader==='undefined')return;
+        var rd=new FileReader();
+        rd.onload=function(){ try{ txt.value=String(rd.result||''); impMsg('已读取 '+f.name+' · 点击「导入」确认'); }catch(e){} };
+        rd.readAsText(f);
+      });
     }
-    else toast('存档格式无效');
-  }catch(e){ toast('存档格式无效'); }
+  }catch(e){}
+  var go=$('impGo');
+  if(go)go.onclick=function(){ doImport(txt?txt.value:''); };
+  var bk=$('impBk');
+  if(bk&&hasBk)bk.onclick=function(){
+    try{
+      var raw=localStorage.getItem('akgacha_backup');
+      if(!raw){ impMsg('没有可恢复的备份',true); return; }
+      var ns=JSON.parse(raw);
+      if(!ns||typeof ns!=='object'){ impMsg('备份损坏',true); return; }
+      state=normalizeState(ns); save(); try{ location.reload(); }catch(e){}
+    }catch(e){ impMsg('恢复失败：'+e.message,true); }
+  };
+}
+function doImport(s){
+  var s2=String(s||'').trim();
+  if(!s2){ toast('请先选择文件或粘贴存档内容'); return; }
+  try{
+    var ns=JSON.parse(s2);
+    if(!ns||typeof ns!=='object'||!Array.isArray(ns.history)||!Array.isArray(ns.collection)||ns.jade==null){
+      toast('存档格式无效（需包含 jade / history / collection）'); return;
+    }
+    try{ localStorage.setItem('akgacha_backup',JSON.stringify(state)); toast('已自动备份当前存档'); }catch(e){}
+    state=normalizeState(ns); save(); try{ location.reload(); }catch(e){}
+  }catch(e){ toast('JSON 解析失败：'+e.message); }
 }
 function toggleSound(){ SOUND=!SOUND; try{ localStorage.setItem('akgacha_snd',SOUND?'1':'0'); }catch(e){} var b=$('btnSound'); if(b){ b.textContent=SOUND?'音效: 开':'音效: 关'; b.classList.toggle('on',SOUND); } }
 var THEME_NAMES={default:'默认黑金',blue:'深空蓝',amber:'龙门暖',green:'源石绿'};
