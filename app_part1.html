@@ -390,6 +390,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .farm{color:#7bd88f; font-style:normal; font-size:11px}
 .selgrid{max-height:170px; overflow-y:auto}
 .wikisearch{display:flex; gap:8px; margin-bottom:8px}
+.wikisearch input:focus,.wikisearch input:focus-visible{outline:none; border-color:var(--acc2); box-shadow:0 0 0 3px rgba(74,179,255,.18)}
 .wikisearch input{flex:1; background:var(--bg2); border:1px solid var(--line); border-radius:8px; padding:8px 10px; color:var(--txt); font-family:inherit; font-size:13px; outline:none}
 .wikisearch input:focus{border-color:var(--acc2)}
 .wikihint{font-size:12px; color:var(--dim); background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:8px 10px; margin-bottom:10px; line-height:1.8}
@@ -642,7 +643,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
     background:linear-gradient(transparent, rgba(11,17,28,.97) 32%);
     justify-content:center; gap:8px;
   }
-  #rateNote{display:none}
+  #rateNote{margin-top:6px; padding:6px 10px; border-radius:8px; background:rgba(74,179,255,.06); border:1px solid var(--line); font-size:12px; color:var(--txt); line-height:1.8}
   .barName{display:block; width:100%; text-align:center; font-size:11px; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .pityCount{display:none; position:fixed; bottom:76px; left:50%; transform:translateX(-50%); background:linear-gradient(90deg,rgba(255,93,58,.9),rgba(255,154,46,.9)); color:#fff; font-size:12px; font-weight:800; padding:6px 14px; border-radius:20px; box-shadow:0 4px 16px rgba(255,93,58,.4); z-index:40; animation:urgentpulse 1.6s infinite}@media(min-width:721px){.pityCount.show{display:none}}
 .pityCount.show{display:block}
@@ -743,7 +744,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员/Wiki数据，更新至 2026-08-29）· bilibili Wiki（精二立绘/皮肤/材料图标与掉落）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.68（运势每日固定·章节缓存·标题渐变）</b>
+  数据来源：PRTS Wiki（卡池/干员/Wiki数据，更新至 2026-08-29）· bilibili Wiki（精二立绘/皮肤/材料图标与掉落）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.69（概率提示可见·jsonp超时·输入聚焦）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
