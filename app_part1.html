@@ -316,7 +316,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .lg-desc{font-size:11px; color:var(--acc2); margin-top:2px}
 .matgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:8px; max-height:60vh; overflow-y:auto; margin-top:8px}
 .mat-item{position:relative; background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:8px; cursor:pointer; text-align:center; transition:.15s}
-.mat-item:hover{border-color:var(--acc2); transform:translateY(-2px)}
+.mat-item:hover{border-color:var(--acc2); transform:translateY(-2px); box-shadow:0 8px 20px rgba(74,179,255,.22); z-index:2}
 .mat-item.mc-base{border-top:3px solid #7a8aa0}
 .mat-item.mc-high{border-top:3px solid #d64a4a}
 .mat-item.mc-chip{border-top:3px solid #4a9bd6}
@@ -344,6 +344,9 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .mat-item .mat-det .wrow span{font-size:11px; line-height:1.8}
 .mat-drop{font-size:11px; margin-right:6px}
 .mat-det .mat-wrap{width:22px; height:22px; margin:0 2px 0 0; vertical-align:middle}
+.mat-detail-head .mat-wrap{width:56px; height:56px; margin:0 10px 0 0; vertical-align:middle; flex:0 0 56px}
+.mat-detail-head .mat-fallback{font-size:24px; border-radius:12px}
+.mat-detail-head{display:flex; align-items:center; margin-bottom:8px}
 .mat-det .mat-wrap .mat-fallback{font-size:10px}
 .mat-recipe{font-size:11px; color:var(--dim); margin-top:6px; padding-top:6px; border-top:1px dashed var(--line); line-height:2}
 .mat-recipe .mat-wrap{width:20px; height:20px; margin:0 2px 0 0; vertical-align:middle}
@@ -736,7 +739,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员/Wiki数据，更新至 2026-08-29）· bilibili Wiki（精二立绘/皮肤/材料图标与掉落）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.65（删除动态皮肤数量显示）</b>
+  数据来源：PRTS Wiki（卡池/干员/Wiki数据，更新至 2026-08-29）· bilibili Wiki（精二立绘/皮肤/材料图标与掉落）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.66（倒计时小时·皮肤缓存·界面美化）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
