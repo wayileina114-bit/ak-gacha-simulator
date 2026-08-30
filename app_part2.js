@@ -2597,7 +2597,7 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v11.54</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v11.55</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 真实寻访记录分析（纯前端）· 存档导入导出 · 四主题</div>');
   h.push('</div>');
@@ -2609,7 +2609,7 @@ function openAbout(){
   var pb=$('btnWikiProbe'); if(pb)pb.onclick=function(){ var po=$('wikiProbeOut'); if(po)wikiProbe(po); };
   var al=$('aboutLog');
   if(al){
-    var logTxt=['<b>v11.54</b> 井兑换规则修正 · 联动文案','<b>v11.53</b> 成就扩充（联动/井中月/六星军团）','<b>v11.52</b> 关于面板更新 · 时装回廊统计','<b>v11.51</b> Wiki连通性检测 · 关于面板优化','<b>v11.50</b> 养成材料逐项推荐 · 皮肤泄漏/范围修复','<b>v11.49</b> 材料刷取查询重做 · 真图标','<b>v11.48</b> Wiki同步六重回退 · 进度提示','<b>v11.47</b> Wiki返回按钮 · 材料PRTS链接','<b>v11.46</b> 材料图标彩色兜底','<b>v11.45</b> 材料入口去重 · 图标重试','<b>v11.44</b> 皮肤懒加载缓存 · 时装角标','<b>v11.43</b> 特性行 · 时装列表','<b>v11.42</b> 联动池300井','<b>v11.41</b> 手机端卡池列表可滑动','<b>v11.40</b> Wiki整页获取 · 五重回退','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
+    var logTxt=['<b>v11.55</b> 立绘画廊职业筛选 · 计数','<b>v11.54</b> 井兑换规则修正 · 联动文案','<b>v11.53</b> 成就扩充（联动/井中月/六星军团）','<b>v11.52</b> 关于面板更新 · 时装回廊统计','<b>v11.51</b> Wiki连通性检测 · 关于面板优化','<b>v11.50</b> 养成材料逐项推荐 · 皮肤泄漏/范围修复','<b>v11.49</b> 材料刷取查询重做 · 真图标','<b>v11.48</b> Wiki同步六重回退 · 进度提示','<b>v11.47</b> Wiki返回按钮 · 材料PRTS链接','<b>v11.46</b> 材料图标彩色兜底','<b>v11.45</b> 材料入口去重 · 图标重试','<b>v11.44</b> 皮肤懒加载缓存 · 时装角标','<b>v11.43</b> 特性行 · 时装列表','<b>v11.42</b> 联动池300井','<b>v11.41</b> 手机端卡池列表可滑动','<b>v11.40</b> Wiki整页获取 · 五重回退','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
     al.innerHTML=logTxt;
   }
   openModalBox();
@@ -3009,14 +3009,26 @@ function openPoolModal(){
   var pm=$('poolMore'); if(pm)pm.onclick=function(){ POOL_N+=36; openPoolModal(); };
   var ps=$('poolSearch'); if(ps){ var pst=null; ps.oninput=function(){ POOL_Q=this.value.trim(); POOL_N=36; clearTimeout(pst); pst=setTimeout(function(){ openPoolModal(); },180); }; }
 }
-var galF='all', galV=2, galMode='art', galSearch='';
+var galF='all', galV=2, galMode='art', galSearch='', galProf='all';
+var GAL_PROFS=null;
+function galProfList(){
+  if(GAL_PROFS)return GAL_PROFS;
+  GAL_PROFS=[];
+  for(var pk54 in opByName){ var po54=opByName[pk54]; if(po54.prof&&GAL_PROFS.indexOf(po54.prof)<0)GAL_PROFS.push(po54.prof); }
+  GAL_PROFS.sort(function(a,b){return a.localeCompare(b,'zh');});
+  return GAL_PROFS;
+}
 var GAL_ART_CACHE={};
 function galArt(o){ if(!o||!o.name)return ''; var ck=o.name+':2'; if(GAL_ART_CACHE[ck])return GAL_ART_CACHE[ck];
   return GAL_ART_CACHE[ck]=thumbOf(o.art,o.name,'skin 0 2.png',480)||o.art||avUrl(o); }
 function openGallery(){
-  var h=['<h4 class="sect" style="margin-top:0">立绘画廊</h4><input id="galSearch" placeholder="搜索干员..." value="'+esc(galSearch)+'"/><div class="filters" id="galChips"></div><div class="galbar"><button class="mini-btn" id="galV2"'+(galV===2?' style="border-color:var(--acc)"':'')+'>精二立绘</button><button class="mini-btn" id="galSkin"'+(galMode==='skin'?' style="border-color:var(--acc)"':'')+'>🎨 皮肤模式</button></div><div class="gallery" id="galGrid"></div>'];
+  var h=['<h4 class="sect" style="margin-top:0">立绘画廊</h4><input id="galSearch" placeholder="搜索干员..." value="'+esc(galSearch)+'"/><div class="filters" id="galChips"></div><div class="filters" id="galProfChips"></div><div class="galbar"><button class="mini-btn" id="galV2"'+(galV===2?' style="border-color:var(--acc)"':'')+'>精二立绘</button><button class="mini-btn" id="galSkin"'+(galMode==='skin'?' style="border-color:var(--acc)"':'')+'>🎨 皮肤模式</button><span class="gal-count" id="galCount"></span></div><div class="gallery" id="galGrid"></div>'];
   $('mBody').innerHTML=h.join('');
   setChips($('galChips'),[['all','全部'],['6','6★'],['5','5★'],['4','4★'],['3','3★']],galF,function(){ galF=$('galChips')._v; renderGallery(); });
+  var profChips54=[['all','全部职业']];
+  var profList54=galProfList();
+  for(var pi54=0;pi54<profList54.length;pi54++)profChips54.push([profList54[pi54],profList54[pi54]]);
+  setChips($('galProfChips'),profChips54,galProf,function(){ galProf=$('galProfChips')._v; renderGallery(); });
   var gv2=$('galV2'); if(gv2)gv2.onclick=function(){ galV=2; galMode='art'; openGallery(); };
   var gsk=$('galSkin'); if(gsk)gsk.onclick=function(){ galMode=(galMode==='skin')?'art':'skin'; openGallery(); };
   var gsr=$('galSearch'); if(gsr){ var gst=null; gsr.oninput=function(){ galSearch=this.value.trim(); GAL_N=120; clearTimeout(gst); gst=setTimeout(function(){ renderGallery(); },180); }; }
@@ -3033,6 +3045,7 @@ function renderGallery(){
   for(i=0;i<names.length;i++){
     o=opByName[names[i]];
     if(galF!=='all'&&String(o.rarity)!==galF)continue;
+    if(galProf!=='all'&&o.prof!==galProf)continue;
     if(galSearch&&o.name.indexOf(galSearch)<0)continue;
     totalMatch++;
     if(shown>=GAL_N)break;
@@ -3042,6 +3055,7 @@ function renderGallery(){
   if(totalMatch>shown)h.push('<button class="mini-btn" id="galMore" style="margin:8px auto;display:block">加载更多（'+(totalMatch-shown)+'）</button>');
   if(!h.length)h.push('<div class="notice">暂无符合条件的干员</div>');
   $('galGrid').innerHTML=h.join('');
+  var gcEl=$('galCount'); if(gcEl)gcEl.textContent='显示 '+shown+' / '+totalMatch+' 名干员'+(galProf!=='all'?'（'+galProf+'）':'');
   var items=$('galGrid').querySelectorAll('.gal-item');
   for(i=0;i<items.length;i++){ (function(it){ it.onclick=function(){ if(galMode==='skin'){ openSkins(it.getAttribute('data-op')); } else { openModal(it.getAttribute('data-op')); } }; })(items[i]); }
   var gm=$('galMore'); if(gm)gm.onclick=function(){ GAL_N+=120; renderGallery(); };
