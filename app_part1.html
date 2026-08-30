@@ -431,12 +431,13 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .statbar{height:5px; background:var(--bg); border-radius:3px; overflow:hidden; margin-top:6px}
 .statbar i{display:block; height:100%; background:linear-gradient(90deg,#ff6ec7,#c96ab6); border-radius:3px}
 .stat{background:var(--bg2); border:1px solid var(--line); border-radius:10px; padding:10px; text-align:center; transition:transform .15s, border-color .15s, box-shadow .15s}
-.stat:hover{transform:translateY(-2px); border-color:var(--acc2); box-shadow:0 6px 16px rgba(74,179,255,.18)}}
-.stat .v{font-size:22px; font-weight:800; color:var(--acc2)}
+.stat:hover{transform:translateY(-2px); border-color:var(--acc2); box-shadow:0 6px 16px rgba(74,179,255,.18)}
+.stat .v{font-size:22px; font-weight:800; color:var(--acc2); background:linear-gradient(180deg,#eaf4ff 0%,var(--acc2) 100%); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-fill-color:transparent; transition:transform .15s}
+.stat:hover .v{transform:scale(1.12)}
 .stat .k{font-size:11px; color:var(--dim); margin-top:2px}
-.stat .v.gold{color:var(--gold)}
-.stat .v.red{color:var(--red)}
-.stat .v.orange{color:var(--acc)}
+.stat .v.gold{color:var(--gold); -webkit-text-fill-color:var(--gold); background:none}
+.stat .v.red{color:var(--red); -webkit-text-fill-color:var(--red); background:none}
+.stat .v.orange{color:var(--acc); -webkit-text-fill-color:var(--acc); background:none}
 .sectbar{display:flex; align-items:center; gap:10px; margin:14px 0 8px}
 .sectbar h4{font-size:13px; color:var(--acc2); letter-spacing:2px; border-left:3px solid var(--acc2); padding-left:8px; margin:0}
 .sectbar .mini-btn{margin-left:auto}
