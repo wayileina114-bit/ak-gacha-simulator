@@ -1410,9 +1410,7 @@ function renderStats(){
 }
 function totalOps(){ return Object.keys(opByName).length; }
 var histF='all', histT='all', histTime='all', histN=60, histOp='', histSearch='', histGap='all', histRar='all', histBid='';
-function renderHistory(){
-  var hbc0=$('btnHistCur');
-  if(hbc0){ var curBid0=state.cur||''; var hbBid0=histBid?(histBid.indexOf(':')>=0?histBid.slice(0,histBid.indexOf(':')):histBid):''; if(histBid&&hbBid0!==curBid0)histBid=''; hbc0.classList.toggle('on',!!histBid); hbc0.textContent=histBid?'🎯 当前池 ✓':'🎯 当前池'; }
+function histFilteredList(){
   var all=state.history;
   var nowH=new Date();
   var dayS=new Date(nowH.getFullYear(),nowH.getMonth(),nowH.getDate()).getTime();
@@ -1463,8 +1461,14 @@ function renderHistory(){
     }
     list=filtered;
   }
+  return list;
+}
+function renderHistory(){
+  var hbc0=$('btnHistCur');
+  if(hbc0){ var curBid0=state.cur||''; var hbBid0=histBid?(histBid.indexOf(':')>=0?histBid.slice(0,histBid.indexOf(':')):histBid):''; if(histBid&&hbBid0!==curBid0)histBid=''; hbc0.classList.toggle('on',!!histBid); hbc0.textContent=histBid?'🎯 当前池 ✓':'🎯 当前池'; }
+  var list=histFilteredList();
   var show=list.slice(0,histN);
-  var h=[],r,o,lastDay='';
+  var h=[],r,o,lastDay='',i;
   for(i=0;i<show.length;i++){
     r=show[i]; o=opOf(r.op);
     var dayKey='';
@@ -1481,6 +1485,7 @@ function renderHistory(){
   h.push('<div class="hitem" style="justify-content:center">');
   if(show.length<list.length)h.push('<button class="mini-btn" id="histMore">加载更多（'+list.length+'条，已显示'+show.length+'）</button>');
   else if(list.length)h.push('<span style="color:#5a6c8e">共 '+list.length+' 条记录（6★×'+fc6+' · 5★×'+fc5+' · 6★率 '+(list.length?(fc6/list.length*100).toFixed(1):0)+'%）</span>');
+  if(list.length&&(histF!=='all'||histT!=='all'||histTime!=='all'||histOp||histSearch||histGap!=='all'||histBid))h.push('<button class="mini-btn" id="btnExportHistFilt" style="margin-left:8px">📤 导出当前筛选</button>');
   else if(histF!=='all'||histRar!=='all'||histT!=='all'||histTime!=='all'||histOp||histSearch||histGap!=='all'||histBid)h.push('<span style="color:#5a6c8e">没有符合条件的记录</span>');
   else h.push('<span style="color:#5a6c8e">暂无记录，开始抽卡吧</span>');
   h.push('</div>');
@@ -1495,6 +1500,7 @@ function renderHistory(){
     h.push('</div></div>');
   }
   $('history').innerHTML=h.join('');
+  var hef=$('btnExportHistFilt'); if(hef)hef.onclick=function(){ exportHistory(true); };
   var hm=$('histMore');
   if(hm)hm.onclick=function(){ histN+=60; renderHistory(); };
   var hc=$('history'); if(hc)hc.onclick=function(e){ var t=e.target; if(t&&t.classList){ if(t.classList.contains('hopname')){ histOp=(histOp===t.getAttribute('data-op'))?'':t.getAttribute('data-op'); histN=60; renderHistory(); } else if(t.classList.contains('jump')){ jumpBanner(t.getAttribute('data-bid')); } } };
@@ -1798,6 +1804,7 @@ function renderWikiTab(name, tab){
   else if(tab==='file')h.push(wikiFileTab(name,data));
   else h.push(wikiVoiceTab(name,data));
   if(body)body.innerHTML=h.join('');
+  try{ var mBox=$('modal'); if(mBox&&mBox.querySelector){ var mbx=mBox.querySelector('.mbox'); if(mbx&&mbx.scrollTop!==undefined)mbx.scrollTop=0; } }catch(e){}
 }
 function wikiBaseTab(name,data){
   var o=opOf(name), h=[];
@@ -3400,15 +3407,16 @@ function exportBanners(){
   }catch(e){ window.prompt('复制以下内容：', text); }
 }
 function csvEsc(v){ v=String(v==null?'':v); return v.indexOf(',')>=0||v.indexOf('"')>=0?'"'+v.split('"').join('""')+'"':v; }
-function exportHistory(){
+function exportHistory(useFilter){
+  var arr=useFilter?histFilteredList():state.history;
   var NL=String.fromCharCode(10);
   var lines=['干员,稀有度,时间,卡池,卡池类型,UP组合,距上次6★(抽)'];
   var gapArr=[], gi6=-1, gi2;
-  for(gi2=state.history.length-1;gi2>=0;gi2--){
-    if(state.history[gi2].rar===6){ gi6=gi2; gapArr[gi2]=0; }
+  for(gi2=arr.length-1;gi2>=0;gi2--){
+    if(arr[gi2].rar===6){ gi6=gi2; gapArr[gi2]=0; }
     else gapArr[gi2]=(gi6>=0)?(gi6-gi2):-1;
   }
-  for(var i=0;i<state.history.length;i++){ var r=state.history[i], o=opOf(r.op), dt=new Date(r.t||Date.now()); var gapTxt=gapArr[i]>=0?String(gapArr[i]):'—';
+  for(var i=0;i<arr.length;i++){ var r=arr[i], o=opOf(r.op), dt=new Date(r.t||Date.now()); var gapTxt=gapArr[i]>=0?String(gapArr[i]):'—';
     lines.push(csvEsc(o?o.name:r.op)+','+r.rar+'星,'+dt.getFullYear()+'-'+(dt.getMonth()+1)+'-'+dt.getDate()+' '+dt.getHours()+':'+(dt.getMinutes()<10?'0':'')+dt.getMinutes()+','+csvEsc(r.bn||'')+','+(r.type||'event')+','+csvEsc(r.sel?selShort(r.sel):'')+','+gapTxt); }
   var text=String.fromCharCode(0xFEFF)+lines.join(NL);
   try{
@@ -3416,10 +3424,10 @@ function exportHistory(){
     var blob=new Blob([text],{type:'text/plain;charset=utf-8'});
     var a=document.createElement('a');
     a.href=URL.createObjectURL(blob);
-    a.download='抽卡记录_'+new Date().toISOString().slice(0,10)+'.csv';
+    a.download='抽卡记录'+(useFilter?'_筛选':'')+'_'+new Date().toISOString().slice(0,10)+'.csv';
     document.body.appendChild(a); a.click();
     setTimeout(function(){ try{ URL.revokeObjectURL(a.href); }catch(e){} a.remove(); },1000);
-    toast('抽卡记录已导出（共 '+state.history.length+' 条）');
+    toast((useFilter?'筛选记录已导出':'抽卡记录已导出')+'（共 '+arr.length+' 条）');
   }catch(e){ window.prompt('复制以下记录：', text); }
 }
 function clearHistory(){
