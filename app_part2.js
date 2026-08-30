@@ -1572,8 +1572,20 @@ function openModal(opName){
 function prtsApiUrl(page, section){
   return 'https://prts.wiki/api.php?action=parse&page='+encodeURIComponent(page)+'&prop=wikitext&format=json&section='+section;
 }
-function stripWiki(t){ return String(t||'').replace(/\{\{[^{}]*\}\}/g,'').replace(/\[\[[^\]]*\|?([^\]|]*)\]\]/g,'$1').replace(/'''/g,'').replace(/<br\/>/g,' ').trim(); }
-function wikiColor(t){ return String(t||'').replace(/\{\{color\|#[0-9A-Fa-f]{6}\|([^}]*)\}\}/g,'$1').replace(/\{\{术语\|[^|]*\|([^}]*)\}\}/g,'$1'); }
+function stripWiki(t){
+  return String(t||'')
+    .replace(/\{\{\{[^{}]*\}\}\}/g,'')
+    .replace(/\{\{[^{}]*\}\}/g,'')
+    .replace(/\[\[(?:文件|File|分类|Category):[^\]]*\]\]/gi,'')
+    .replace(/\[\[[^\]]*\|?([^\]|]*)\]\]/g,'$1')
+    .replace(/<ref[^>]*>[\s\S]*?<\/ref>/gi,'')
+    .replace(/<ref[^>]*\/?>/gi,'')
+    .replace(/<\/?[a-z][^>]*>/gi,'')
+    .replace(/'''/g,'').replace(/<br\/?>/gi,' ')
+    .replace(/&nbsp;/g,' ').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&')
+    .replace(/\s+/g,' ').trim();
+}
+function wikiColor(t){ return String(t||'').replace(/\{\{color\|#[0-9A-Fa-f]{3,6}\|([^}]*)\}\}/g,'$1').replace(/\{\{术语\|(?:[^|]*\|)?([^}]*)\}\}/g,'$1'); }
 var wikiSecCache={}, wikiQueue=[], wikiBusy=0;
 (function(){ try{ var wr2=localStorage.getItem('akgacha_pw_v1'); if(wr2){ var wo=JSON.parse(wr2); for(var wk in wo){ if(wo[wk]&&typeof wo[wk].v==='string'&&Date.now()-wo[wk].t<7*86400000)wikiSecCache[wk]=wo[wk]; } } }catch(e){} })();
 var __pwSaveT=null;
@@ -1618,7 +1630,7 @@ function pumpWiki(){
 }
 function wikiFinish(it, txt){
   wikiBusy--;
-  if(txt===null&&it.attempts<2){ it.attempts++; wikiQueue.push(it); setTimeout(pumpWiki,350); return; }
+  if(txt===null&&it.attempts<4){ it.attempts++; wikiQueue.push(it); setTimeout(pumpWiki,350); return; }
   var key='pw:'+it.page+':'+(it.sec===null||it.sec===undefined?'all':it.sec);
   if(typeof txt==='string'){ wikiSecCache[key]={t:Date.now(),v:txt}; persistSecCache(); }
   it.cb(typeof txt==='string'?txt:'');
@@ -1630,7 +1642,13 @@ function doWikiFetch(it){
   if(typeof fetch!=='function'||typeof window==='undefined'){ wikiFinish(it, null); return; }
   var ctl=null; try{ ctl=new AbortController(); }catch(e){}
   var to=ctl?setTimeout(function(){ try{ctl.abort();}catch(e){} },10000):null;
-  fetch(url+(url.indexOf('?')>=0?'&':'?')+'origin=*',{signal:ctl?ctl.signal:undefined})
+  var target=url+(url.indexOf('?')>=0?'&':'?')+'origin=*';
+  if(it.attempts>=3){
+    // 终极回退：CORS 代理（直连/jsonp 均失败时尝试，用户网络环境可能可达）
+    var proxy=it.attempts===3?'https://api.allorigins.win/raw?url=':'https://corsproxy.io/?url=';
+    target=proxy+encodeURIComponent(url);
+  }
+  fetch(target,{signal:ctl?ctl.signal:undefined})
     .then(function(res){ return res.text(); })
     .then(function(txt){ if(to)clearTimeout(to); var j=null; try{ j=JSON.parse(txt); }catch(e){} var w=extractWikiText(j); if(w===null)wikiFinish(it,null); else wikiFinish(it,w); })
     .catch(function(){ if(to)clearTimeout(to); wikiFinish(it,null); });
@@ -1804,7 +1822,7 @@ function wikiBaseTab(name,data){
   var o=opOf(name), h=[];
   if(data&&data.charInfo){
     var ci=String(data.charInfo||'');
-    function ckv(k){ var m=ci.match(new RegExp('\\|'+k+'=([^\\n|]*)')); return m?m[1].trim():''; }
+    function ckv(k){ var m=ci.match(new RegExp('\\|'+k+'=([^\\n]*)')); return m?m[1].trim():''; }
     function pick(){ for(var pi2=0;pi2<arguments.length;pi2++){ var v=ckv(arguments[pi2]); if(v)return v; } return ''; }
     var feat=ckv('特性'), prof=ckv('职业'), branch=ckv('分支'), pos=ckv('位置'), tags=ckv('标签'), code=ckv('情报编号');
     var nation=pick('所属国家','阵营','国家'), org=pick('所属组织','组织'), painter=ckv('画师');
@@ -1826,8 +1844,8 @@ function wikiBaseTab(name,data){
   }
   if(data.acquire){
     var at=String(data.acquire||'');
-    var am1=at.match(/\|获得方式=([^\n|]*)/);
-    var am2=at.match(/\|上线时间=([^\n|]*)/);
+    var am1=at.match(/\|获得方式=([^\n]*)/);
+    var am2=at.match(/\|上线时间=([^\n]*)/);
     h.push('<div class="wikisec"><h4>🎁 获取方式</h4><div class="notice">'+(am1?'获得方式：'+esc(stripWiki(am1[1])):'')+(am2?'<br/>上线时间：'+esc(stripWiki(am2[1])):'')+'</div></div>');
   }
   if(data.talents){
@@ -1855,7 +1873,7 @@ function wikiAttrTab(name,data){
   var rangeHtml='';
   if(data.range){
     var rg=String(data.range||'');
-    var r0m=rg.match(/\|精英0范围=([^\n|]*)/), r1m=rg.match(/\|精英1范围=([^\n|]*)/), r2m=rg.match(/\|精英2范围=([^\n|]*)/);
+    var r0m=rg.match(/\|精英0范围=([^\n]*)/), r1m=rg.match(/\|精英1范围=([^\n]*)/), r2m=rg.match(/\|精英2范围=([^\n]*)/);
     if(r0m||r1m||r2m){
       var rows=[];
       if(r0m)rows.push('<div class="wrow"><b>精英0</b><span>'+esc(wikiClean(r0m[1]))+'</span></div>');
@@ -1893,7 +1911,7 @@ function wikiSkillTab(name,data){
     var t1=blk.match(/技能类型1=([^\n]*)/), t2=blk.match(/技能类型2=([^\n]*)/);
     if(t1||t2)h.push('<div class="wskilltype">'+esc(clean(t1?t1[1]:'')+(t1&&t2?' · ':'')+clean(t2?t2[1]:''))+'</div>');
     var lv7m=blk.match(/技能7描述=([^\n]*)/);
-    var i7=blk.match(/技能7初始=([^\n|]*)/), c7=blk.match(/技能7消耗=([^\n|]*)/), d7=blk.match(/技能7持续=([^\n|]*)/);
+    var i7=blk.match(/技能7初始=([^\n]*)/), c7=blk.match(/技能7消耗=([^\n]*)/), d7=blk.match(/技能7持续=([^\n]*)/);
     if(lv7m)h.push('<div class="wskilldesc">'+esc(clean(lv7m[1]))+'</div>');
     if(i7||c7||d7)h.push('<div class="wskillnum">初始 '+(i7?esc(clean(i7[1])):'—')+' · 消耗 '+(c7?esc(clean(c7[1])):'—')+' · 持续 '+(d7&&d7[1]?esc(clean(d7[1])):'—')+'（7级）</div>');
     var m1=blk.match(/技能专精1描述=([^\n]*)/); if(m1)h.push('<div class="wskilldesc m">专精1：'+esc(clean(m1[1]))+'</div>');
@@ -2062,7 +2080,7 @@ function wikiFileTab(name,data){
     for(var sti=1;sti<storyBlocks.length;sti++){
       var sb=storyBlocks[sti];
       var sName=sb.slice(0, sb.indexOf('\n')>=0?sb.indexOf('\n'):sb.length).trim();
-      var sIntro=sb.match(/\|storyIntro1=([^\n|]*)/);
+      var sIntro=sb.match(/\|storyIntro1=([^\n]*)/);
       if(sName)stArr.push({n:wikiClean(sName),i:sIntro?wikiClean(sIntro[1]):''});
     }
     if(stArr.length){
@@ -2073,7 +2091,7 @@ function wikiFileTab(name,data){
   }
   if(data&&data.paradox){
     var pa=String(data.paradox||'');
-    var pn=pa.match(/\|name=([^\n|]*)/), pd=pa.match(/\|description=([\s\S]*?)(?=\n\|)/);
+    var pn=pa.match(/\|name=([^\n]*)/), pd=pa.match(/\|description=([\s\S]*?)(?=\n\|)/);
     if(pn||pd){
       h.push('<div class="wikisec"><h4>🧩 悖论模拟</h4>');
       if(pn)h.push('<div class="wskillname">'+esc(wikiClean(pn[1]))+'</div>');
@@ -2142,7 +2160,7 @@ function wikiVoiceTab(name,data){
     var body=$('wikiBody'); if(!body)return;
     var items=[], langs=[], paths={};
     if(txt){
-      var pathM=txt.match(/\|路径=([^\n|]*)/);
+      var pathM=txt.match(/\|路径=([^\n]*)/);
       if(pathM){
         var ps=pathM[1].split(',');
         for(var pi=0;pi<ps.length;pi++){
@@ -2191,7 +2209,7 @@ function wikiSuggestHtml(v){
   return html.join('');
 }
 function cmpAttr(txt, k){
-  var m=String(txt||'').match(new RegExp('\\|'+k+'=([^\\n|]*)'));
+  var m=String(txt||'').match(new RegExp('\\|'+k+'=([^\\n]*)'));
   return m?m[1].trim():'';
 }
 function cmpNum(v){ var n=parseInt(String(v||'').replace(/[^0-9-]/g,''),10); return isNaN(n)?null:n; }
@@ -2271,16 +2289,16 @@ function openCompare(){
 function renderCompare(a,b){
   var out=$('cmpOut'); if(!out)return;
   out.innerHTML='<div class="notice">正在同步 <b>'+esc(a)+'</b> 与 <b>'+esc(b)+'</b> 的数据…（需联网）</div>';
-  var gA={c1:'',c3:''}, gB={c1:'',c3:''}, done2=0;
+  var gA='', gB='', done2=0;
   function fin(){
     done2++;
-    if(done2<4)return;
-    out.innerHTML=cmpHtml(a,gA.c1,gA.c3,b,gB.c1,gB.c3);
+    if(done2<2)return;
+    var pA=gA?parseWikiPage(gA):{charInfo:'',attr:''};
+    var pB=gB?parseWikiPage(gB):{charInfo:'',attr:''};
+    out.innerHTML=cmpHtml(a,pA.charInfo||'',pA.attr||'',b,pB.charInfo||'',pB.attr||'');
   }
-  prtsFetch(a,1,function(t){ gA.c1=t||''; fin(); });
-  prtsFetch(a,3,function(t){ gA.c3=t||''; fin(); });
-  prtsFetch(b,1,function(t){ gB.c1=t||''; fin(); });
-  prtsFetch(b,3,function(t){ gB.c3=t||''; fin(); });
+  prtsFetch(a,null,function(t){ gA=t||''; fin(); });
+  prtsFetch(b,null,function(t){ gB=t||''; fin(); });
 }
 var fhallF='all', fhallQ='';
 function renderFashionHall(){
@@ -2386,8 +2404,8 @@ function renderWikiData(name,data,target){
   if(data&&data.acquire){
     var acqTxt=String(data.acquire||'');
     var acqPieces=[];
-    var am1=acqTxt.match(/\|获得方式=([^\n|]*)/);
-    var am2=acqTxt.match(/\|上线时间=([^\n|]*)/);
+    var am1=acqTxt.match(/\|获得方式=([^\n]*)/);
+    var am2=acqTxt.match(/\|上线时间=([^\n]*)/);
     if(am1)acqPieces.push('获得方式：'+stripWiki(am1[1]));
     if(am2)acqPieces.push('上线时间：'+stripWiki(am2[1]));
     if(acqPieces.length)h.push('<div class="wikisec"><h4>🎁 获取方式</h4><div class="notice">'+esc(acqPieces.join('<br/>'))+'</div></div>');
@@ -2420,7 +2438,7 @@ function renderWikiData(name,data,target){
     h.push('<div class="wikisec"><h4>⚔️ 技能详情</h4>');
     var skills=data.skills;
     var blocks=skills.split(/'''技能[0-9]+（/);
-    for(var bi=1;bi<blocks.length;bi++){ var blk=blocks[bi]; var endNm=blk.indexOf("'''"); var nm=endNm>0?blk.slice(0,endNm):('技能'+bi); var endNmDummy=endNm>=0?blk.slice(0,endNm):''; h.push('<div class="wskill"><div class="wskillname">'+esc(stripWiki(wikiColor(nm)))+'</div>'); var sm=blk.match(/技能名=([^\n]*)/); if(sm)h.push('<div class="wskillnm">'+esc(stripWiki(wikiColor(sm[1])))+'</div>'); var t1=blk.match(/技能类型1=([^\n]*)/), t2=blk.match(/技能类型2=([^\n]*)/); if(t1||t2)h.push('<div class="wskilltype">'+esc(stripWiki(wikiColor(t1?t1[1]:''))+(t1&&t2?' · ':'')+stripWiki(wikiColor(t2?t2[1]:'')))+'</div>'); var lv7m=blk.match(/技能7描述=([^\n]*)/); if(lv7m)h.push('<div class="wskilldesc">'+esc(stripWiki(wikiColor(lv7m[1])))+'</div>'); var i7=blk.match(/技能7初始=([^\n|]*)/), c7=blk.match(/技能7消耗=([^\n|]*)/), d7=blk.match(/技能7持续=([^\n|]*)/); if(i7||c7||d7)h.push('<div class="wskillnum">初始 '+(i7?esc(stripWiki(wikiColor(i7[1]))):'—')+' · 消耗 '+(c7?esc(stripWiki(wikiColor(c7[1]))):'—')+' · 持续 '+(d7&&d7[1]?esc(stripWiki(wikiColor(d7[1]))):'—')+'（7级）</div>'); var m1=blk.match(/技能专精1描述=([^\n]*)/); if(m1)h.push('<div class="wskilldesc m">专精1：'+esc(stripWiki(wikiColor(m1[1])))+'</div>'); var m2=blk.match(/技能专精2描述=([^\n]*)/); if(m2)h.push('<div class="wskilldesc m">专精2：'+esc(stripWiki(wikiColor(m2[1])))+'</div>'); var m3=blk.match(/技能专精3描述=([^\n]*)/); if(m3)h.push('<div class="wskilldesc m">专精3：'+esc(stripWiki(wikiColor(m3[1])))+'</div>'); h.push('</div>'); }
+    for(var bi=1;bi<blocks.length;bi++){ var blk=blocks[bi]; var endNm=blk.indexOf("'''"); var nm=endNm>0?blk.slice(0,endNm):('技能'+bi); var endNmDummy=endNm>=0?blk.slice(0,endNm):''; h.push('<div class="wskill"><div class="wskillname">'+esc(stripWiki(wikiColor(nm)))+'</div>'); var sm=blk.match(/技能名=([^\n]*)/); if(sm)h.push('<div class="wskillnm">'+esc(stripWiki(wikiColor(sm[1])))+'</div>'); var t1=blk.match(/技能类型1=([^\n]*)/), t2=blk.match(/技能类型2=([^\n]*)/); if(t1||t2)h.push('<div class="wskilltype">'+esc(stripWiki(wikiColor(t1?t1[1]:''))+(t1&&t2?' · ':'')+stripWiki(wikiColor(t2?t2[1]:'')))+'</div>'); var lv7m=blk.match(/技能7描述=([^\n]*)/); if(lv7m)h.push('<div class="wskilldesc">'+esc(stripWiki(wikiColor(lv7m[1])))+'</div>'); var i7=blk.match(/技能7初始=([^\n]*)/), c7=blk.match(/技能7消耗=([^\n]*)/), d7=blk.match(/技能7持续=([^\n]*)/); if(i7||c7||d7)h.push('<div class="wskillnum">初始 '+(i7?esc(stripWiki(wikiColor(i7[1]))):'—')+' · 消耗 '+(c7?esc(stripWiki(wikiColor(c7[1]))):'—')+' · 持续 '+(d7&&d7[1]?esc(stripWiki(wikiColor(d7[1]))):'—')+'（7级）</div>'); var m1=blk.match(/技能专精1描述=([^\n]*)/); if(m1)h.push('<div class="wskilldesc m">专精1：'+esc(stripWiki(wikiColor(m1[1])))+'</div>'); var m2=blk.match(/技能专精2描述=([^\n]*)/); if(m2)h.push('<div class="wskilldesc m">专精2：'+esc(stripWiki(wikiColor(m2[1])))+'</div>'); var m3=blk.match(/技能专精3描述=([^\n]*)/); if(m3)h.push('<div class="wskilldesc m">专精3：'+esc(stripWiki(wikiColor(m3[1])))+'</div>'); h.push('</div>'); }
     h.push('</div>');
   }
   if(data&&data.mats){
@@ -2533,11 +2551,11 @@ function renderSkins(name,skins,failed){
       // 皮肤名/系列/介绍：sec1 时装数据优先，其次 SKIN_META
       var sName='', sSeries='', sIntro='', sObtain='', sPrice='';
       if(ciInfo){
-        var cim=ciInfo.match(new RegExp('\\|时装'+no+'名称=([^\\n|]*)'));
-        var cim2=ciInfo.match(new RegExp('\\|时装'+no+'系列=([^\\n|]*)'));
+        var cim=ciInfo.match(new RegExp('\\|时装'+no+'名称=([^\\n]*)'));
+        var cim2=ciInfo.match(new RegExp('\\|时装'+no+'系列=([^\\n]*)'));
         var cim3=ciInfo.match(new RegExp('\\|时装'+no+'介绍=([\\s\\S]*?)(?=\\n\\|时装|\\n}}|$)'));
-        var cim4=ciInfo.match(new RegExp('\\|时装'+no+'价格=([^\\n|]*)'))||ciInfo.match(new RegExp('\\|时装'+no+'售价=([^\\n|]*)'));
-        var cim5=ciInfo.match(new RegExp('\\|时装'+no+'获取方式=([^\\n|]*)'))||ciInfo.match(new RegExp('\\|时装'+no+'获取=([^\\n|]*)'))||ciInfo.match(new RegExp('\\|时装'+no+'获得方式=([^\\n|]*)'));
+        var cim4=ciInfo.match(new RegExp('\\|时装'+no+'价格=([^\\n]*)'))||ciInfo.match(new RegExp('\\|时装'+no+'售价=([^\\n]*)'));
+        var cim5=ciInfo.match(new RegExp('\\|时装'+no+'获取方式=([^\\n]*)'))||ciInfo.match(new RegExp('\\|时装'+no+'获取=([^\\n]*)'))||ciInfo.match(new RegExp('\\|时装'+no+'获得方式=([^\\n]*)'));
         if(cim)sName=wikiClean(cim[1]);
         if(cim2)sSeries=wikiClean(cim2[1]);
         if(cim3)sIntro=wikiClean(cim3[1]);
