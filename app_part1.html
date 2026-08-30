@@ -108,7 +108,9 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   background:var(--bg2); border:1px solid var(--line); border-radius:10px; cursor:pointer; transition:.15s;
 }
 .bcard:hover{border-color:var(--acc2); transform:translateX(2px)}
+.bcard{position:relative}
 .bcard.on{border-color:var(--acc); background:linear-gradient(90deg, rgba(255,154,46,.12), var(--bg2))}
+.bcard.on::before{content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:linear-gradient(180deg,var(--acc2),var(--gold)); border-radius:3px 0 0 3px}
 .bcard.active{border-left:3px solid #4ade80}
 .bcard .thumb{display:flex; gap:2px; min-width:64px}
 .bcard .thumb img{width:30px; height:30px; border-radius:6px; object-fit:cover; border:1px solid var(--line)}
@@ -272,6 +274,8 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .ld-bar{flex:1; height:5px; background:var(--bg); border-radius:3px; overflow:hidden}
 .ld-bar i{display:block; height:100%; background:linear-gradient(90deg,var(--acc),var(--acc2)); border-radius:3px}
 .pitymap{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:8px; max-height:56vh; overflow-y:auto}
+.pitymap .pitymap-card{transition:transform .15s, border-color .15s, box-shadow .15s}
+.pitymap .pitymap-card:hover{transform:translateY(-2px); border-color:var(--acc2); box-shadow:0 6px 16px rgba(74,179,255,.18)}
 .pitymap-card{background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:10px; cursor:pointer; transition:transform .15s, border-color .15s}
 .pitymap-card:hover{border-color:var(--acc2); transform:translateY(-2px)}
 .pitymap-card.on{border-color:var(--acc)}
@@ -744,7 +748,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员/Wiki数据，更新至 2026-08-29）· bilibili Wiki（精二立绘/皮肤/材料图标与掉落）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.69（概率提示可见·jsonp超时·输入聚焦）</b>
+  数据来源：PRTS Wiki（卡池/干员/Wiki数据，更新至 2026-08-29）· bilibili Wiki（精二立绘/皮肤/材料图标与掉落）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.70（模拟自选池拦截·空池防护·当前池高亮）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
