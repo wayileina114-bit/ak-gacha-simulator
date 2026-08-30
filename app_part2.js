@@ -1126,7 +1126,7 @@ function renderMatGrid(q){
 function openMatDetail(mn){
   var h=['<h4 class="sect" style="margin-top:0">🧱 材料详情 · '+esc(mn)+'</h4>'];
   h.push('<button class="mini-btn" id="matBack" style="margin-bottom:8px">← 返回材料列表</button>');
-  h.push('<div class="mat-detail-head">'+matIconHtml(mn)+'<span class="mat-detail-name">'+esc(mn)+'</span></div>');
+  h.push('<div class="mat-detail-head">'+matIconHtml(mn)+'<span class="mat-detail-name">'+esc(mn)+'</span><a class="mini-btn" href="https://prts.wiki/w/'+esc(encodeURIComponent(mn))+'" target="_blank" rel="noopener" style="margin-left:auto;text-decoration:none">🔗 PRTS</a></div>');
   h.push(matStagesHtml(mn));
   $('mBody').innerHTML=h.join('');
   var mb=$('matBack'); if(mb)mb.onclick=function(){ openMatQuery(); };
@@ -1721,6 +1721,7 @@ function wikiDetail(name, container){
   var box=container||$('wikiOut');
   var o=opOf(name);
   var h=[];
+  h.push('<div style="margin-bottom:6px"><button class="mini-btn" id="wikiDetailBack">← 返回</button></div>');
   h.push('<div class="wikid-head">');
   h.push('<img loading="lazy" src="'+esc(o?opArtT(o):'')+'" onerror="this.onerror=null;this.src=this.dataset.fb" data-fb="'+esc(o?(o.art||''):'')+'" alt=""/>');
   h.push('<div class="wikid-meta"><div class="wikid-name">'+esc(name)+'</div>');
@@ -1732,6 +1733,7 @@ function wikiDetail(name, container){
   h.push('</div>');
   h.push('<div id="wikiBody"><div class="notice" id="wikiSync">正在从 PRTS Wiki 同步数据…（需联网）</div></div>');
   box.innerHTML=h.join('');
+  var wdb=$('wikiDetailBack'); if(wdb)wdb.onclick=function(){ if(__wikiBack)__wikiBack(); else closeModal(); };
   var tabsEl=box.querySelectorAll('.wikid-tab');
   for(i=0;i<tabsEl.length;i++){ (function(tb){ tb.onclick=function(){ var tt=tb.getAttribute('data-t'); var all=box.querySelectorAll('.wikid-tab'); for(var ti2=0;ti2<all.length;ti2++)all[ti2].classList.remove('on'); tb.classList.add('on'); renderWikiTab(name,tt); }; })(tabsEl[i]); }
   wikiFetchDetail(name, box);
