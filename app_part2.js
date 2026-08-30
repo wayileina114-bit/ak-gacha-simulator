@@ -1023,6 +1023,7 @@ function matStagesHtml(mn){
     h.push('<div class="wrow"><b>'+esc(st.stage)+'</b><span>'+(ch?esc(ch)+' · ':'')+'期望 '+(st.ap<1?'理智效率极高':(st.ap.toFixed(1)+' 理智/个'))+dropsHtml+(st.note?'<br/>'+esc(st.note):'')+'</span></div>');
   }
   h.push('</div>');
+  h.push(matRecipeHtml(mn));
   return h.join('');
 }
 function openMatQuery(){
@@ -2245,6 +2246,40 @@ var MAT_FARM_DB={
  "褐素纤维":{stages:[{stage:"7-12",ap:30,drops:["酮阵列"]},{stage:"9-12",ap:31,drops:["酮阵列"]},]},
  "紫薯":{stages:[{stage:"6-16",ap:30,drops:["固源岩组"]},]},
 };
+var MAT_RECIPE={
+ '固源岩组':{from:[['固源岩',3]]},'提纯源岩':{from:[['固源岩组',2]]},
+ '聚酸酯组':{from:[['聚酸酯',2]]},'聚酸酯块':{from:[['聚酸酯组',2]]},
+ '糖组':{from:[['糖',3]]},'糖聚块':{from:[['糖组',2]]},
+ '异铁组':{from:[['异铁',3]]},'异铁块':{from:[['异铁组',2]]},
+ '酮凝集组':{from:[['酮凝集',3]]},'酮阵列':{from:[['酮凝集组',2]]},
+ '全新装置':{from:[['装置',2]]},'改量装置':{from:[['全新装置',2]]},
+ '五水研磨石':{from:[['研磨石',2]]},'白马醇':{from:[['扭转醇',2]]},
+ '三水锰矿':{from:[['轻锰矿',2]]},'聚合凝胶':{from:[['凝胶',2]]},
+ '炽合金块':{from:[['炽合金',2]]},'RMA70-24':{from:[['RMA70-12',2]]},
+ '晶体电路':{from:[['晶体元件',2]]},'晶体电子单元':{from:[['晶体电路',2]]},
+ '双极纳米片':{from:[['晶体电子单元',1]],to:['晶体电子单元']},
+ '聚合剂':{to:['提纯源岩']},'D32钢':{to:['五水研磨石']},
+ '褐素纤维':{to:['酮阵列']},'紫薯':{to:['三水锰矿']},
+ '源岩':{to:['固源岩']},'固源岩':{to:['固源岩组']},'固源岩组':{from:[['固源岩',3]],to:['提纯源岩']},
+ '酯原料':{to:['聚酸酯']},'聚酸酯':{to:['聚酸酯组']},'聚酸酯组':{from:[['聚酸酯',2]],to:['聚酸酯块']},
+ '糖':{to:['糖组']},'糖组':{from:[['糖',3]],to:['糖聚块']},
+ '异铁':{to:['异铁组']},'异铁组':{from:[['异铁',3]],to:['异铁块']},
+ '酮凝集':{to:['酮凝集组']},'酮凝集组':{from:[['酮凝集',3]],to:['酮阵列']},
+ '装置':{to:['全新装置']},'全新装置':{from:[['装置',2]],to:['改量装置']},
+ '研磨石':{to:['五水研磨石']},'扭转醇':{to:['白马醇']},'轻锰矿':{to:['三水锰矿']},
+ '凝胶':{to:['聚合凝胶']},'炽合金':{to:['炽合金块']},'RMA70-12':{to:['RMA70-24']},
+ '晶体元件':{to:['晶体电路']},'晶体电路':{from:[['晶体元件',2]],to:['晶体电子单元']},
+ '晶体电子单元':{from:[['晶体电路',2]],to:['双极纳米片','聚合剂']},
+};
+function matRecipeHtml(mn){
+  var rp=MAT_RECIPE[mn];
+  if(!rp)return '';
+  var h=[];
+  if(rp.from&&rp.from.length)h.push('🧪 合成：'+rp.from.map(function(x){ return matIconHtml(x[0])+'<span class="mat-drop">'+esc(x[0])+'×'+x[1]+'</span>'; }).join(' + '));
+  if(rp.to&&rp.to.length)h.push('⬆️ 用于合成：'+rp.to.map(function(x){ return matIconHtml(x)+'<span class="mat-drop">'+esc(x)+'</span>'; }).join(' '));
+  if(!h.length)return '';
+  return '<div class="mat-recipe">'+h.join('')+'</div>';
+}
 var MTL_ICON={
  "源岩":"MTL_SL_G1",
  "固源岩":"MTL_SL_G2",
