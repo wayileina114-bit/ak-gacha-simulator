@@ -540,8 +540,10 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .colrar .cr b{color:var(--gold); margin-left:4px}
 .colbar i{display:block; height:100%; background:linear-gradient(90deg,var(--acc2),var(--gold)); width:0%; transition:.3s}
 .achgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px}
-.ach{background:var(--bg2); border:1px solid var(--line); border-radius:10px; padding:12px; text-align:center}
-.ach .aic{font-size:26px}
+.ach{background:var(--bg2); border:1px solid var(--line); border-radius:10px; padding:12px; text-align:center; transition:transform .15s, border-color .15s, box-shadow .15s}
+.ach:hover{transform:translateY(-2px); border-color:var(--acc2); box-shadow:0 6px 16px rgba(74,179,255,.18)}
+.ach:hover .aic{transform:scale(1.2)}
+.ach .aic{font-size:26px; display:inline-block; transition:transform .15s}
 .ach .an{font-weight:800; margin:6px 0 4px; color:var(--txt)}
 .ach .ad{font-size:11px; color:var(--dim); margin-bottom:6px}
 .ach .ap{font-size:11px; color:var(--gold); margin-bottom:4px}
@@ -616,9 +618,9 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .opstats #opSort{padding:7px 10px; border-radius:8px; background:var(--bg2); border:1px solid var(--line); color:var(--txt); font-family:inherit; font-size:13px}
 #colSortSel{padding:5px 8px; border-radius:8px; background:var(--bg2); border:1px solid var(--line); color:var(--txt); font-family:inherit; font-size:12px; margin-left:4px}
 #opTable{max-height:52vh; overflow-y:auto; margin-top:8px}
-.optable-row{display:flex; align-items:center; gap:10px; padding:5px 8px; border-radius:8px; font-size:13px; cursor:pointer}
+.optable-row{display:flex; align-items:center; gap:10px; padding:5px 8px; border-radius:8px; font-size:13px; cursor:pointer; transition:transform .12s, background .12s}
 .optable-row:nth-child(odd){background:rgba(255,255,255,.025)}
-.optable-row:hover{background:rgba(74,179,255,.08)}
+.optable-row:hover{background:rgba(74,179,255,.08); transform:translateX(2px)}
 .optable-row img{width:36px; height:36px; border-radius:8px; object-fit:cover; object-position:top; border:1px solid var(--line); flex-shrink:0}
 .optable-row .on{flex:1.2; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .optable-row .ost{color:var(--gold); font-size:11px; width:60px; flex-shrink:0}
