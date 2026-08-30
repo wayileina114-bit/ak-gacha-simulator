@@ -1515,6 +1515,10 @@ function openModal(opName){
   h.push('<div class="kv"><b>职业</b>'+esc(o.prof||'—')+'</div>');
   h.push('<div class="kv"><b>阵营</b>'+esc(o.nation||'—')+'</div>');
   h.push('<div class="kv"><b>标签</b>'+esc(o.tag||'—')+'</div>');
+  try{
+    var ciChar2=wikiCache[opName]&&wikiCache[opName].charInfo;
+    if(ciChar2){ var fm2=ciChar2.match(new RegExp('\\|特性=([^\\n]*)')); if(fm2&&fm2[1])h.push('<div class="kv"><b>特性</b>'+esc(wikiClean(fm2[1]))+'</div>'); }
+  }catch(e){}
   h.push('<div class="kv"><b>获取</b>'+(state.collection.indexOf(opName)>=0?'已拥有':'未获得')+(o.gift?' · <span style="color:#ff9a2e">🎁 活动赠送干员</span>':'')+(o.collabOp?' · <span style="color:#c96ab6">🔗 联动限定</span>':'')+'</div>');
   var opC=(state.opCnt&&state.opCnt[opName])||0;
   h.push('<div class="kv"><b>已抽到</b>'+opC+' 次'+(opC&&state.history.length?'（占全部 '+(opC/state.history.length*100).toFixed(1)+'%）':'')+'</div>');
@@ -1838,6 +1842,17 @@ function wikiBaseTab(name,data){
     if(painter)h.push('<div class="wrow"><b>画师</b><span>'+esc(wikiClean(painter))+'</span></div>');
     if(cnv||jpv)h.push('<div class="wrow"><b>配音</b><span>中：'+esc(wikiClean(cnv||'—'))+(jpv?' · 日：'+esc(wikiClean(jpv)):'')+'</span></div>');
     h.push('</div>');
+    var skArr=[];
+    for(var sn2=1;sn2<=8;sn2++){
+      var smN=ci.match(new RegExp('\\|时装'+sn2+'名称=([^\\n]*)'));
+      var smS=ci.match(new RegExp('\\|时装'+sn2+'系列=([^\\n]*)'));
+      if(smN&&smN[1])skArr.push({n:wikiClean(smN[1]),s:smS?wikiClean(smS[1]):''});
+    }
+    if(skArr.length){
+      h.push('<div class="wikisec"><h4>👗 时装（'+skArr.length+'）</h4><div class="wikirows">');
+      for(var si6=0;si6<skArr.length;si6++){ h.push('<div class="wrow"><b>'+esc(skArr[si6].n)+'</b><span>'+(skArr[si6].s?esc(skArr[si6].s):'')+'</span></div>'); }
+      h.push('</div></div>');
+    }
     if(intro0)h.push('<div class="notice" style="line-height:2">📷 精英0：'+esc(wikiClean(intro0))+'</div>');
     if(intro2)h.push('<div class="notice" style="line-height:2">🌟 精英2：'+esc(wikiClean(intro2))+'</div>');
     h.push('</div>');
@@ -2108,7 +2123,7 @@ function parseVoiceLang(label){
   return '中文';
 }
 function voiceHtml(vd){
-  var h=['<div class="wikisec"><h4>🎙 语音记录</h4>'];
+  var h=['<div class="wikisec"><h4>🎙 语音记录'+(vd&&vd.items&&vd.items.length?('（'+vd.items.length+' 条）'):'')+'</h4>'];
   if(!vd||!vd.items||!vd.items.length){ h.push('<div class="notice">暂无语音数据</div>'); return h.join(''); }
   var selLang=vd.selLang||'中文';
   if(vd.langs&&vd.langs.length>1){
