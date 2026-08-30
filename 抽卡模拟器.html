@@ -675,7 +675,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
       <div class="filters" id="histTypeChips"></div>
       <div class="filters" id="histTimeChips"></div>
       <div id="history"></div>
-      <div class="sectbar"><h4>干员图鉴</h4><span class="notice" id="colCount" style="margin-left:4px"></span><select id="colSortSel"><option value="fav">收藏置顶</option><option value="rarity">按稀有度</option><option value="name">按名称</option><option value="prof">按职业</option></select><select id="colNationSel"><option value="all">阵营:全部</option><option value="罗德岛">罗德岛</option><option value="龙门">龙门</option><option value="乌萨斯">乌萨斯</option><option value="维多利亚">维多利亚</option><option value="炎国">炎国</option><option value="哥伦比亚">哥伦比亚</option><option value="莱塔尼亚">莱塔尼亚</option><option value="萨尔贡">萨尔贡</option><option value="谢拉格">谢拉格</option><option value="叙拉古">叙拉古</option><option value="玻利瓦尔">玻利瓦尔</option><option value="雷姆必拓">雷姆必拓</option><option value="拉特兰">拉特兰</option><option value="伊比利亚">伊比利亚</option><option value="米诺斯">米诺斯</option><option value="阿戈尔">阿戈尔</option><option value="东国">东国</option><option value="卡西米尔">卡西米尔</option><option value="深海猎人">深海猎人</option><option value="岁">岁</option><option value="未知">未知/其他</option></select><button class="mini-btn" id="btnGallery">立绘画廊</button><button class="mini-btn" id="btnWishList">💝 心愿单</button><button class="mini-btn" id="btnRandOp">🎲 随机干员</button></div>
+      <div class="sectbar"><h4>干员图鉴</h4><span class="notice" id="colCount" style="margin-left:4px"></span><select id="colSortSel"><option value="fav">收藏置顶</option><option value="got">按获得顺序</option><option value="cnt">按抽到次数</option><option value="rarity">按稀有度</option><option value="name">按名称</option><option value="prof">按职业</option></select><select id="colNationSel"><option value="all">阵营:全部</option><option value="罗德岛">罗德岛</option><option value="龙门">龙门</option><option value="乌萨斯">乌萨斯</option><option value="维多利亚">维多利亚</option><option value="炎国">炎国</option><option value="哥伦比亚">哥伦比亚</option><option value="莱塔尼亚">莱塔尼亚</option><option value="萨尔贡">萨尔贡</option><option value="谢拉格">谢拉格</option><option value="叙拉古">叙拉古</option><option value="玻利瓦尔">玻利瓦尔</option><option value="雷姆必拓">雷姆必拓</option><option value="拉特兰">拉特兰</option><option value="伊比利亚">伊比利亚</option><option value="米诺斯">米诺斯</option><option value="阿戈尔">阿戈尔</option><option value="东国">东国</option><option value="卡西米尔">卡西米尔</option><option value="深海猎人">深海猎人</option><option value="岁">岁</option><option value="未知">未知/其他</option></select><button class="mini-btn" id="btnGallery">立绘画廊</button><button class="mini-btn" id="btnWishList">💝 心愿单</button><button class="mini-btn" id="btnRandOp">🎲 随机干员</button></div>
       <div class="colbar" id="colBar"></div>
       <div id="colRarity"></div>
       <div class="filters" id="colChips"></div>
@@ -686,7 +686,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.31（存档导入升级·文件拖拽·备份恢复）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.32（图鉴排序增强·快捷键扩充）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -1065,7 +1065,7 @@ function renderBannerList(){
     }
     matched.push(b);
   }
-  if(!window.__todayStr)window.__todayStr=(function(){ var d=new Date(); return d.getFullYear()+'-'+(d.getMonth()<9?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate(); })(); var todayStrB=window.__todayStr;
+  var todayStrB=(function(){ var d2b=new Date(); return d2b.getFullYear()+'-'+(d2b.getMonth()<9?'0':'')+(d2b.getMonth()+1)+'-'+(d2b.getDate()<10?'0':'')+d2b.getDate(); })();
   matched.sort(function(a,b2){
     var aAct=a.start<=todayStrB&&a.end>=todayStrB?1:0, bAct=b2.start<=todayStrB&&b2.end>=todayStrB?1:0;
     if(aAct!==bAct)return bAct-aAct;
@@ -2142,15 +2142,18 @@ var NATION_CN={'rhodes':'罗德岛','lungmen':'龙门','ursus':'乌萨斯','vict
 var COL_SORT_CACHE=null, COL_SORT_KEY='';
 function renderCollection(){
   var names;
-  if(COL_SORT_KEY===colSort&&COL_SORT_CACHE){ names=COL_SORT_CACHE; }
+  var colCacheKey=colSort+':'+state.collection.length+':'+state.history.length+':'+((state.opCnt&&Object.keys(state.opCnt).length)||0)+':'+((state.favOps&&Object.keys(state.favOps).length)||0);
+  if(COL_SORT_KEY===colCacheKey&&COL_SORT_CACHE){ names=COL_SORT_CACHE; }
   else{
     names=Object.keys(opByName).sort(function(a,b){
     if(colSort==='fav'){ var fa=state.favOps&&state.favOps[a]?1:0, fb=state.favOps&&state.favOps[b]?1:0; if(fa!==fb)return fb-fa; }
+    if(colSort==='got'){ var ia=state.collection.indexOf(a), ib=state.collection.indexOf(b); var va=ia>=0?ia:999999, vb=ib>=0?ib:999999; if(va!==vb)return va-vb; }
+    if(colSort==='cnt'){ var ca2=(state.opCnt&&state.opCnt[a])||0, cb2=(state.opCnt&&state.opCnt[b])||0; if(ca2!==cb2)return cb2-ca2; }
     if(colSort==='name')return a.localeCompare(b,'zh');
     if(colSort==='prof'){ var pa=(opByName[a]&&opByName[a].prof)||'', pb=(opByName[b]&&opByName[b].prof)||''; return pa.localeCompare(pb,'zh')||opByName[b].rarity-opByName[a].rarity; }
     return opByName[b].rarity-opByName[a].rarity||a.localeCompare(b,'zh');
   });
-    COL_SORT_KEY=colSort; COL_SORT_CACHE=names;
+    COL_SORT_KEY=colCacheKey; COL_SORT_CACHE=names;
   }
   var h=[],i,o;
   var colSet={}, csi;
@@ -4200,6 +4203,8 @@ function init(){
     else if(e.key==='g'||e.key==='G')openGallery();
     else if(e.key==='s'||e.key==='S')openStats();
     else if(e.key==='h'||e.key==='H'){ var hp=$('history'); if(hp&&hp.scrollIntoView)hp.scrollIntoView({behavior:'smooth',block:'start'}); }
+    else if(e.key==='w'||e.key==='W')openWishList();
+    else if(e.key==='p'||e.key==='P')openPityMap();
   });
   var bl=$('bannerList');
   if(bl)bl.onclick=function(e){
