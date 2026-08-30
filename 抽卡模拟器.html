@@ -735,7 +735,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员/Wiki数据，更新至 2026-08-29）· bilibili Wiki（精二立绘/皮肤/材料图标与掉落）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.53（成就扩充·联动/井/六星军团）</b>
+  数据来源：PRTS Wiki（卡池/干员/Wiki数据，更新至 2026-08-29）· bilibili Wiki（精二立绘/皮肤/材料图标与掉落）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.54（井兑换规则修正·联动文案）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -1313,7 +1313,7 @@ function bannerInfoHtml(b){
   if(ups6.length===1)h.push(' · 当期6★占6★出率的 <b>50%</b>');
   else if(ups6.length>=2)h.push(' · 当期6★各占6★出率的 <b>'+(b.type==='zjselect'?35:b.rate6)+'%</b>');
   if(b.limitedSix.length)h.push(' · 限定干员：<b>'+b.limitedSix.map(esc).join('、')+'</b>');
-  if(b.spark)h.push(' · 300抽可兑换限定干员');
+  if(b.spark)h.push(' · 300抽可兑换'+(b.collab?'联动干员':'限定干员'));
   h.push('</div>');
   var st0=state.pity[pityKey(b)]||{fails:0};
   if(st0.fails>=90)h.push('<div class="pityurgent">🚨 已接近保底！当前 '+st0.fails+' 抽，最多再 '+Math.max(0,100-st0.fails)+' 抽必出 6★</div>');
@@ -1338,7 +1338,7 @@ function bannerInfoHtml(b){
   if(b.spark){
     var tok=state.spark[b.id]||0;
     h.push('<div class="spark"><span>'+(b.collab?'🔗 寻访数据契约（联动·300兑换联动限定）':'寻访数据契约')+'</span><div class="bar"><i style="width:'+Math.min(100,tok/3)+'%"></i></div><b>'+tok+' / 300</b>'+(tok<300?'<span class="sparkhint">还差 <b>'+(300-tok)+'</b> 抽可兑换'+(b.collab?'联动限定':'限定')+'</span>':'<span class="sparkhint done">已可兑换'+(b.collab?'联动限定':'限定干员')+'！</span>'));
-    h.push('<button class="mini-btn" id="spark300" '+(tok>=300?'':'disabled')+'>300兑换限定</button>');
+    h.push('<button class="mini-btn" id="spark300" '+(tok>=300?'':'disabled')+'>'+(b.collab?'300兑换联动限定':'300兑换限定')+'</button>');
     var nonLim=b.six.filter(function(n){return b.limitedSix.indexOf(n)<0;});
     if(nonLim.length)h.push('<button class="mini-btn" id="spark200" '+(tok>=200?'':'disabled')+'>200兑换当期6★</button>');
     h.push('</div>');
@@ -1414,10 +1414,14 @@ function updateRateNote(b){
   var pc=$('pityCount');
   if(pc){ if(st.fails>=85){ pc.textContent='⏳ 还剩 '+(100-st.fails)+' 抽必出6★'; pc.classList.add('show'); } else { pc.textContent=''; pc.classList.remove('show'); } }
 }
+function sparkTargets(b, cost){
+  if(cost===300)return b.collab?b.six.slice():b.limitedSix.slice();
+  return b.six.filter(function(n){ return b.limitedSix.indexOf(n)<0; });
+}
 function sparkExchange(cost){
   var b=bannerById(state.cur), tok=state.spark[b.id]||0;
   if(tok<cost){ toast('寻访数据契约不足'); return; }
-  var list=cost===300?(b.collab?b.six.slice():b.limitedSix.slice()):b.six.slice();
+  var list=sparkTargets(b, cost);
   if(!list.length){ toast('无可兑换干员'); return; }
   var h=['<h4 class="sect" style="margin-top:0">选择要兑换的干员（消耗 <b>'+cost+'</b> 契约 · 现有 '+tok+'）</h4><div class="rateup">'];
   var i,o;
@@ -3340,7 +3344,7 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v11.53</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v11.54</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 真实寻访记录分析（纯前端）· 存档导入导出 · 四主题</div>');
   h.push('</div>');
@@ -3352,7 +3356,7 @@ function openAbout(){
   var pb=$('btnWikiProbe'); if(pb)pb.onclick=function(){ var po=$('wikiProbeOut'); if(po)wikiProbe(po); };
   var al=$('aboutLog');
   if(al){
-    var logTxt=['<b>v11.53</b> 成就扩充（联动/井中月/六星军团）','<b>v11.52</b> 关于面板更新 · 时装回廊统计','<b>v11.51</b> Wiki连通性检测 · 关于面板优化','<b>v11.50</b> 养成材料逐项推荐 · 皮肤泄漏/范围修复','<b>v11.49</b> 材料刷取查询重做 · 真图标','<b>v11.48</b> Wiki同步六重回退 · 进度提示','<b>v11.47</b> Wiki返回按钮 · 材料PRTS链接','<b>v11.46</b> 材料图标彩色兜底','<b>v11.45</b> 材料入口去重 · 图标重试','<b>v11.44</b> 皮肤懒加载缓存 · 时装角标','<b>v11.43</b> 特性行 · 时装列表','<b>v11.42</b> 联动池300井','<b>v11.41</b> 手机端卡池列表可滑动','<b>v11.40</b> Wiki整页获取 · 五重回退','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
+    var logTxt=['<b>v11.54</b> 井兑换规则修正 · 联动文案','<b>v11.53</b> 成就扩充（联动/井中月/六星军团）','<b>v11.52</b> 关于面板更新 · 时装回廊统计','<b>v11.51</b> Wiki连通性检测 · 关于面板优化','<b>v11.50</b> 养成材料逐项推荐 · 皮肤泄漏/范围修复','<b>v11.49</b> 材料刷取查询重做 · 真图标','<b>v11.48</b> Wiki同步六重回退 · 进度提示','<b>v11.47</b> Wiki返回按钮 · 材料PRTS链接','<b>v11.46</b> 材料图标彩色兜底','<b>v11.45</b> 材料入口去重 · 图标重试','<b>v11.44</b> 皮肤懒加载缓存 · 时装角标','<b>v11.43</b> 特性行 · 时装列表','<b>v11.42</b> 联动池300井','<b>v11.41</b> 手机端卡池列表可滑动','<b>v11.40</b> Wiki整页获取 · 五重回退','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
     al.innerHTML=logTxt;
   }
   openModalBox();
