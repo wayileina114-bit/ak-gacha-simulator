@@ -1,6 +1,6 @@
 # 明日方舟抽卡模拟器（Arknights Gacha Simulator）
 
-![version](https://img.shields.io/badge/version-v11.48-blue) ![banners](https://img.shields.io/badge/卡池-442-orange) ![ops](https://img.shields.io/badge/干员-409-brightgreen) ![license](https://img.shields.io/badge/license-MIT-lightgrey)
+![version](https://img.shields.io/badge/version-v11.49-blue) ![banners](https://img.shields.io/badge/卡池-442-orange) ![ops](https://img.shields.io/badge/干员-409-brightgreen) ![license](https://img.shields.io/badge/license-MIT-lightgrey)
 
 > 单文件 HTML 的明日方舟抽卡模拟器 · 自选历史卡池 · 干员立绘 · 抽卡统计 · 皮肤图鉴
 
@@ -15,6 +15,7 @@
 | 📊 统计 | 欧气评分（等级徽章）· 六星间隔 · UP 命中率 · 每月统计 · 每日出货 · 热力图 · 时段 · 保底总览 · 等价合成玉 · 限定图鉴完成度 · 限定/6★缺卡清单 |
 | 🧪 模拟 | 独立保底模拟（垫刀起始进度 · UP命中统计 · 10次分布 · 与真实对比），绝不污染存档 |
 | 📖 Wiki | 属性/技能/材料/模组/档案/密录/语音（多语言台词复制）实时同步 PRTS · 六重回退自动获取（JSONP/CORS/多级代理）· 进度提示 · 分节缓存 · 搜索候选 · 双干员对比 |
+| 🧱 材料 | 材料刷取查询：内置 bilibili Wiki 官方掉落数据（固定/概率/小概率/基建生产）与**真实图标**（断网可用）· 分类筛选 · 掉落关卡数 · 合成配方 · PRTS 实时同步增强 |
 | 💝 心愿单 | 标记想要干员，抽到自动提醒并移除 |
 | 🏆 成就 | 22 项成就（限定收藏家 / 全图鉴 / 五星常客 / 深度博士 / 单日三黄…）+ 进度条 |
 | 📱 移动端 | 抽屉式卡池选择 · 底部操作栏 · iOS 安全区适配 |
