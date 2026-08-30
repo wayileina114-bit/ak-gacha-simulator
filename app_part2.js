@@ -589,7 +589,7 @@ function bannerInfoHtml(b){
   }
   if(b.spark){
     var tok=state.spark[b.id]||0;
-    h.push('<div class="spark"><span>寻访数据契约</span><div class="bar"><i style="width:'+Math.min(100,tok/3)+'%"></i></div><b>'+tok+' / 300</b>'+(tok<300?'<span class="sparkhint">还差 <b>'+(300-tok)+'</b> 抽可兑换限定</span>':'<span class="sparkhint done">已可兑换限定干员！</span>'));
+    h.push('<div class="spark"><span>'+(b.collab?'🔗 寻访数据契约（联动·300兑换联动限定）':'寻访数据契约')+'</span><div class="bar"><i style="width:'+Math.min(100,tok/3)+'%"></i></div><b>'+tok+' / 300</b>'+(tok<300?'<span class="sparkhint">还差 <b>'+(300-tok)+'</b> 抽可兑换'+(b.collab?'联动限定':'限定')+'</span>':'<span class="sparkhint done">已可兑换'+(b.collab?'联动限定':'限定干员')+'！</span>'));
     h.push('<button class="mini-btn" id="spark300" '+(tok>=300?'':'disabled')+'>300兑换限定</button>');
     var nonLim=b.six.filter(function(n){return b.limitedSix.indexOf(n)<0;});
     if(nonLim.length)h.push('<button class="mini-btn" id="spark200" '+(tok>=200?'':'disabled')+'>200兑换当期6★</button>');
@@ -669,7 +669,7 @@ function updateRateNote(b){
 function sparkExchange(cost){
   var b=bannerById(state.cur), tok=state.spark[b.id]||0;
   if(tok<cost){ toast('寻访数据契约不足'); return; }
-  var list=cost===300?b.limitedSix.slice():b.six.slice();
+  var list=cost===300?(b.collab?b.six.slice():b.limitedSix.slice()):b.six.slice();
   if(!list.length){ toast('无可兑换干员'); return; }
   var h=['<h4 class="sect" style="margin-top:0">选择要兑换的干员（消耗 <b>'+cost+'</b> 契约 · 现有 '+tok+'）</h4><div class="rateup">'];
   var i,o;
@@ -1692,7 +1692,7 @@ function wikiFetch(name,target){
   openModalBox();
   prtsFetch(name, null, function(wt){
     if(!wt){
-      box.innerHTML='<h4 class="sect" style="margin-top:0">📊 '+esc(name)+' · Wiki数据</h4><div class="notice">同步失败：无法连接 PRTS Wiki（需联网），请确认网络后重试</div><div style="text-align:center;margin-top:8px"><button class="mini-btn" id="wikiRetry">🔄 重试同步</button></div>';
+      box.innerHTML='<h4 class="sect" style="margin-top:0">📊 '+esc(name)+' · Wiki数据</h4><div class="notice">同步失败：无法连接 PRTS Wiki（需联网/可能限流），请稍后重试</div><div style="text-align:center;margin-top:8px"><button class="mini-btn" id="wikiRetry">🔄 重试同步</button></div>';
       var wr=$('wikiRetry'); if(wr)wr.onclick=function(){ box.innerHTML='<div class="notice">正在从 PRTS Wiki 同步 <b>'+esc(name)+'</b> 的数据…（需联网）</div>'; wikiFetch(name,box); };
       return;
     }
@@ -1792,7 +1792,7 @@ function wikiFetchDetail(name, box){
   prtsFetch(name, null, function(wt){
     var b2=$('wikiBody');
     if(!wt){
-      if(b2)b2.innerHTML='<div class="notice">同步失败：无法连接 PRTS Wiki（需联网）或该干员页面不存在</div><div style="text-align:center;margin-top:8px"><button class="mini-btn" id="wikiRetry3">🔄 重试</button></div>';
+      if(b2)b2.innerHTML='<div class="notice">同步失败：无法连接 PRTS Wiki（需联网）或该干员页面不存在，也可能是 PRTS 限流，请稍后重试</div><div style="text-align:center;margin-top:8px"><button class="mini-btn" id="wikiRetry3">🔄 重试</button></div>';
       var wr=$('wikiRetry3'); if(wr)wr.onclick=function(){ wikiFetchDetail(name,box); };
       return;
     }

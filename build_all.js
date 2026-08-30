@@ -63,7 +63,7 @@ for (const b of banners) {
     six: f6, five: f5, four: f4,
     limitedSix: sixAll.filter(s => s.limited && opMap[s.name] && opMap[s.name].rarity >= 6).map(s => s.name),
     rate6: f6.length >= 2 ? 35 : 50,
-    spark: type === 'limited',
+    spark: type === 'limited' || isCollab,
   });
 }
 
