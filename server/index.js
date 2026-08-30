@@ -104,8 +104,24 @@ var server = http.createServer(async function(req, res){
         }
         return json(res, 200, { ok: true, total: all.length, pages: page, records: all });
       }
+      if (url === '/api/skland'){
+        if (!body.token) return json(res, 400, { ok: false, error: '缺少 token（森空岛凭证）' });
+        const token = String(body.token).trim();
+        let player = {};
+        let records = [];
+        try {
+          const info = await reqJson(AK_API + '/api/player/info/v1', 'GET', { cred: token }, null);
+          player = (info.json && (info.json.data || info.json)) || {};
+        } catch (e) { /* 信息接口可能变动 */ }
+        try {
+          const g = await gachaQuery(token, 1, 1);
+          const list = (g && (g.list || g.records || g.gacha)) || [];
+          for (const it of list) records.push(it);
+        } catch (e) { /* 抽卡接口可能变动，仅返回账号信息 */ }
+        return json(res, 200, { ok: true, player: player, total: records.length, records: records });
+      }
       if (url === '/'){
-        return json(res, 200, { ok: true, endpoints: ['/api/ping', '/api/login', '/api/grant', '/api/gacha'], note: 'POST JSON 调用，见 README' });
+        return json(res, 200, { ok: true, endpoints: ['/api/ping', '/api/login', '/api/grant', '/api/gacha', '/api/skland'], note: 'POST JSON 调用，见 README' });
       }
       json(res, 404, { ok: false, error: '未找到接口: ' + url });
     }catch(e){

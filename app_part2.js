@@ -946,6 +946,28 @@ function wireBackend(){
       bkOut('✅ 获取成功：共 '+d.total+' 条记录');
     }).catch(function(e){ bkOut('❌ 获取失败：'+e.message,true); });
   };
+  var sk=$('skFetch');
+  if(sk)sk.onclick=function(){
+    var base=($('bkUrl')?$('bkUrl').value:'').trim()||'http://127.0.0.1:8723';
+    var tok=($('skToken')?$('skToken').value:'').trim();
+    if(!tok){ bkOut('请先粘贴森空岛 token',true); return; }
+    bkOut('正在通过后端拉取森空岛账号数据…');
+    bkCall(base,'/api/skland',{token:tok}).then(function(d){
+      var p=d.player||{};
+      var nick=p.nickName||p.name||p.昵称||'未知博士';
+      var uid=p.uid||p.userId||p.UID||'';
+      var lv=p.level||'';
+      var skh=['<div class="sk-card">'];
+      skh.push('<div class="sk-head">');
+      if(p.avatar)p.push?0:0;
+      skh.push('<div class="sk-name">'+esc(nick)+'</div>');
+      skh.push('<div class="sk-sub">'+(uid?'UID '+esc(uid):'')+(lv?' · LV '+esc(lv):'')+'</div>');
+      skh.push('</div></div>');
+      var out=$('skOut'); if(out)out.innerHTML=skh.join('');
+      var realOut=$('realOut'); if(realOut)realOut.innerHTML=renderRealAnalysis(parseRealRecords(JSON.stringify({records:d.records||[]})));
+      bkOut('✅ 森空岛数据获取成功：共 '+d.total+' 条记录'+(d.records&&d.records.length?'':'（抽卡接口可能变动，仅显示账号信息）'));
+    }).catch(function(e){ bkOut('❌ 获取失败：'+e.message,true); });
+  };
   var bl=$('bkLogin');
   if(bl)bl.onclick=function(){
     var base=($('bkUrl')?$('bkUrl').value:'').trim()||'http://127.0.0.1:8723';
@@ -1012,18 +1034,58 @@ function renderRealAnalysis(recs){
   }
   return h.join('');
 }
+function parseMatDrops(html){
+  var res={fixed:[],prob:[],rare:[]};
+  var labels=[['固定掉落','fixed'],['概率掉落','prob'],['小概率掉落','rare']];
+  for(var li=0;li<labels.length;li++){
+    var idx=html.indexOf(labels[li][0]);
+    if(idx<0)continue;
+    var seg=html.slice(idx, idx+5000);
+    var re=/(?:>|title=")([A-Z]?[0-9]+(?:-[0-9]+)+)(?:<| )/g;
+    var m;
+    while((m=re.exec(seg))){ var st=m[1]; if(res[labels[li][1]].indexOf(st)<0)res[labels[li][1]].push(st); }
+  }
+  return res;
+}
+function renderLiveDrops(drops, mn){
+  var h=['<div class="mat-live"><h4>📡 PRTS 官方掉落（实时）</h4>'];
+  var cats=[['fixed','固定掉落'],['prob','概率掉落'],['rare','小概率掉落']];
+  var any=false;
+  for(var ci=0;ci<cats.length;ci++){
+    var list=drops[cats[ci][0]];
+    if(!list||!list.length)continue;
+    any=true;
+    h.push('<div class="mat-live-cat"><b>'+cats[ci][1]+'</b><span>');
+    for(var si=0;si<list.length;si++){
+      var ch=chapterOf(list[si]);
+      h.push('<span class="mat-live-stage">'+esc(list[si])+(ch?' · '+esc(ch):'')+'</span>');
+    }
+    h.push('</span></div>');
+  }
+  if(!any)h.push('<div class="notice">未解析到掉落数据（页面结构可能变动）</div>');
+  h.push('</div>');
+  return h.join('');
+}
 function matStagesHtml(mn){
   var d=MAT_FARM_DB[mn];
-  if(!d||!d.stages||!d.stages.length)return '<div class="notice">该材料暂未收录刷取数据</div>';
   var h=['<div class="wikirows">'];
-  for(var i=0;i<d.stages.length;i++){
-    var st=d.stages[i];
-    var ch=chapterOf(st.stage);
-    var dropsHtml=(st.drops&&st.drops.length)?('<br/>其他产物：'+st.drops.map(function(x){return matIconHtml(x)+'<span class="mat-drop">'+esc(x)+'</span>';}).join(' ')):'';
-    h.push('<div class="wrow"><b>'+esc(st.stage)+'</b><span>'+(ch?esc(ch)+' · ':'')+'期望 '+(st.ap<1?'理智效率极高':(st.ap.toFixed(1)+' 理智/个'))+dropsHtml+(st.note?'<br/>'+esc(st.note):'')+'</span></div>');
-  }
+  if(d&&d.stages&&d.stages.length){
+    for(var i=0;i<d.stages.length;i++){
+      var st=d.stages[i];
+      var ch=chapterOf(st.stage);
+      var dropsHtml=(st.drops&&st.drops.length)?('<br/>其他产物：'+st.drops.map(function(x){return matIconHtml(x)+'<span class="mat-drop">'+esc(x)+'</span>';}).join(' ')):'';
+      h.push('<div class="wrow"><b>'+esc(st.stage)+'</b><span>'+(ch?esc(ch)+' · ':'')+'估计 '+(st.ap<1?'理智效率极高':(st.ap.toFixed(1)+' 理智/个'))+'（参考值）'+dropsHtml+(st.note?'<br/>'+esc(st.note):'')+'</span></div>');
+    }
+  } else { h.push('<div class="notice">该材料暂未收录刷取数据</div>'); }
   h.push('</div>');
   h.push(matRecipeHtml(mn));
+  h.push('<div class="notice" id="matLive">📡 正在同步 PRTS 官方掉落数据…（需联网）</div>');
+  jsonp('https://prts.wiki/api.php?action=parse&page='+encodeURIComponent(mn)+'&prop=text&format=json',function(data){
+    var html=(data&&data.parse&&data.parse.text&&data.parse.text['*'])||'';
+    var drops=parseMatDrops(html);
+    var out=$('matLive');
+    if(out)out.outerHTML=renderLiveDrops(drops, mn);
+  },15000);
   return h.join('');
 }
 function openMatQuery(){
@@ -1073,6 +1135,10 @@ function openRealGacha(){
   h.push('<div class="controls" style="margin-bottom:6px"><span class="notice">方式二：鹰角账号密码登录 → 自动获取凭证与记录</span></div>');
   h.push('<div class="wikisearch"><input id="bkPhone" placeholder="手机号"/><input id="bkPwd" type="password" placeholder="密码"/><button class="mini-btn" id="bkLogin">📱 登录并拉取</button></div>');
   h.push('<div id="bkOut" style="margin-top:6px"></div>');
+  h.push('<div class="wikisec" style="margin-top:10px"><h4>🏝 森空岛账号数据</h4></div>');
+  h.push('<div class="wikihint">从 <b>森空岛 APP</b>（明日方舟官方社区）获取账号 token 后，通过本地后端拉取账号信息与抽卡记录。<br/>获取方式：森空岛 APP → 我的 → 设置 → 开发者选项 → 复制 token（社区教程一致）。</div>');
+  h.push('<div class="wikisearch"><input id="skToken" placeholder="粘贴森空岛 token..."/><button class="mini-btn" id="skFetch">🏝 拉取账号数据</button></div>');
+  h.push('<div id="skOut"></div>');
   h.push('<div id="realOut"></div>');
   $('mBody').innerHTML=h.join('');
   openModalBox();
@@ -1777,19 +1843,36 @@ function wikiVoiceTab(name,data){
   var h=['<div class="wikisec"><h4>🎙 语音记录</h4>'];
   h.push('<div class="notice">正在从 PRTS 同步语音…（需联网）</div>');
   var vc=wikiVoiceCache[name];
-  if(vc&&Date.now()-vc.t<600000){ h.pop(); h.push.apply(h, vc.html); $('wikiBody').innerHTML=h.join(''); return; }
+  if(vc&&Date.now()-vc.t<600000){ h.pop(); h.push.apply(h, vc.html); var body0=$('wikiBody'); if(body0)body0.innerHTML=h.join(''); return; }
   jsonp('https://prts.wiki/api.php?action=parse&page='+encodeURIComponent(name+'/语音记录')+'&prop=wikitext&format=json',function(data){
     var wt=(data&&data.parse&&data.parse.wikitext&&data.parse.wikitext['*'])||'';
     var html=[];
+    var cnPath='';
     if(wt){
+      var pathM=wt.match(/\|路径=([^\n|]*)/);
+      if(pathM){ var ps=pathM[1].split(','); for(var pi=0;pi<ps.length;pi++){ var pv=ps[pi].split(':'); if(pv[0].indexOf('中文')>=0){ cnPath=pv[1]; break; } } }
       var lines=wt.split('\n');
+      var curTitle='', curFile='', curText='', hasFile=false;
       for(var vi=0;vi<lines.length;vi++){
         var l=lines[vi].trim();
-        if(l.indexOf('===')===0){ html.push('<div class="wskillname" style="margin-top:8px">'+esc(wikiClean(l.replace(/===/g,'')))+'</div>'); }
-        else if(l.indexOf('|')===0&&l.indexOf('=')>0){
+        if(l.indexOf('|')===0&&l.indexOf('=')>0){
           var kvp=l.slice(1).split('=');
-          var k=wikiClean(kvp[0]), v=wikiClean(kvp.slice(1).join('='));
-          if(v&&v.length<200)html.push('<div class="wrow"><b>'+esc(k)+'</b><span>'+esc(v)+'</span></div>');
+          var k=kvp[0].trim(), v=kvp.slice(1).join('=');
+          if(k.indexOf('标题')===0&&!hasFile){ curTitle=wikiClean(v); }
+          else if(k.indexOf('语音')===0){ curFile=wikiClean(v); hasFile=true; }
+          else if(k.indexOf('台词')===0){
+            var wm=v.match(/\{\{VoiceData\/word\|中文\|([^}]*)\}\}/);
+            if(wm)curText=wikiClean(wm[1]);
+          }
+        }
+        if(hasFile){
+          var audio='';
+          if(curFile&&cnPath){
+            var audioUrl='https://torappu.prts.wiki/aud/'+cnPath+'/'+curFile;
+            audio='<audio controls preload="none" src="'+esc(audioUrl)+'" style="width:100%;height:34px;margin:4px 0"></audio>';
+          }
+          html.push('<div class="voice-item"><div class="wskillname">'+esc(curTitle||('语音'+(vi+1)))+'</div>'+(curText?'<div class="voice-txt">'+esc(curText)+'</div>':'')+audio+'</div>');
+          curTitle=''; curFile=''; curText=''; hasFile=false;
         }
       }
       if(!html.length)html.push('<div class="notice">暂无语音数据</div>');
@@ -1798,7 +1881,7 @@ function wikiVoiceTab(name,data){
     h.pop();
     h.push.apply(h, html);
     var body=$('wikiBody'); if(body)body.innerHTML=h.join('');
-  },12000);
+  },20000);
   return h.join('');
 }
 function openWikiSearch(){
