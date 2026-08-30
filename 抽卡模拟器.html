@@ -691,7 +691,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
       <div id="resultMsg"></div>
     </section>
     <section class="panel">
-      <div class="sectbar"><h4>抽卡统计</h4><button class="mini-btn" id="btnAch">🏆 成就</button><button class="mini-btn" id="btnStats">详细统计</button><button class="mini-btn" id="btnPityMap">🛡 保底一览</button><button class="mini-btn" id="btnSim">🧪 模拟抽卡</button><button class="mini-btn" id="btnReport">📊 抽卡报告</button><button class="mini-btn" id="btnMatQuery">🧱 材料刷取</button><button class="mini-btn" id="btnReal">🎯 真实记录</button><button class="mini-btn" id="btnOpStats">干员统计</button><button class="mini-btn" id="btnCopyStats">复制总结</button><button class="mini-btn" id="btnRules">规则说明</button><button class="mini-btn" id="btnReset2">清空记录</button></div>
+      <div class="sectbar"><h4>抽卡统计</h4><button class="mini-btn" id="btnAch">🏆 成就</button><button class="mini-btn" id="btnStats">详细统计</button><button class="mini-btn" id="btnPityMap">🛡 保底一览</button><button class="mini-btn" id="btnSim">🧪 模拟抽卡</button><button class="mini-btn" id="btnReport">📊 抽卡报告</button><button class="mini-btn" id="btnReal">🎯 真实记录</button><button class="mini-btn" id="btnOpStats">干员统计</button><button class="mini-btn" id="btnCopyStats">复制总结</button><button class="mini-btn" id="btnRules">规则说明</button><button class="mini-btn" id="btnReset2">清空记录</button></div>
       <div class="stats-grid" id="statsGrid"></div>
       <div class="sectbar"><h4>寻访记录</h4><button class="mini-btn" id="btnExportHist">导出记录</button></div>
       <div class="histsearch"><input id="histSearch" placeholder="搜索干员/卡池..."/><button class="mini-btn" id="histClearSearch">✕</button></div>
@@ -717,7 +717,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.44（皮肤整页缓存·回廊皮肤数）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.45（入口去重·图标失败重试）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -3702,7 +3702,12 @@ var MTL_ICON={
 };
 function chapterOf(stage){ var k=String(stage||'').match(/^[A-Z]?\d+-/); return (k&&CHAPTER_MAP[k[0]])?CHAPTER_MAP[k[0]].ch:''; }
 function matIconUrl(mn){ var id=MTL_ICON[String(mn||'').trim()]; return id?('https://torappu.prts.wiki/assets/item_icon/'+id+'.png'):''; }
-function matIconHtml(mn){ var u=matIconUrl(mn); var ch=esc(String(mn||'').charAt(0)||'?'); if(!u)return '<span class="mat-fallback">'+ch+'</span>'; return '<span class="mat-wrap"><span class="mat-fallback">'+ch+'</span><img class="mat-icon" loading="lazy" src="'+esc(u)+'" onerror="this.remove()" alt=""/></span>'; }
+function matIconHtml(mn){ var u=matIconUrl(mn); var ch=esc(String(mn||'').charAt(0)||'?'); if(!u)return '<span class="mat-fallback">'+ch+'</span>'; return '<span class="mat-wrap"><span class="mat-fallback">'+ch+'</span><img class="mat-icon" loading="lazy" src="'+esc(u)+'" onerror="matIconErr(this)" data-u="'+esc(u)+'" alt=""/></span>'; }
+function matIconErr(im){
+  if(im.dataset.rt)return;
+  im.dataset.rt='1';
+  setTimeout(function(){ try{ im.src=im.dataset.u||im.src; }catch(e){} }, 600);
+}
 function calcLuck(){
   var hist=state.history, i, c6=0,c5=0,bestTen=0,maxG=0,last6=-1;
   for(i=0;i<hist.length;i++){ var r=hist[i]; if(r.rar===6)c6++; else if(r.rar===5)c5++; }
@@ -4374,7 +4379,6 @@ function init(){
   wire('btnSim',simulatePull);
   wire('btnReport',openReport);
   wire('btnReal',openRealGacha);
-  wire('btnMatQuery',openMatQuery);
   wire('btnOpStats',openOpStats);
   wire('btnCopyStats',copyStats);
   wire('btnRules',openRules);

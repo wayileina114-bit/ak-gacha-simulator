@@ -2973,7 +2973,12 @@ var MTL_ICON={
 };
 function chapterOf(stage){ var k=String(stage||'').match(/^[A-Z]?\d+-/); return (k&&CHAPTER_MAP[k[0]])?CHAPTER_MAP[k[0]].ch:''; }
 function matIconUrl(mn){ var id=MTL_ICON[String(mn||'').trim()]; return id?('https://torappu.prts.wiki/assets/item_icon/'+id+'.png'):''; }
-function matIconHtml(mn){ var u=matIconUrl(mn); var ch=esc(String(mn||'').charAt(0)||'?'); if(!u)return '<span class="mat-fallback">'+ch+'</span>'; return '<span class="mat-wrap"><span class="mat-fallback">'+ch+'</span><img class="mat-icon" loading="lazy" src="'+esc(u)+'" onerror="this.remove()" alt=""/></span>'; }
+function matIconHtml(mn){ var u=matIconUrl(mn); var ch=esc(String(mn||'').charAt(0)||'?'); if(!u)return '<span class="mat-fallback">'+ch+'</span>'; return '<span class="mat-wrap"><span class="mat-fallback">'+ch+'</span><img class="mat-icon" loading="lazy" src="'+esc(u)+'" onerror="matIconErr(this)" data-u="'+esc(u)+'" alt=""/></span>'; }
+function matIconErr(im){
+  if(im.dataset.rt)return;
+  im.dataset.rt='1';
+  setTimeout(function(){ try{ im.src=im.dataset.u||im.src; }catch(e){} }, 600);
+}
 function calcLuck(){
   var hist=state.history, i, c6=0,c5=0,bestTen=0,maxG=0,last6=-1;
   for(i=0;i<hist.length;i++){ var r=hist[i]; if(r.rar===6)c6++; else if(r.rar===5)c5++; }
@@ -3645,7 +3650,6 @@ function init(){
   wire('btnSim',simulatePull);
   wire('btnReport',openReport);
   wire('btnReal',openRealGacha);
-  wire('btnMatQuery',openMatQuery);
   wire('btnOpStats',openOpStats);
   wire('btnCopyStats',copyStats);
   wire('btnRules',openRules);
