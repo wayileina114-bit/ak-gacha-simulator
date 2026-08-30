@@ -563,10 +563,12 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 #mBannerOpen{display:none}
 .barName{display:none}
 .chart{margin-top:8px}
-.crow{display:flex; align-items:center; gap:8px; margin:3px 0; font-size:12px}
+.crow{display:flex; align-items:center; gap:8px; margin:3px 0; font-size:12px; border-radius:6px; padding:1px 4px; transition:background .15s}
+.crow:hover{background:rgba(74,179,255,.06)}
 .cl{width:44px; color:var(--dim); text-align:right; flex-shrink:0}
 .cbar{flex:1; height:14px; background:#0a1220; border-radius:4px; overflow:hidden}
-.cbar i{display:block; height:100%; background:linear-gradient(90deg,var(--acc2),var(--acc)); border-radius:4px; min-width:2px}
+.cbar i{display:block; height:100%; background:linear-gradient(90deg,var(--acc2),var(--acc)); border-radius:4px; min-width:2px; transition:filter .2s}
+.crow:hover .cbar i{filter:brightness(1.35)}
 .cv{width:46px; color:var(--txt); flex-shrink:0}
 .customrow{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px}
 .customrow input{width:86px; padding:7px 10px; border-radius:8px; background:var(--bg2); border:1px solid var(--line); color:var(--txt); font-family:inherit; font-size:13px}
