@@ -908,7 +908,7 @@ function buildReport(days){
     if(!firstSeen[nm2])firstSeen[nm2]=r.t;
   }
   var preOps={};
-  for(var poI=state.history.length-1;poI>=0;poI--){ var hxP=state.history[poI]; if(hxP.t&&hxP.t<cutoff)preOps[hxP.op]=1; else if(hxP.t>=cutoff)break; }
+  for(var poI=state.history.length-1;poI>=0;poI--){ var hxP=state.history[poI]; if(hxP.t&&hxP.t<cutoff)preOps[opOf(hxP.op)?opOf(hxP.op).name:hxP.op]=1; else if(hxP.t>=cutoff)break; }
   var newOps=[];
   for(nm2 in firstSeen){ if(firstSeen[nm2]>=cutoff&&!preOps[nm2])newOps.push(nm2); }
   var total=list.length;
@@ -2558,7 +2558,7 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v11.73</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v11.74</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 存档导入导出 · 四主题</div>');
   h.push('</div>');
@@ -2570,7 +2570,7 @@ function openAbout(){
   var pb=$('btnWikiProbe'); if(pb)pb.onclick=function(){ var po=$('wikiProbeOut'); if(po)wikiProbe(po); };
   var al=$('aboutLog');
   if(al){
-    var logTxt=['<b>v11.73</b> 跨期新干员修正 · 卡池状态缓存 · 语音美化','<b>v11.72</b> 历史标签 · 列表缓存 · 行悬停','<b>v11.71</b> 开启倒计时小时 · 关卡缓存 · Wiki美化','<b>v11.70</b> 模拟自选池拦截 · 空池防护 · 当前池高亮','<b>v11.69</b> 概率提示可见 · jsonp超时 · 输入聚焦','<b>v11.68</b> 运势每日固定 · 章节缓存 · 标题渐变','<b>v11.67</b> 清空重置领取 · 批量性能 · 卡片美化','<b>v11.66</b> 倒计时小时 · 皮肤缓存 · 美化','<b>v11.65</b> 删除动态皮肤数量显示','<b>v11.64</b> 真实掉率比值 · 删除真实记录','<b>v11.63</b> 删除不存在材料','<b>v11.62</b> 材料列表清理 · 兜底两字','<b>v11.61</b> 材料图标本地嵌入 · 离线可用','<b>v11.60</b> 材料实时快速失败 · PRTS冷却','<b>v11.59</b> 时装回廊动态角标 · 功能体检','<b>v11.58</b> 限定归类修正 · 兑换计入统计','<b>v11.57</b> 代理链扩充至8重 · 皮肤注释清理','<b>v11.56</b> 模拟等价消耗 · 详情皮肤数','<b>v11.55</b> 立绘画廊职业筛选 · 计数','<b>v11.54</b> 井兑换规则修正 · 联动文案','<b>v11.53</b> 成就扩充（联动/井中月/六星军团）','<b>v11.52</b> 关于面板更新 · 时装回廊统计','<b>v11.51</b> Wiki连通性检测 · 关于面板优化','<b>v11.50</b> 养成材料逐项推荐 · 皮肤泄漏/范围修复','<b>v11.49</b> 材料刷取查询重做 · 真图标','<b>v11.48</b> Wiki同步六重回退 · 进度提示','<b>v11.47</b> Wiki返回按钮 · 材料PRTS链接','<b>v11.46</b> 材料图标彩色兜底','<b>v11.45</b> 材料入口去重 · 图标重试','<b>v11.44</b> 皮肤懒加载缓存 · 时装角标','<b>v11.43</b> 特性行 · 时装列表','<b>v11.42</b> 联动池300井','<b>v11.41</b> 手机端卡池列表可滑动','<b>v11.40</b> Wiki整页获取 · 五重回退','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
+    var logTxt=['<b>v11.74</b> 皮肤图片失败占位 · 滑动窗口统计 · 热力图悬停','<b>v11.73</b> 跨期新干员修正 · 卡池状态缓存 · 语音美化','<b>v11.72</b> 历史标签 · 列表缓存 · 行悬停','<b>v11.71</b> 开启倒计时小时 · 关卡缓存 · Wiki美化','<b>v11.70</b> 模拟自选池拦截 · 空池防护 · 当前池高亮','<b>v11.69</b> 概率提示可见 · jsonp超时 · 输入聚焦','<b>v11.68</b> 运势每日固定 · 章节缓存 · 标题渐变','<b>v11.67</b> 清空重置领取 · 批量性能 · 卡片美化','<b>v11.66</b> 倒计时小时 · 皮肤缓存 · 美化','<b>v11.65</b> 删除动态皮肤数量显示','<b>v11.64</b> 真实掉率比值 · 删除真实记录','<b>v11.63</b> 删除不存在材料','<b>v11.62</b> 材料列表清理 · 兜底两字','<b>v11.61</b> 材料图标本地嵌入 · 离线可用','<b>v11.60</b> 材料实时快速失败 · PRTS冷却','<b>v11.59</b> 时装回廊动态角标 · 功能体检','<b>v11.58</b> 限定归类修正 · 兑换计入统计','<b>v11.57</b> 代理链扩充至8重 · 皮肤注释清理','<b>v11.56</b> 模拟等价消耗 · 详情皮肤数','<b>v11.55</b> 立绘画廊职业筛选 · 计数','<b>v11.54</b> 井兑换规则修正 · 联动文案','<b>v11.53</b> 成就扩充（联动/井中月/六星军团）','<b>v11.52</b> 关于面板更新 · 时装回廊统计','<b>v11.51</b> Wiki连通性检测 · 关于面板优化','<b>v11.50</b> 养成材料逐项推荐 · 皮肤泄漏/范围修复','<b>v11.49</b> 材料刷取查询重做 · 真图标','<b>v11.48</b> Wiki同步六重回退 · 进度提示','<b>v11.47</b> Wiki返回按钮 · 材料PRTS链接','<b>v11.46</b> 材料图标彩色兜底','<b>v11.45</b> 材料入口去重 · 图标重试','<b>v11.44</b> 皮肤懒加载缓存 · 时装角标','<b>v11.43</b> 特性行 · 时装列表','<b>v11.42</b> 联动池300井','<b>v11.41</b> 手机端卡池列表可滑动','<b>v11.40</b> Wiki整页获取 · 五重回退','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
     al.innerHTML=logTxt;
   }
   openModalBox();
@@ -2757,6 +2757,15 @@ function openSkins(opName){
     renderSkins(name,skins,failed);
   },12000);
 }
+function skinImgFail(im){
+  if(!im)return;
+  if(im.dataset.fb){ var vf=im.dataset.fb; im.dataset.fb=''; im.src=vf; return; }
+  if(im.dataset.fb2){ var v2=im.dataset.fb2; im.dataset.fb2=''; im.src=v2; return; }
+  im.onerror=null;
+  if(im.style)im.style.display='none';
+  var p=im.parentNode;
+  if(p&&p.classList&&p.classList.add)p.classList.add('imgfail');
+}
 function renderSkins(name,skins,failed){
   var o=opOf(name), h=[];
   var from=SKINS_FROM==='fashion'?'fashion':(SKINS_FROM==='gallery'?'gallery':'modal');
@@ -2810,10 +2819,10 @@ function renderSkins(name,skins,failed){
   var bd=$('btnSkinsDetail'); if(bd)bd.onclick=function(){ openModal(name); };
   var sr=$('skinRetry'); if(sr)sr.onclick=function(){ try{ delete skinCache[name]; localStorage.removeItem('akgacha_skins_v1'); }catch(e){} openSkins(name); };
   var items=$('mBody').querySelectorAll('.skin-item');
-  for(var j=0;j<items.length;j++){ (function(el){ el.onclick=function(){ openLightbox(el.getAttribute('data-url')); }; })(items[j]); }
+  for(var j=0;j<items.length;j++){ (function(el){ el.onclick=function(){ if(el.classList&&el.classList.contains('imgfail')){ toast('图片未加载成功，无法查看大图'); return; } openLightbox(el.getAttribute('data-url')); }; })(items[j]); }
   var simgs=$('mBody').querySelectorAll('.skin-item img');
   for(var si2=0;si2<simgs.length;si2++){
-    (function(im){ im.onerror=function(){ if(im.dataset.fb){ var vf=im.dataset.fb; im.dataset.fb=''; im.src=vf; return; } if(im.dataset.fb2){ var v2=im.dataset.fb2; im.dataset.fb2=''; im.src=v2; return; } im.onerror=null; }; })(simgs[si2]);
+    (function(im){ im.onerror=function(){ skinImgFail(im); }; })(simgs[si2]);
   }
   if(!ciInfo){
     prtsFetch(name,null,function(wt){
@@ -3243,7 +3252,10 @@ function matIconErr(im){
 function calcLuck(){
   var hist=state.history, i, c6=0,c5=0,bestTen=0,maxG=0,last6=-1;
   for(i=0;i<hist.length;i++){ var r=hist[i]; if(r.rar===6)c6++; else if(r.rar===5)c5++; }
-  for(i=0;i<hist.length;i++){ var t10=0; for(var tj=i;tj<hist.length&&tj<i+10;tj++){ if(hist[tj].rar===6)t10++; } if(t10>bestTen)bestTen=t10; }
+  var win6=0;
+  for(i=0;i<hist.length&&i<10;i++){ if(hist[i].rar===6)win6++; }
+  if(hist.length)bestTen=win6;
+  for(i=10;i<hist.length;i++){ if(hist[i].rar===6)win6++; if(hist[i-10].rar===6)win6--; if(win6>bestTen)bestTen=win6; }
   for(i=0;i<hist.length;i++){ if(hist[i].rar===6){ if(last6>=0){ var g=i-last6-1; if(g>maxG)maxG=g; } last6=i; } }
   var total=hist.length, exp6=total*0.0289;
   var score6=exp6>0?(c6/exp6*100):100;
@@ -3399,7 +3411,6 @@ function openStats(){
   h.push('</div>');
   h.push('<div class="notice">欧气指数 = 6★出率(50%) + 5★出率(15%) + 最欧十连(15%) + 最长非酋(20%) 综合加权 · 期望6★率约 2.89%</div>');
   h.push('<h4 class="sect">期望对比</h4><div class="chart">');
-  var expC=c6>0?exp6:0;
   var diffN=Math.round(c6-exp6);
   h.push('<div class="crow"><span class="cl">实际6★</span><div class="cbar"><i style="width:'+Math.min(100,Math.max(2,(exp6?c6/exp6*50:2)))+'%"></i></div><span class="cv">'+c6+' 只</span></div>');
   h.push('<div class="crow"><span class="cl">期望6★</span><div class="cbar"><i style="width:50%"></i></div><span class="cv">'+exp6.toFixed(1)+' 只</span></div>');

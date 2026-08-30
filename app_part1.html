@@ -82,7 +82,8 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .sidehead{display:flex; align-items:center; justify-content:space-between; gap:8px}
 .sidehead h3{flex:1}
 .heat{display:grid; grid-template-columns:repeat(auto-fill,minmax(16px,1fr)); gap:3px; margin-top:8px}
-.hcell{height:16px; border-radius:3px; background:#0d1626}
+.hcell{height:16px; border-radius:3px; background:#0d1626; transition:transform .12s, box-shadow .12s}
+.hcell:hover{transform:scale(1.4); box-shadow:0 0 6px rgba(255,255,255,.35); outline:1px solid rgba(255,255,255,.4); position:relative; z-index:2}
 .hcell.l1{background:#2a4a7a}
 .hcell.l2{background:#4a9bd6}
 .hcell.l3{background:#ffd76a}
@@ -477,8 +478,11 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .mdesc{font-size:12px; color:var(--dim); line-height:1.8}
 .skingrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; margin-top:8px}
 .skin-item{border:2px solid var(--line); border-radius:10px; overflow:hidden; cursor:zoom-in; transition:border-color .2s, transform .2s; background:#0d1526}
-.skin-item:hover{border-color:var(--acc); transform:translateY(-2px)}
+.skin-item:hover{border-color:var(--acc); transform:translateY(-2px); box-shadow:0 8px 20px rgba(74,179,255,.28)}
 .skin-item img{width:100%; display:block; aspect-ratio:4/5; object-fit:cover; background:#0d1526}
+.skin-item.imgfail img{display:none}
+.skin-item.imgfail{min-height:96px; display:flex; align-items:center; justify-content:center}
+.skin-item.imgfail::after{content:'🖼 图片加载失败'; font-size:12px; color:var(--dim); text-align:center; padding:8px; line-height:1.6}
 .skin-nm{font-size:12px; text-align:center; color:#cfe0ff; padding:5px 4px; border-top:1px solid var(--line)}
 .stars{color:var(--gold); font-size:15px; letter-spacing:2px}
 .foot{text-align:center; font-size:11px; color:#5a6c8e; margin-top:18px; line-height:1.8}
