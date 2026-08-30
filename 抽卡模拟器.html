@@ -735,7 +735,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员/Wiki数据，更新至 2026-08-29）· bilibili Wiki（精二立绘/皮肤/材料图标与掉落）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.52（关于面板更新·时装回廊统计）</b>
+  数据来源：PRTS Wiki（卡池/干员/Wiki数据，更新至 2026-08-29）· bilibili Wiki（精二立绘/皮肤/材料图标与掉落）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.53（成就扩充·联动/井/六星军团）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -809,7 +809,7 @@ var opByName={}, ops4=[], ops3=[], opBanners={}, limitedOps={}, limitedTotal=0;
 })();
 var LS_KEY='akgacha_v2';
 var LS_OLD='akgacha_v1';
-function defaultState(){ return { cur:null, jade:60000, theme:'default', pity:{}, spark:{}, sel:{}, cnt:{}, opCnt:{}, fav:{}, favOps:{}, wish:[], history:[], collection:[] }; }
+function defaultState(){ return { cur:null, jade:60000, theme:'default', pity:{}, spark:{}, sel:{}, cnt:{}, opCnt:{}, fav:{}, favOps:{}, wish:[], history:[], collection:[], sparkEx:0 }; }
 function normalizeState(s){
   if(!s||typeof s!=='object')return defaultState();
   if(typeof s.jade!=='number')s.jade=60000;
@@ -826,6 +826,7 @@ function normalizeState(s){
   if(!Array.isArray(s.history))s.history=[];
   if(!Array.isArray(s.collection))s.collection=[];
   if(!Array.isArray(s.wish))s.wish=[];
+  if(typeof s.sparkEx!=='number')s.sparkEx=0;
   if(!s.theme)s.theme='default';
   var sk2;
   for(sk2 in s.sel){ var sv=s.sel[sk2]; if(!sv||typeof sv!=='object'){ delete s.sel[sk2]; continue; } if(!Array.isArray(sv.six))sv.six=[]; if(!Array.isArray(sv.five))sv.five=[]; }
@@ -1439,6 +1440,7 @@ function sparkExchange(cost){
       if(state.collection.indexOf(opName)>=0)return;
       card.onclick=function(){
         state.spark[b.id]=tok-cost;
+        state.sparkEx=(state.sparkEx||0)+1;
         addCol(opName);
         save();
         closeModal();
@@ -3338,7 +3340,7 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v11.52</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v11.53</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 真实寻访记录分析（纯前端）· 存档导入导出 · 四主题</div>');
   h.push('</div>');
@@ -3350,7 +3352,7 @@ function openAbout(){
   var pb=$('btnWikiProbe'); if(pb)pb.onclick=function(){ var po=$('wikiProbeOut'); if(po)wikiProbe(po); };
   var al=$('aboutLog');
   if(al){
-    var logTxt=['<b>v11.52</b> 关于面板更新 · 时装回廊统计','<b>v11.51</b> Wiki连通性检测 · 关于面板优化','<b>v11.50</b> 养成材料逐项推荐 · 皮肤泄漏/范围修复','<b>v11.49</b> 材料刷取查询重做 · 真图标','<b>v11.48</b> Wiki同步六重回退 · 进度提示','<b>v11.47</b> Wiki返回按钮 · 材料PRTS链接','<b>v11.46</b> 材料图标彩色兜底','<b>v11.45</b> 材料入口去重 · 图标重试','<b>v11.44</b> 皮肤懒加载缓存 · 时装角标','<b>v11.43</b> 特性行 · 时装列表','<b>v11.42</b> 联动池300井','<b>v11.41</b> 手机端卡池列表可滑动','<b>v11.40</b> Wiki整页获取 · 五重回退','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
+    var logTxt=['<b>v11.53</b> 成就扩充（联动/井中月/六星军团）','<b>v11.52</b> 关于面板更新 · 时装回廊统计','<b>v11.51</b> Wiki连通性检测 · 关于面板优化','<b>v11.50</b> 养成材料逐项推荐 · 皮肤泄漏/范围修复','<b>v11.49</b> 材料刷取查询重做 · 真图标','<b>v11.48</b> Wiki同步六重回退 · 进度提示','<b>v11.47</b> Wiki返回按钮 · 材料PRTS链接','<b>v11.46</b> 材料图标彩色兜底','<b>v11.45</b> 材料入口去重 · 图标重试','<b>v11.44</b> 皮肤懒加载缓存 · 时装角标','<b>v11.43</b> 特性行 · 时装列表','<b>v11.42</b> 联动池300井','<b>v11.41</b> 手机端卡池列表可滑动','<b>v11.40</b> Wiki整页获取 · 五重回退','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
     al.innerHTML=logTxt;
   }
   openModalBox();
@@ -4038,8 +4040,8 @@ function calcAch(){
   var limCol=0, lk2, colSet2={}, csi2;
   for(csi2=0;csi2<state.collection.length;csi2++)colSet2[state.collection[csi2]]=1;
   for(lk2 in limitedOps){ if(colSet2[lk2])limCol++; }
-  var col5N=0, col4N=0;
-  for(csi2=0;csi2<state.collection.length;csi2++){ var co=opByName[state.collection[csi2]]; if(co){ if(co.rarity===5)col5N++; else if(co.rarity===4)col4N++; } }
+  var col5N=0, col4N=0, col6N=0, collabN=0;
+  for(csi2=0;csi2<state.collection.length;csi2++){ var co=opByName[state.collection[csi2]]; if(co){ if(co.rarity===6)col6N++; else if(co.rarity===5)col5N++; else if(co.rarity===4)col4N++; if(co.collabOp)collabN++; } }
   var dayMap6={}, d6k, day3=false;
   for(csi2=0;csi2<hist.length;csi2++){ if(hist[csi2].rar===6&&hist[csi2].t){ var d6=new Date(hist[csi2].t); var d6key=d6.getFullYear()+'-'+(d6.getMonth()+1)+'-'+d6.getDate(); dayMap6[d6key]=(dayMap6[d6key]||0)+1; } }
   for(d6k in dayMap6){ if(dayMap6[d6k]>=3)day3=true; }
@@ -4067,6 +4069,9 @@ function calcAch(){
     {name:'四星集邮',desc:'拥有全部4★干员（'+ops4.length+'）',icon:'📮',done:col4N>=ops4.length&&ops4.length>0,prog:col4N+' / '+ops4.length},
     {name:'单日三黄',desc:'单日抽到3只以上6★',icon:'🌞',done:day3,prog:''},
     {name:'早鸟玄学',desc:'凌晨5-8点出过6★',icon:'🌅',done:bird6,prog:''},
+    {name:'联动干员',desc:'获得任一联动干员（含活动赠送）',icon:'🔗',done:collabN>=1,prog:collabN+' / 1'},
+    {name:'六星军团',desc:'拥有不同6★干员≥30',icon:'💪',done:col6N>=30,prog:col6N+' / 30'},
+    {name:'井中月',desc:'在限定/联动池完成一次300契约兑换',icon:'🌙',done:(state.sparkEx||0)>=1,prog:(state.sparkEx||0)+' / 1'},
     {name:'全图鉴',desc:'拥有全部干员（'+totalOpsN+'）',icon:'🏅',done:state.collection.length>=totalOpsN,prog:state.collection.length+' / '+totalOpsN}
   ]};
   ACH_KEY=key; ACH_CACHE=res;
