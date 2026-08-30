@@ -1,0 +1,2 @@
+test \d \s \n \u \/ \. [0-9]|abc\|xyz|newline
+second line

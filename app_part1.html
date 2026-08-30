@@ -308,8 +308,16 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .mat-live-stage{display:inline-block; background:var(--panel2); border:1px solid var(--line); border-radius:6px; padding:1px 6px; margin:2px 3px 2px 0}
 .sk-card{background:linear-gradient(135deg,var(--panel2),var(--bg2)); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin:6px 0}
 .sk-head{display:flex; align-items:center; gap:10px}
+.sk-avatar{width:52px; height:52px; border-radius:50%; object-fit:cover; background:var(--panel2); border:2px solid var(--acc2); flex:none}
+.sk-avatar.ph{display:flex; align-items:center; justify-content:center; color:var(--acc2); font-weight:800; font-size:20px}
+.sk-meta{flex:1; min-width:0}
 .sk-name{font-size:16px; font-weight:800; color:var(--txt)}
 .sk-sub{font-size:12px; color:var(--dim)}
+.wikiprog{height:6px; background:var(--bg2); border-radius:3px; margin-top:6px; overflow:hidden}
+.wikiprog-bar{height:100%; background:linear-gradient(90deg,var(--acc2),var(--gold)); border-radius:3px; transition:width .3s}
+.voice-langs{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px}
+.voice-lang.on{background:var(--acc2); border-color:var(--acc2); color:#fff; font-weight:700}
+.voice-err{font-size:11px; color:var(--red); margin-top:2px}
 .lg-link{font-size:11px; color:var(--acc2); margin-left:6px}
 .wikirows .wrow .farm{color:#7bd88f; font-style:normal; font-size:11px; margin-left:6px}
 .wskilltype{font-size:11px; color:var(--acc2); margin-bottom:4px}
@@ -652,7 +660,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.25（语音播放·森空岛分区·材料实时掉落）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.26（Wiki引用重构·皮肤显示修复·语音多语言）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
