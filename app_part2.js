@@ -393,7 +393,7 @@ function selBoxHtml(b,rar){
   for(i=0;i<list.length;i++){
     o=opOf(list[i]); if(!o)continue;
     var on=sel.indexOf(list[i])>=0;
-    h.push('<div class="selop'+(on?' on':' off')+'" data-op="'+esc(list[i])+'" data-rar="'+rar+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/><div class="sn">'+esc(o.name)+'</div></div>');
+    h.push('<div class="selop'+(on?' on':' off')+'" data-op="'+esc(list[i])+'" data-rar="'+rar+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/><div class="ot'+(state.collection.indexOf(list[i])>=0?' have':' new')+'">'+(state.collection.indexOf(list[i])>=0?'✓':'NEW')+'</div><div class="sn">'+esc(o.name)+'</div></div>');
   }
   h.push('</div></div>');
   return h.join('');
@@ -403,12 +403,14 @@ function bannerInfoHtml(b){
   h.push('<button class="mini-btn" id="mBannerOpen">🎴 切换卡池</button>');
   h.push('<div class="row1"><button class="mini-btn navB" data-dir="-1">◀ 上期</button><h2>'+esc(b.full)+'</h2><span class="badge" style="background:'+b.color+'">'+esc(b.label)+'</span><span class="dates">'+esc(b.start)+' ~ '+esc(b.end)+'</span><button class="mini-btn navB" data-dir="1">下期 ▶</button></div>');
   h.push('<div class="rateup">');
+  var colSet3={}, ci3;
+  for(ci3=0;ci3<state.collection.length;ci3++)colSet3[state.collection[ci3]]=1;
   var ups=b.six,i,j,o;
   for(i=0;i<ups.length;i++){
     o=opOf(ups[i]); if(!o)continue;
     var lim=b.limitedSix.indexOf(ups[i])>=0;
     h.push('<div class="rup-card r'+o.rarity+'" data-op="'+esc(ups[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/>');
-    h.push('<div class="ot'+(state.collection.indexOf(ups[i])>=0?' have':' new')+'">'+(state.collection.indexOf(ups[i])>=0?'✓ 已有':'NEW')+'</div>');
+    h.push('<div class="ot'+(colSet3[ups[i]]?' have':' new')+'">'+(colSet3[ups[i]]?'✓ 已有':'NEW')+'</div>');
     h.push('<div class="rn">'+esc(o.name)+'</div>');
     h.push('<div class="rb">'+(lim?'限定':'UP')+'</div>');
     h.push('<div class="rr">'+stars(o.rarity)+'</div></div>');
@@ -417,7 +419,7 @@ function bannerInfoHtml(b){
   for(j=0;j<ups5.length;j++){
     o=opOf(ups5[j]); if(!o)continue;
     h.push('<div class="rup-card r'+o.rarity+'" data-op="'+esc(ups5[j])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/>');
-    h.push('<div class="ot'+(state.collection.indexOf(ups5[j])>=0?' have':' new')+'">'+(state.collection.indexOf(ups5[j])>=0?'✓ 已有':'NEW')+'</div>');
+    h.push('<div class="ot'+(colSet3[ups5[j]]?' have':' new')+'">'+(colSet3[ups5[j]]?'✓ 已有':'NEW')+'</div>');
     h.push('<div class="rn">'+esc(o.name)+'</div><div class="rb">UP</div><div class="rr">'+stars(o.rarity)+'</div></div>');
   }
   var ups4=(b.four||[]).slice(0,3);
@@ -746,6 +748,39 @@ function runSim(b, n){
   h.push('<button class="mini-btn" id="simAgain" style="margin:6px auto;display:block">🔁 再来一次</button>');
   $('simOut').innerHTML=h.join('');
   var sa=$('simAgain'); if(sa)sa.onclick=function(){ runSim(b, n); };
+}
+function openWishList(){
+  var wish=state.wish||[];
+  var h=['<h4 class="sect" style="margin-top:0">💝 心愿单（'+wish.length+'）</h4>'];
+  if(!wish.length){
+    h.push('<div class="notice">心愿单为空 · 在干员详情点击「💝 心愿单」加入想抽的干员，抽到会自动移出</div>');
+  } else {
+    var gotN=0, i, o;
+    for(i=0;i<wish.length;i++){ if(state.collection.indexOf(wish[i])>=0)gotN++; }
+    h.push('<div class="notice">已拥有 <b>'+gotN+'</b> / '+wish.length+' · 点击干员查看详情，点击 📌 卡池快速跳转</div>');
+    h.push('<div class="wishgrid">');
+    for(i=0;i<wish.length;i++){
+      o=opOf(wish[i]); if(!o)continue;
+      var got=state.collection.indexOf(wish[i])>=0;
+      var srcs=opBanners[wish[i]]||[];
+      var poolTxt='';
+      if(srcs.length){
+        var latest=srcs[srcs.length-1];
+        var lb=bannerById(latest.id);
+        if(lb)poolTxt='<span class="wishpool jump" data-bid="'+lb.id+'">📌 '+esc(lb.full.slice(0,14))+'</span>';
+      }
+      h.push('<div class="wish-item r'+o.rarity+'" data-op="'+esc(wish[i])+'"><img loading="lazy" src="'+esc(opArtT(o))+'" alt=""/><div class="wn">'+esc(o.name)+'</div><div class="wr">'+stars(o.rarity)+'</div>'+(got?'<div class="wgot">✓ 已拥有</div>':'')+poolTxt+'</div>');
+    }
+    h.push('</div>');
+    h.push('<button class="mini-btn warn" id="btnWishClear" style="margin:10px auto;display:block">🗑 清空心愿单</button>');
+  }
+  $('mBody').innerHTML=h.join('');
+  openModalBox();
+  var wc=$('btnWishClear'); if(wc)wc.onclick=function(){ if(confirm('确定清空心愿单吗？')){ state.wish=[]; save(); openWishList(); } };
+  var items=$('mBody').querySelectorAll('.wish-item');
+  for(var wi7=0;wi7<items.length;wi7++){ (function(el){ el.onclick=function(){ openModal(el.getAttribute('data-op')); }; })(items[wi7]); }
+  var wps=$('mBody').querySelectorAll('.wishpool.jump');
+  for(var wi8=0;wi8<wps.length;wi8++){ (function(el){ el.onclick=function(e){ if(e.stopPropagation)e.stopPropagation(); jumpBanner(el.getAttribute('data-bid')); }; })(wps[wi8]); }
 }
 function renderStats(){
   var b=bannerById(state.cur), st=state.pity[pityKey(b)]||{fails:0}, p6=Math.min(0.02+Math.max(0,st.fails-49)*0.02,1);
@@ -1319,6 +1354,22 @@ function renderGallery(){
   for(i=0;i<items.length;i++){ (function(it){ it.onclick=function(){ if(galMode==='skin'){ openSkins(it.getAttribute('data-op')); } else { openModal(it.getAttribute('data-op')); } }; })(items[i]); }
   var gm=$('galMore'); if(gm)gm.onclick=function(){ GAL_N+=120; renderGallery(); };
 }
+function calcLuck(){
+  var hist=state.history, i, c6=0,c5=0,bestTen=0,maxG=0,last6=-1;
+  for(i=0;i<hist.length;i++){ var r=hist[i]; if(r.rar===6)c6++; else if(r.rar===5)c5++; }
+  for(i=0;i<hist.length;i++){ var t10=0; for(var tj=i;tj<hist.length&&tj<i+10;tj++){ if(hist[tj].rar===6)t10++; } if(t10>bestTen)bestTen=t10; }
+  for(i=0;i<hist.length;i++){ if(hist[i].rar===6){ if(last6>=0){ var g=i-last6-1; if(g>maxG)maxG=g; } last6=i; } }
+  var total=hist.length, exp6=total*0.0289;
+  var score6=exp6>0?(c6/exp6*100):100;
+  var score5=total>0?Math.min(200,(c5/(total*0.08)*100)):100;
+  var s6p=Math.max(0,Math.min(100,(score6-50)*1.5));
+  var s5p=Math.max(0,Math.min(100,(score5-50)*1.2));
+  var s10p=bestTen>=2?100:(bestTen===1?55:20);
+  var sgp=Math.max(0,Math.min(100,(50-maxG)*2));
+  var luckIdx=total?Math.round(s6p*0.5+s5p*0.15+s10p*0.15+sgp*0.2):50;
+  var label=luckIdx>=85?'欧皇转世 ✨':luckIdx>=70?'运气爆棚':luckIdx>=45?'正常水平':luckIdx>=25?'有点非了':'非洲酋长 ☔';
+  return {total:total,c6:c6,c5:c5,bestTen:bestTen,maxG:maxG,s6p:s6p,s5p:s5p,s10p:s10p,sgp:sgp,luckIdx:luckIdx,label:label,score6:score6,score5:score5};
+}
 var ACH_CACHE=null, ACH_KEY='';
 function calcAch(){
   var hist=state.history, i, last6=-1, maxG=0;
@@ -1423,17 +1474,8 @@ function openStats(){
   var buckets=[0,0,0,0,0,0,0,0,0,0], bi, bmax=1;
   for(i=0;i<gaps.length;i++){ bi=Math.min(9,Math.floor(gaps[i]/10)); buckets[bi]++; if(buckets[bi]>bmax)bmax=buckets[bi]; }
   var exp6=total*0.0289;
-  var bestTen=0;
-  for(i=0;i<hist.length;i++){ var t10=0; for(var tj=i;tj<hist.length&&tj<i+10;tj++){ if(hist[tj].rar===6)t10++; } if(t10>bestTen)bestTen=t10; }
-  var score6=exp6>0?(c6/exp6*100):100;
-  var score5=total>0?Math.min(200,(c5/(total*0.08)*100)):100;
-  var s6p=Math.max(0,Math.min(100,(score6-50)*1.5));
-  var s5p=Math.max(0,Math.min(100,(score5-50)*1.2));
-  var s10p=bestTen>=2?100:(bestTen===1?55:20);
-  var sgp=Math.max(0,Math.min(100,(50-maxG)*2));
-  var luckIdx=Math.round(s6p*0.5+s5p*0.15+s10p*0.15+sgp*0.2);
-  if(!total)luckIdx=50;
-  var label=luckIdx>=85?'欧皇转世 ✨':luckIdx>=70?'运气爆棚':luckIdx>=45?'正常水平':luckIdx>=25?'有点非了':'非洲酋长 ☔';
+  var LK=calcLuck();
+  var bestTen=LK.bestTen, maxG=LK.maxG, luckIdx=LK.luckIdx, label=LK.label, s6p=LK.s6p, s5p=LK.s5p, s10p=LK.s10p, sgp=LK.sgp;
   var TCN={limited:'限定',event:'活动',standard:'标准',zhongjian:'中坚',joint:'联合行动',direct:'定向甄选',zjselect:'中坚甄选',special:'特殊'};
   var h=[];
   h.push('<h4 class="sect" style="margin-top:0">总览</h4><div class="stats-grid">');
@@ -1615,9 +1657,9 @@ function copyStats(){
   var hist=state.history, i, c6=0,c5=0,c4=0,c3=0;
   for(i=0;i<hist.length;i++){ var r=hist[i]; if(r.rar===6)c6++; else if(r.rar===5)c5++; else if(r.rar===4)c4++; else c3++; }
   var total=hist.length;
-  var exp6=total*0.0289;
-  var score=exp6>0?Math.round(c6/exp6*100):100;
-  var gaps=[], last=-1, maxG=0;
+  var LK2=calcLuck();
+  var score=LK2.luckIdx, maxG=LK2.maxG;
+  var gaps=[], last=-1;
   for(i=0;i<hist.length;i++){ if(hist[i].rar===6){ if(last>=0)gaps.push(i-last-1); last=i; } }
   for(i=0;i<gaps.length;i++){ if(gaps[i]>maxG)maxG=gaps[i]; }
   var curFails=(state.pity[pityKey(bannerById(state.cur))]||{fails:0}).fails;
@@ -1626,7 +1668,7 @@ function copyStats(){
   for(var k2 in (state.opCnt||{})){ if(state.opCnt[k2]>topN){ topN=state.opCnt[k2]; topOp=k2; } }
   var topName=topOp?(opOf(topOp)?opOf(topOp).name:topOp):'';
   var NL=String.fromCharCode(10);
-  var text=['【明日方舟干员寻访模拟 · 抽卡总结】','总抽数：'+total+' 抽（6★×'+c6+' · 5★×'+c5+' · 4★×'+c4+' · 3★×'+c3+'）','6★出率：'+(total?(c6/total*100).toFixed(2):0)+'% · 欧气评分：'+score,'最长非酋纪录：'+(maxG||0)+' 抽 · 当前保底：'+curFails+' 抽','最近六星：'+(s6.join('、')||'暂无'),'出货最多：'+(topName||'暂无')+(topN?(' ×'+topN):'')].join(NL);
+  var text=['【明日方舟干员寻访模拟 · 抽卡总结】','总抽数：'+total+' 抽（6★×'+c6+' · 5★×'+c5+' · 4★×'+c4+' · 3★×'+c3+'）','6★出率：'+(total?(c6/total*100).toFixed(2):0)+'% · 欧气指数：'+score+'（'+LK2.label+'）','最长非酋纪录：'+(maxG||0)+' 抽 · 当前保底：'+curFails+' 抽','最近六星：'+(s6.join('、')||'暂无'),'出货最多：'+(topName||'暂无')+(topN?(' ×'+topN):'')].join(NL);
   var ta=document.createElement('textarea');
   ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
   document.body.appendChild(ta); ta.select();
@@ -1848,6 +1890,7 @@ function init(){
   wire('btnCopyStats',copyStats);
   wire('btnRules',openRules);
   wire('btnGallery',openGallery);
+  wire('btnWishList',openWishList);
   wire('btnRandOp',function(){ var keys=Object.keys(opByName); if(!keys.length)return; openModal(keys[Math.floor(Math.random()*keys.length)]); });
   wire('btnAch',openAch);
   wire('btnExportHist',exportHistory);

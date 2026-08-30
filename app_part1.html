@@ -251,6 +251,19 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .rup-card .ot.new{background:rgba(255,93,58,.92); color:#fff; box-shadow:0 0 8px rgba(255,93,58,.55)}
 .rup-card .ot.have{background:rgba(12,24,40,.85); color:var(--dim)}
 #simOut .stats-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+*{-webkit-tap-highlight-color:transparent}
+.wishgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; max-height:58vh; overflow-y:auto}
+.wish-item{position:relative; border-radius:10px; overflow:hidden; border:2px solid var(--line); cursor:pointer; background:var(--bg2); transition:transform .15s, border-color .15s}
+.wish-item:hover{transform:translateY(-2px); border-color:var(--acc2)}
+.wish-item img{width:100%; height:120px; object-fit:cover; object-position:top; display:block}
+.wish-item .wn{font-size:12px; font-weight:700; padding:4px 6px 2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.wish-item .wr{font-size:10px; padding:0 6px 4px; color:var(--dim)}
+.wish-item .wgot{position:absolute; top:4px; right:4px; font-size:9px; padding:1px 6px; border-radius:6px; background:rgba(74,179,255,.9); color:#fff}
+.wish-item .wishpool{display:block; margin:0 6px 6px; font-size:10px; color:var(--acc2); background:rgba(74,179,255,.08); border:1px solid rgba(74,179,255,.2); border-radius:5px; padding:2px 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.wish-item .wishpool:hover{border-color:var(--acc); color:#fff}
+.selop .ot{position:absolute; top:2px; left:2px; font-size:8px; padding:0 4px; border-radius:4px; z-index:2; pointer-events:none}
+.selop .ot.new{background:rgba(255,93,58,.92); color:#fff}
+.selop .ot.have{background:rgba(12,24,40,.85); color:var(--dim)}
 #fortune.busy{color:var(--gold); font-weight:700; animation:urgentpulse 1s infinite}
 .sixstrip{display:flex; justify-content:center; gap:10px; margin:6px 0 10px; flex-wrap:wrap}
 .sixcard{width:110px; border-radius:10px; overflow:hidden; border:2px solid var(--r6); box-shadow:0 0 16px rgba(255,93,58,.4); cursor:pointer; transition:transform .15s; position:relative}
@@ -476,7 +489,9 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   .barName{display:block; width:100%; text-align:center; font-size:11px; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .pityCount{display:none; position:fixed; bottom:76px; left:50%; transform:translateX(-50%); background:linear-gradient(90deg,rgba(255,93,58,.9),rgba(255,154,46,.9)); color:#fff; font-size:12px; font-weight:800; padding:6px 14px; border-radius:20px; box-shadow:0 4px 16px rgba(255,93,58,.4); z-index:40; animation:urgentpulse 1.6s infinite}@media(min-width:721px){.pityCount.show{display:none}}
 .pityCount.show{display:block}
-  .pull-btn{flex:1; max-width:200px; padding:12px 10px; font-size:15px}
+  .pull-btn{flex:1; max-width:200px; padding:13px 10px; font-size:15px; min-height:48px; touch-action:manipulation}
+  .mini-btn{touch-action:manipulation}
+  .bcard{padding:9px}
   .pull-btn .cost{font-size:10px}
   #cards{grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:8px; min-height:148px}
   .card{height:148px}
@@ -555,7 +570,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
       <div class="filters" id="histTypeChips"></div>
       <div class="filters" id="histTimeChips"></div>
       <div id="history"></div>
-      <div class="sectbar"><h4>干员图鉴</h4><span class="notice" id="colCount" style="margin-left:4px"></span><select id="colSortSel"><option value="fav">收藏置顶</option><option value="rarity">按稀有度</option><option value="name">按名称</option><option value="prof">按职业</option></select><button class="mini-btn" id="btnGallery">立绘画廊</button><button class="mini-btn" id="btnRandOp">🎲 随机干员</button></div>
+      <div class="sectbar"><h4>干员图鉴</h4><span class="notice" id="colCount" style="margin-left:4px"></span><select id="colSortSel"><option value="fav">收藏置顶</option><option value="rarity">按稀有度</option><option value="name">按名称</option><option value="prof">按职业</option></select><button class="mini-btn" id="btnGallery">立绘画廊</button><button class="mini-btn" id="btnWishList">💝 心愿单</button><button class="mini-btn" id="btnRandOp">🎲 随机干员</button></div>
       <div class="colbar" id="colBar"></div>
       <div id="colRarity"></div>
       <div class="filters" id="colChips"></div>
@@ -566,7 +581,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.12（成就扩展·跳转防护·代码清理）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.13（心愿单页·触控优化·评分统一）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
