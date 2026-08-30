@@ -2973,7 +2973,25 @@ var MTL_ICON={
 };
 function chapterOf(stage){ var k=String(stage||'').match(/^[A-Z]?\d+-/); return (k&&CHAPTER_MAP[k[0]])?CHAPTER_MAP[k[0]].ch:''; }
 function matIconUrl(mn){ var id=MTL_ICON[String(mn||'').trim()]; return id?('https://torappu.prts.wiki/assets/item_icon/'+id+'.png'):''; }
-function matIconHtml(mn){ var u=matIconUrl(mn); var ch=esc(String(mn||'').charAt(0)||'?'); if(!u)return '<span class="mat-fallback">'+ch+'</span>'; return '<span class="mat-wrap"><span class="mat-fallback">'+ch+'</span><img class="mat-icon" loading="lazy" src="'+esc(u)+'" onerror="matIconErr(this)" data-u="'+esc(u)+'" alt=""/></span>'; }
+var MAT_COLORS=[
+  ['#3a6ea5','#5b8ac0'],['#7a4a9e','#9b6cc4'],['#b5651d','#d18a3f'],['#2e7d5b','#4f9e7c'],
+  ['#a8325a','#c85a82'],['#4a6fb5','#6f92d8'],['#8a6d2f','#ad8f52'],['#3f7d8a','#63a0ad'],
+  ['#7d3fa0','#9f66c2'],['#c0563a','#e07a58'],['#356a4e','#579170'],['#8a3f6d','#ac6390'],
+  ['#4f6db5','#7491d6'],['#b08a2e','#d2ad52'],['#3f8a6a','#63ad8e'],['#a84a8a','#c86eac']
+];
+function matColor(mn){
+  var h=0, s=String(mn||'');
+  for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;
+  return MAT_COLORS[h%MAT_COLORS.length];
+}
+function matIconHtml(mn){
+  var u=matIconUrl(mn);
+  var ch=esc(String(mn||'').charAt(0)||'?');
+  var c=matColor(mn);
+  var st='background:linear-gradient(135deg,'+c[0]+','+c[1]+')';
+  if(!u)return '<span class="mat-fallback" style="'+st+'">'+ch+'</span>';
+  return '<span class="mat-wrap"><span class="mat-fallback" style="'+st+'">'+ch+'</span><img class="mat-icon" loading="lazy" src="'+esc(u)+'" onerror="matIconErr(this)" data-u="'+esc(u)+'" alt=""/></span>';
+}
 function matIconErr(im){
   if(im.dataset.rt)return;
   im.dataset.rt='1';
