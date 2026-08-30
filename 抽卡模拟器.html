@@ -735,7 +735,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.50（养成材料逐项推荐·多项修复）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.51（Wiki连通性检测·关于面板优化）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -2437,6 +2437,52 @@ function stripWiki(t){
     .replace(/\s+/g,' ').trim();
 }
 function wikiColor(t){ return String(t||'').replace(/\{\{color\|#[0-9A-Fa-f]{3,6}\|([^}]*)\}\}/g,'$1').replace(/\{\{术语\|(?:[^|]*\|)?([^}]*)\}\}/g,'$1'); }
+function wikiProbe(box){
+  if(!box)return;
+  box.innerHTML='<div class="wikisec"><h4>🌐 Wiki 连通性检测</h4><div class="notice" id="wikiProbeBox">正在检测 PRTS Wiki 连通性…（约需数秒，请稍候）</div></div>';
+  var probeUrl='https://prts.wiki/api.php?action=query&meta=siteinfo&format=json';
+  var out=[];
+  function step(i){
+    var el=$('wikiProbeBox');
+    if(el)el.innerHTML='⏳ 检测中（'+(i+1)+'/'+WIKI_METHODS.length+'）：'+WIKI_METHODS[i];
+    var T0=Date.now();
+    function advance(ok){
+      out.push({name:WIKI_METHODS[i], ok:ok, ms:Date.now()-T0});
+      if(i+1<WIKI_METHODS.length)setTimeout(function(){ step(i+1); }, 300);
+      else renderProbeResult(box, out);
+    }
+    if(i===0){ wikiJsonp(probeUrl, function(d){ advance(!!(d&&d.query)); }); return; }
+    if(typeof fetch!=='function'){ advance(false); return; }
+    var ctl=null; try{ ctl=new AbortController(); }catch(e){}
+    var to=ctl?setTimeout(function(){ try{ctl.abort();}catch(e){} },10000):null;
+    var target=null, asText=false, outer=false;
+    if(i===1||i===2){ target=probeUrl+'&origin=*'; }
+    else if(i===3){ target='https://api.allorigins.win/get?url='+encodeURIComponent(probeUrl); outer=true; }
+    else if(i===4){ target='https://corsproxy.io/?url='+encodeURIComponent(probeUrl); }
+    else { var raw='https://prts.wiki/index.php?title='+encodeURIComponent('能天使')+'&action=raw'; target='https://r.jina.ai/'+encodeURIComponent(raw); asText=true; }
+    fetch(target,{signal:ctl?ctl.signal:undefined})
+      .then(function(res){ return res.text(); })
+      .then(function(txt){ if(to)clearTimeout(to);
+        if(asText){ advance(looksLikeWiki(txt)); return; }
+        var j=null; try{ j=JSON.parse(txt); }catch(e){}
+        if(outer&&j&&typeof j.contents==='string'){ try{ j=JSON.parse(j.contents); }catch(e){} }
+        advance(!!(j&&j.query));
+      })
+      .catch(function(){ if(to)clearTimeout(to); advance(false); });
+  }
+  step(0);
+}
+function renderProbeResult(box, out){
+  var okN=0, h=['<div class="wikisec"><h4>🌐 Wiki 连通性检测</h4><div class="wikirows">'];
+  for(var i=0;i<out.length;i++){
+    if(out[i].ok)okN++;
+    h.push('<div class="wrow"><b>'+(out[i].ok?'✅':'❌')+' '+esc(out[i].name)+'</b><span>'+(out[i].ok?('连通 · '+(out[i].ms<1000?(out[i].ms+'ms'):((out[i].ms/1000).toFixed(1)+'s'))):'失败')+'</span></div>');
+  }
+  h.push('</div>');
+  h.push('<div class="notice">'+(okN?'✅ PRTS Wiki 可达（'+okN+'/'+out.length+' 种方式可用），Wiki 同步可正常进行。':'⚠️ 全部方式均不可达——PRTS 被网络拦截/限流，或浏览器代理/广告拦截扩展干扰；请检查网络后重试。')+'</div></div>');
+  box.innerHTML=h.join('');
+}
+
 var wikiSecCache={}, wikiQueue=[], wikiBusy=0;
 (function(){ try{ var wr2=localStorage.getItem('akgacha_pw_v1'); if(wr2){ var wo=JSON.parse(wr2); for(var wk in wo){ if(wo[wk]&&typeof wo[wk].v==='string'&&Date.now()-wo[wk].t<7*86400000)wikiSecCache[wk]=wo[wk]; } } }catch(e){} })();
 var __pwSaveT=null;
@@ -2579,8 +2625,9 @@ function wikiFetch(name,target){
   prtsFetch(name, null, function(wt){
     wikiStatusHook=null;
     if(!wt){
-      box.innerHTML='<h4 class="sect" style="margin-top:0">📊 '+esc(name)+' · Wiki数据</h4><div class="notice">⚠️ 同步失败：已尝试 '+WIKI_METHODS.length+' 种方式均未成功（PRTS 限流 / 网络被拦截 / 广告拦截扩展干扰等）。'+(wikiLastErr?'最近一次：'+esc(wikiLastErr)+'。':'')+'请稍后重试</div><div style="text-align:center;margin-top:8px"><button class="mini-btn" id="wikiRetry">🔄 重试同步</button></div>';
+      box.innerHTML='<h4 class="sect" style="margin-top:0">📊 '+esc(name)+' · Wiki数据</h4><div class="notice">⚠️ 同步失败：已尝试 '+WIKI_METHODS.length+' 种方式均未成功（PRTS 限流 / 网络被拦截 / 广告拦截扩展干扰等）。'+(wikiLastErr?'最近一次：'+esc(wikiLastErr)+'。':'')+'请稍后重试</div><div style="text-align:center;margin-top:8px"><button class="mini-btn" id="wikiRetry">🔄 重试同步</button><button class="mini-btn" id="wikiProbeBtn" style="margin-left:6px">🔍 连通性检测</button></div>';
       var wr=$('wikiRetry'); if(wr)wr.onclick=function(){ box.innerHTML='<div class="notice">正在从 PRTS Wiki 同步 <b>'+esc(name)+'</b> 的数据…（需联网）</div>'; wikiFetch(name,box); };
+      var wpb=$('wikiProbeBtn'); if(wpb)wpb.onclick=function(){ wikiProbe(box); };
       return;
     }
     var pd=parseWikiPage(wt);
@@ -2681,8 +2728,9 @@ function wikiFetchDetail(name, box){
   prtsFetch(name, null, function(wt){
     var b2=$('wikiBody');
     if(!wt){
-      if(b2)b2.innerHTML='<div class="notice">同步失败：无法连接 PRTS Wiki（需联网）或该干员页面不存在，也可能是 PRTS 限流，请稍后重试</div><div style="text-align:center;margin-top:8px"><button class="mini-btn" id="wikiRetry3">🔄 重试</button></div>';
+      if(b2)b2.innerHTML='<div class="notice">同步失败：无法连接 PRTS Wiki（需联网）或该干员页面不存在，也可能是 PRTS 限流，请稍后重试</div><div style="text-align:center;margin-top:8px"><button class="mini-btn" id="wikiRetry3">🔄 重试</button><button class="mini-btn" id="wikiProbeBtn3" style="margin-left:6px">🔍 连通性检测</button></div>';
       var wr=$('wikiRetry3'); if(wr)wr.onclick=function(){ wikiFetchDetail(name,box); };
+      var wpb3=$('wikiProbeBtn3'); if(wpb3)wpb3.onclick=function(){ if(b2)wikiProbe(b2); };
       return;
     }
     var data=parseWikiPage(wt);
@@ -3286,17 +3334,19 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v11.38</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v11.51</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（PRTS实时掉落）· 真实寻访记录分析 · 森空岛账号数据 · 存档导入导出 · 四主题</div>');
   h.push('</div>');
   h.push('<div class="wikisec"><h4>⌨️ 快捷键</h4><div class="notice">1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏卡池 · G 画廊 · S 统计 · H 寻访记录 · W 心愿单 · P 保底一览</div></div>');
   h.push('<div class="wikisec"><h4>🗂 数据来源</h4><div class="notice">PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· torappu.prts.wiki（语音音频）· 图片/音频在线加载，需联网</div></div>');
+  h.push('<div class="wikisec"><h4>🌐 Wiki 连通性检测</h4><div class="notice">检测本机到 PRTS Wiki 各获取方式（JSONP/CORS/多级代理）的连通性，Wiki 同步失败时可用于排查原因。</div><div style="text-align:center;margin-top:6px"><button class="mini-btn" id="btnWikiProbe">🔍 开始检测</button></div><div id="wikiProbeOut"></div></div>');
   h.push('<div class="wikisec"><h4>📜 最近更新</h4><div id="aboutLog"><div class="notice">加载中…</div></div></div>');
   $('mBody').innerHTML=h.join('');
+  var pb=$('btnWikiProbe'); if(pb)pb.onclick=function(){ var po=$('wikiProbeOut'); if(po)wikiProbe(po); };
   var al=$('aboutLog');
   if(al){
-    var logTxt=['<b>v11.50</b> 养成材料逐项推荐 · 皮肤泄漏/范围修复','<b>v11.49</b> 材料刷取查询重做 · 真图标','<b>v11.48</b> Wiki同步六重回退 · 进度提示','<b>v11.47</b> Wiki返回按钮 · 材料PRTS链接','<b>v11.46</b> 材料图标彩色兜底','<b>v11.45</b> 材料入口去重 · 图标重试','<b>v11.44</b> 皮肤懒加载缓存 · 时装角标','<b>v11.43</b> 特性行 · 时装列表','<b>v11.42</b> 联动池300井','<b>v11.41</b> 手机端卡池列表可滑动','<b>v11.40</b> Wiki整页获取 · 五重回退','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
+    var logTxt=['<b>v11.51</b> Wiki连通性检测 · 关于面板优化','<b>v11.50</b> 养成材料逐项推荐 · 皮肤泄漏/范围修复','<b>v11.49</b> 材料刷取查询重做 · 真图标','<b>v11.48</b> Wiki同步六重回退 · 进度提示','<b>v11.47</b> Wiki返回按钮 · 材料PRTS链接','<b>v11.46</b> 材料图标彩色兜底','<b>v11.45</b> 材料入口去重 · 图标重试','<b>v11.44</b> 皮肤懒加载缓存 · 时装角标','<b>v11.43</b> 特性行 · 时装列表','<b>v11.42</b> 联动池300井','<b>v11.41</b> 手机端卡池列表可滑动','<b>v11.40</b> Wiki整页获取 · 五重回退','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
     al.innerHTML=logTxt;
   }
   openModalBox();
