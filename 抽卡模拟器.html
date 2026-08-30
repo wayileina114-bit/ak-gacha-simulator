@@ -317,6 +317,12 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .matgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:8px; max-height:60vh; overflow-y:auto; margin-top:8px}
 .mat-item{position:relative; background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:8px; cursor:pointer; text-align:center; transition:.15s}
 .mat-item:hover{border-color:var(--acc2); transform:translateY(-2px)}
+.mat-item.mc-base{border-top:3px solid #7a8aa0}
+.mat-item.mc-high{border-top:3px solid #d64a4a}
+.mat-item.mc-chip{border-top:3px solid #4a9bd6}
+.mat-item.mc-skill{border-top:3px solid #c9a14a}
+.mat-item.mc-exp{border-top:3px solid #3dbf8f}
+.mat-item.mc-money{border-top:3px solid #d4af37}
 .mat-item .mat-icon{width:44px; height:44px; object-fit:contain; display:block; margin:0 auto 4px}
 .mat-item .mat-nm{font-size:11px; color:var(--txt)}
 .mat-wrap{position:relative; display:inline-block; width:44px; height:44px; margin:0 auto 4px}
@@ -327,6 +333,9 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .mat-chip.on{background:var(--acc2); color:#fff; border-color:var(--acc2); font-weight:700}
 .mat-item .mat-cnt{position:absolute; top:4px; right:4px; background:rgba(74,179,255,.85); color:#fff; font-size:10px; font-weight:800; padding:1px 6px; border-radius:10px}
 .mat-count{font-size:11px; color:var(--dim); margin-top:6px; text-align:right}
+.mat-rec{color:#3dbf8f; font-weight:700; font-style:normal}
+.mat-cons{display:inline-block; margin:1px 0}
+.mat-cons .mat-rec{display:block; font-size:10px; font-weight:600}
 .mat-tag{display:inline-block; font-size:10px; padding:2px 8px; border-radius:10px; border:1px solid var(--line); color:var(--txt); margin-left:6px; vertical-align:middle}
 .mat-tag-r4,.mat-tag-r5{color:#d4af37; border-color:#d4af37}
 .mat-desc{font-size:12px; color:var(--dim); margin:8px 0; line-height:1.7}
@@ -726,7 +735,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.49（材料刷取查询重做·真图标）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.50（养成材料逐项推荐·多项修复）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -1903,6 +1912,8 @@ function curMatCat(){
   var chips=chEl.querySelectorAll('.mat-chip.on');
   return chips.length?chips[0].getAttribute('data-cat'):'all';
 }
+var MAT_STATE={q:'',cat:'all'};
+var MAT_CAT_LABEL={all:'全部',base:'基础',high:'高级',chip:'芯片',skill:'技能',exp:'经验',money:'特殊'};
 function openMatQuery(){
   var h=['<h4 class="sect" style="margin-top:0">🧱 材料刷取查询</h4>'];
   h.push('<div class="wikisearch"><input id="matSearch" placeholder="搜索材料，如：固源岩 / 技巧概要..."/></div>');
@@ -1915,7 +1926,7 @@ function openMatQuery(){
   var chEl=$('matChips');
   if(chEl){
     var ch='', i;
-    for(i=0;i<cats.length;i++)ch+='<div class="mat-chip'+(cats[i][0]==='all'?' on':'')+'" data-cat="'+cats[i][0]+'">'+cats[i][1]+'</div>';
+    for(i=0;i<cats.length;i++)ch+='<div class="mat-chip'+(cats[i][0]===MAT_STATE.cat?' on':'')+'" data-cat="'+cats[i][0]+'">'+cats[i][1]+'</div>';
     chEl.innerHTML=ch;
     var chips=chEl.querySelectorAll('.mat-chip');
     for(i=0;i<chips.length;i++){
@@ -1929,8 +1940,8 @@ function openMatQuery(){
       })(chips[i]);
     }
   }
-  renderMatGrid('','all');
-  var ms=$('matSearch');
+  var ms=$('matSearch'); if(ms)ms.value=MAT_STATE.q;
+  renderMatGrid(MAT_STATE.q, MAT_STATE.cat);
   if(ms){ var msDl=null; ms.oninput=function(){ clearTimeout(msDl); var v=this.value.trim(); msDl=setTimeout(function(){ renderMatGrid(v, curMatCat()); },150); }; }
 }
 function renderMatGrid(q, cat){
@@ -1944,17 +1955,18 @@ function renderMatGrid(q, cat){
     var cnt=0;
     if(b)cnt=((b.fixed?b.fixed.length:0)+(b.high?b.high.length:0)+(b.prob?b.prob.length:0)+(b.rare?b.rare.length:0)+(b.super?b.super.length:0));
     else if(MAT_FARM_DB[names[i]]&&MAT_FARM_DB[names[i]].stages)cnt=MAT_FARM_DB[names[i]].stages.length;
-    h.push('<div class="mat-item" data-m="'+esc(names[i])+'">'+matIconHtml(names[i])+'<div class="mat-nm">'+esc(names[i])+'</div>'+(cnt?'<div class="mat-cnt">'+cnt+'关</div>':'')+'</div>');
+    h.push('<div class="mat-item mc-'+matCat(names[i])+'" data-m="'+esc(names[i])+'">'+matIconHtml(names[i])+'<div class="mat-nm">'+esc(names[i])+'</div>'+(cnt?'<div class="mat-cnt">'+cnt+'关</div>':'')+'</div>');
   }
   if(!shown)h.push('<div class="notice">没有匹配的材料</div>');
   $('matGrid').innerHTML=h.join('');
-  var mc=$('matCount'); if(mc)mc.textContent='共 '+shown+' 种材料'+(cat&&cat!=='all'?'（'+cat+'）':'');
+  var mc=$('matCount'); if(mc)mc.textContent='共 '+shown+' 种材料'+(cat&&cat!=='all'?(' · '+MAT_CAT_LABEL[cat]||cat):'');
   var items=$('matGrid').querySelectorAll('.mat-item');
   for(i=0;i<items.length;i++){
     (function(el){
       el.onclick=function(){ openMatDetail(el.getAttribute('data-m')); };
     })(items[i]);
   }
+  MAT_STATE.q=q||''; MAT_STATE.cat=cat||'all';
 }
 function openMatDetail(mn){
   var b=MAT_BILL[mn]||{};
@@ -2761,14 +2773,34 @@ function wikiAttrTab(name,data){
   var rangeHtml='';
   if(data.range){
     var rg=String(data.range||'');
-    var r0m=rg.match(/\|精英0范围=([^\n]*)/), r1m=rg.match(/\|精英1范围=([^\n]*)/), r2m=rg.match(/\|精英2范围=([^\n]*)/);
-    if(r0m||r1m||r2m){
-      var rows=[];
-      if(r0m)rows.push('<div class="wrow"><b>精英0</b><span>'+esc(wikiClean(r0m[1]))+'</span></div>');
-      if(r1m)rows.push('<div class="wrow"><b>精英1</b><span>'+esc(wikiClean(r1m[1]))+'</span></div>');
-      if(r2m)rows.push('<div class="wrow"><b>精英2</b><span>'+esc(wikiClean(r2m[1]))+'</span></div>');
-      rangeHtml='<div class="wikisec"><h4>🎯 攻击范围</h4><div class="wikirows">'+rows.join('')+'</div></div>';
+    var rows=[];
+    function rangeVal(key){
+      var idx=rg.indexOf('|'+key+'=');
+      if(idx<0)idx=rg.indexOf(key+'=');
+      if(idx<0)return '';
+      var seg=rg.slice(idx+key.length+1);
+      var nl=seg.indexOf('\n');
+      if(nl>=0)seg=seg.slice(0,nl);
+      return seg.trim();
     }
+    var keys=[['精英0','精英0范围'],['精英0','精英0'],['精英1','精英1范围'],['精英1','精英1'],['精英2','精英2范围'],['精英2','精英2']];
+    var seen={};
+    for(var ri2=0;ri2<keys.length;ri2++){
+      var rk=keys[ri2][1];
+      if(seen[rk])continue;
+      seen[rk]=true;
+      var rv=rangeVal(rk);
+      if(rv){
+        var cv=wikiClean(rv);
+        rows.push('<div class="wrow"><b>'+keys[ri2][0]+'</b><span>'+esc(cv||rv)+'</span></div>');
+      }
+    }
+    if(!rows.length){
+      var cleanedAll=wikiClean(rg);
+      if(cleanedAll&&cleanedAll.length>4&&!/^==/.test(cleanedAll))rows.push('<div class="wrow"><span>'+esc(cleanedAll)+'</span></div>');
+      rows.push('<div class="wrow"><span>攻击范围为图表格式，<a href="https://prts.wiki/w/'+esc(encodeURIComponent(name))+'#攻击范围" target="_blank" rel="noopener">查看 PRTS 页面</a></span></div>');
+    }
+    rangeHtml='<div class="wikisec"><h4>🎯 攻击范围</h4><div class="wikirows">'+rows.join('')+'</div></div>';
   }
   var attr=data.attr, h=[];
   var kvCache={};
@@ -2827,30 +2859,52 @@ function wikiSkillTab(name,data){
   h.push('</div>');
   return h.join('');
 }
+function parseMatsItems(line){
+  var parts=String(line||'').split('{{');
+  var out=[];
+  for(var pi=0;pi<parts.length;pi++){
+    var p=parts[pi];
+    if(p.indexOf('材料消耗|')!==0)continue;
+    var seg=p.slice(5).split('}}')[0].split('|');
+    var nm=seg[0]?seg[0].trim():'';
+    if(nm)out.push({name:nm, n:(seg[1]?parseInt(seg[1],10):1)||1});
+  }
+  return out;
+}
+function matFarmRec(mn){
+  var f=MAT_FARM_DB[mn];
+  if(!f||!f.stages||!f.stages.length)return '';
+  var best=null, fi;
+  for(fi=0;fi<f.stages.length;fi++){
+    var st=f.stages[fi];
+    if(!best||(st.ap!==undefined&&(best.ap===undefined||st.ap<best.ap)))best=st;
+  }
+  if(!best)return '';
+  var ap=best.ap!==undefined?(best.ap<1?'（效率极高）':'（约'+best.ap.toFixed(1)+'理智/个）'):'';
+  return ' <em class="farm mat-rec">📌 推荐 <b>'+esc(best.stage)+'</b>'+ap+'</em>';
+}
+function matConsSpans(items){
+  var sp=[];
+  for(var ii=0;ii<items.length;ii++){
+    sp.push('<span class="mat-cons">'+esc(items[ii].name)+(items[ii].n>1?'×'+items[ii].n:'')+matFarmRec(items[ii].name)+'</span>');
+  }
+  return sp.join(' + ');
+}
 function wikiMatTab(name,data){
   var h=['<div class="wikisec"><h4>🧱 精英化材料</h4>'];
   var hasAny=false;
-  function parseMatsLine(line){
-    var parts=String(line||'').split('}}').map(function(x){x=x.trim(); if(x.indexOf('材料消耗|')>=0){ return x.split('材料消耗|')[1]; } return '';}).filter(function(x){return x;});
-    return parts.map(function(x){ var seg2=x.split('|'); return (seg2[0]||'')+(seg2[1]?'×'+seg2[1]:''); }).join(' + ');
-  }
-  function farmHtml(matName){
-    var mn=String(matName||'').replace(/×[0-9]+/,'').split(' ')[0].trim();
-    var f=MAT_FARM_DB[mn]||MAT_FARM_DB[String(matName||'').trim()];
-    if(!f||!f.stages||!f.stages.length)return '';
-    var h=' <em class="farm">📌';
-    for(var fi3=0;fi3<f.stages.length;fi3++){
-      var st=f.stages[fi3];
-      h+=' <b>'+esc(st.stage)+'</b>（'+(st.ap<1?'效率极高':st.ap.toFixed(1)+'理智/个')+(st.drops&&st.drops.length?' · 掉'+st.drops.map(function(x){return esc(x);}).join('/'):'')+'）';
-    }
-    h+='</em>';
-    return h;
-  }
   if(data&&data.mats){
     var matsLines=[];
     var matsTxt=String(data.mats||'');
     var ml=matsTxt.split('\n');
-    for(var mi2=0;mi2<ml.length;mi2++){ var l2=ml[mi2].trim(); if(l2.indexOf('|精')>=0&&l2.indexOf('=')>=0){ var kv2=l2.split('='); var matsInfo=parseMatsLine(kv2[1]||''); if(matsInfo){ hasAny=true; matsLines.push('<div class="wrow"><b>'+(kv2[0].indexOf('精1')>=0?'精1':'精2')+'</b><span>'+esc(matsInfo)+farmHtml(matsInfo)+'</span></div>'); } } }
+    for(var mi2=0;mi2<ml.length;mi2++){
+      var l2=ml[mi2].trim();
+      if(l2.indexOf('|精')>=0&&l2.indexOf('=')>=0){
+        var kv2=l2.split('=');
+        var items=parseMatsItems(kv2[1]||'');
+        if(items.length){ hasAny=true; matsLines.push('<div class="wrow"><b>'+(kv2[0].indexOf('精1')>=0?'精1':'精2')+'</b><span>'+matConsSpans(items)+'</span></div>'); }
+      }
+    }
     if(matsLines.length)h.push('<div class="wikirows">'+matsLines.join('')+'</div>');
   }
   if(!hasAny)h.push('<div class="notice">暂无精英化材料数据</div>');
@@ -2860,11 +2914,19 @@ function wikiMatTab(name,data){
     var smTxt=String(data.skillMats||'');
     var sml=smTxt.split('\n');
     var smAny=false;
-    for(var smi=0;smi<sml.length;smi++){ var sl2=sml[smi].trim(); if(sl2.indexOf('|')===0&&sl2.indexOf('=')>=0){ var kv3=sl2.slice(1).split('='); var lvName=kv3[0]; var info=parseMatsLine(kv3[1]||''); if(info){ smAny=true; h.push('<div class="wrow"><b>'+esc(lvName.replace(/^一/,'专精'))+'</b><span>'+esc(info)+farmHtml(info)+'</span></div>'); } } }
+    for(var smi=0;smi<sml.length;smi++){
+      var sl2=sml[smi].trim();
+      if(sl2.indexOf('|')===0&&sl2.indexOf('=')>=0){
+        var kv3=sl2.slice(1).split('=');
+        var lvName=kv3[0];
+        var items2=parseMatsItems(kv3[1]||'');
+        if(items2.length){ smAny=true; h.push('<div class="wrow"><b>'+esc(lvName.replace(/^一/,'专精'))+'</b><span>'+matConsSpans(items2)+'</span></div>'); }
+      }
+    }
     if(!smAny)h.push('<div class="notice">暂无技能升级材料数据</div>');
     h.push('</div></div>');
   }
-  h.push('<div class="wikihint">📌 刷取关卡与理智为社区参考值（数据可能存在版本变动），绿色高亮为推荐。</div>');
+  h.push('<div class="wikihint">📌 每个材料都给出推荐刷取关卡（取理智效率最优），理智为社区参考值（数据可能存在版本变动）。</div>');
   return h.join('');
 }
 function wikiPotTab(name,data){
@@ -2905,21 +2967,24 @@ function wikiModTab(name,data){
   var mt=String((data&&data.module)||'');
   if(!mt.trim())return '<div class="notice">暂无模组数据</div>';
   var h=['<div class="wikisec"><h4>🧩 模组</h4>'];
-  var segs=mt.split(/^===/m);
+  // 按 {{模组信息 模板切分（兼容 ==模组N== / ===模组N=== 各种标题样式）
+  var segs=mt.split(/\{\{模组信息/);
   var found=false;
   for(var si=1;si<segs.length;si++){
-    var seg=segs[si];
-    var closeIdx=seg.indexOf('===');
-    var title=closeIdx>=0?seg.slice(0,closeIdx).trim():('模组'+si);
-    var body=closeIdx>=0?seg.slice(closeIdx+3):seg;
+    var body='{{模组信息'+segs[si];
     function kv(k){ var m=body.match(new RegExp('\\|'+k+'=([^\\n]*)')); return m?m[1].trim():''; }
+    var title=kv('模组名');
     var type=kv('类型'), branch=kv('分支'), base=kv('基础证章');
     var hp=kv('生命'), atk=kv('攻击'), hp2=kv('生命2'), atk2=kv('攻击2'), hp3=kv('生命3'), atk3=kv('攻击3');
     var feat=kv('特性'), talent=kv('天赋2')||kv('天赋3');
+    if(!title&&!type&&!branch&&!hp&&!atk&&!feat&&!talent)continue;
     found=true;
-    h.push('<div class="wskill"><div class="wskillname">'+esc(title)+'</div>');
+    h.push('<div class="wskill"><div class="wskillname">'+esc(title||('模组'+(found?si:'')))+'</div>');
     if(type||branch)h.push('<div class="wskilltype">'+esc(wikiClean(type))+(type&&branch?' · ':'')+esc(wikiClean(branch))+'</div>');
-    if(base){ h.push('<div class="wskillnum">基础证章</div>'); }
+    if(base){
+      var baseTxt=wikiClean(base);
+      h.push('<div class="wskillnum">基础证章'+(baseTxt&&baseTxt!=='基础证章'?('：'+esc(baseTxt)):'')+'</div>');
+    }
     else if(hp||atk){
       h.push('<div class="wskillnum">'+(hp?esc('生命 +'+wikiClean(hp)):'')+(hp&&atk?' · ':'')+(atk?esc('攻击 +'+wikiClean(atk)):'')+'（1级）</div>');
       if(hp2||atk2)h.push('<div class="wskillnum">'+(hp2?esc('生命 +'+wikiClean(hp2)):'')+(hp2&&atk2?' · ':'')+(atk2?esc('攻击 +'+wikiClean(atk2)):'')+'（2级）</div>');
@@ -3231,7 +3296,7 @@ function openAbout(){
   $('mBody').innerHTML=h.join('');
   var al=$('aboutLog');
   if(al){
-    var logTxt=['<b>v11.49</b> 材料刷取查询重做 · 真图标','<b>v11.48</b> Wiki同步六重回退 · 进度提示','<b>v11.47</b> Wiki返回按钮 · 材料PRTS链接','<b>v11.46</b> 材料图标彩色兜底','<b>v11.45</b> 材料入口去重 · 图标重试','<b>v11.44</b> 皮肤懒加载缓存 · 时装角标','<b>v11.43</b> 特性行 · 时装列表','<b>v11.42</b> 联动池300井','<b>v11.41</b> 手机端卡池列表可滑动','<b>v11.40</b> Wiki整页获取 · 五重回退','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
+    var logTxt=['<b>v11.50</b> 养成材料逐项推荐 · 皮肤泄漏/范围修复','<b>v11.49</b> 材料刷取查询重做 · 真图标','<b>v11.48</b> Wiki同步六重回退 · 进度提示','<b>v11.47</b> Wiki返回按钮 · 材料PRTS链接','<b>v11.46</b> 材料图标彩色兜底','<b>v11.45</b> 材料入口去重 · 图标重试','<b>v11.44</b> 皮肤懒加载缓存 · 时装角标','<b>v11.43</b> 特性行 · 时装列表','<b>v11.42</b> 联动池300井','<b>v11.41</b> 手机端卡池列表可滑动','<b>v11.40</b> Wiki整页获取 · 五重回退','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
     al.innerHTML=logTxt;
   }
   openModalBox();
@@ -3335,14 +3400,14 @@ function renderWikiData(name,data,target){
     var matsLines=[];
     var matsTxt=String(data.mats||'');
     var ml=matsTxt.split('\n');
-    for(var mi2=0;mi2<ml.length;mi2++){ var l2=ml[mi2].trim(); if(l2.indexOf('|精')>=0&&l2.indexOf('=')>=0){ var kv2=l2.split('='); var matsInfo=parseMatsLine(kv2[1]||''); if(matsInfo)matsLines.push('<div class="wrow"><b>'+(kv2[0].indexOf('精1')>=0?'精1':'精2')+'</b><span>'+esc(matsInfo)+'</span></div>'); } }
+    for(var mi2=0;mi2<ml.length;mi2++){ var l2=ml[mi2].trim(); if(l2.indexOf('|精')>=0&&l2.indexOf('=')>=0){ var kv2=l2.split('='); var itemsB=parseMatsItems(kv2[1]||''); if(itemsB.length)matsLines.push('<div class="wrow"><b>'+(kv2[0].indexOf('精1')>=0?'精1':'精2')+'</b><span>'+matConsSpans(itemsB)+'</span></div>'); } }
     if(matsLines.length){ h.push('<div class="wikisec"><h4>🧱 精英化材料</h4><div class="wikirows">'+matsLines.join('')+'</div></div>'); }
   }
   if(data&&data.skillMats){
     var smLines=[];
     var smTxt=String(data.skillMats||'');
     var sml=smTxt.split('\n');
-    for(var smi=0;smi<sml.length;smi++){ var sl2=sml[smi].trim(); if(sl2.indexOf('|')===0&&sl2.indexOf('=')>=0){ var kv3=sl2.slice(1).split('='); var lvName=kv3[0]; var info=parseMatsLine(kv3[1]||''); if(info)smLines.push('<div class="wrow"><b>'+esc(lvName.replace(/^一/,'专精'))+'</b><span>'+esc(info)+'</span></div>'); } }
+    for(var smi=0;smi<sml.length;smi++){ var sl2=sml[smi].trim(); if(sl2.indexOf('|')===0&&sl2.indexOf('=')>=0){ var kv3=sl2.slice(1).split('='); var lvName=kv3[0]; var itemsS=parseMatsItems(kv3[1]||''); if(itemsS.length)smLines.push('<div class="wrow"><b>'+esc(lvName.replace(/^一/,'专精'))+'</b><span>'+matConsSpans(itemsS)+'</span></div>'); } }
     if(smLines.length){ h.push('<div class="wikisec"><h4>📚 技能升级材料</h4><div class="wikirows">'+smLines.join('')+'</div></div>'); }
   }
   h.push('<div class="notice">数据来源：PRTS Wiki（实时同步）· 点击板块标题可折叠</div>');
@@ -3443,7 +3508,7 @@ function renderSkins(name,skins,failed){
       if(ciInfo){
         var cim=ciInfo.match(new RegExp('\\|时装'+no+'名称=([^\\n]*)'));
         var cim2=ciInfo.match(new RegExp('\\|时装'+no+'系列=([^\\n]*)'));
-        var cim3=ciInfo.match(new RegExp('\\|时装'+no+'介绍=([\\s\\S]*?)(?=\\n\\|时装|\\n}}|$)'));
+        var cim3=ciInfo.match(new RegExp('\\|时装'+no+'介绍=([\\s\\S]*?)(?=\\n\\||\\n}}|$)'));
         var cim4=ciInfo.match(new RegExp('\\|时装'+no+'价格=([^\\n]*)'))||ciInfo.match(new RegExp('\\|时装'+no+'售价=([^\\n]*)'));
         var cim5=ciInfo.match(new RegExp('\\|时装'+no+'获取方式=([^\\n]*)'))||ciInfo.match(new RegExp('\\|时装'+no+'获取=([^\\n]*)'))||ciInfo.match(new RegExp('\\|时装'+no+'获得方式=([^\\n]*)'));
         if(cim)sName=wikiClean(cim[1]);
@@ -3870,7 +3935,7 @@ function matIconHtml(mn){
   var c=matColor(mn);
   var st='background:linear-gradient(135deg,'+c[0]+','+c[1]+')';
   if(!u)return '<span class="mat-fallback" style="'+st+'">'+ch+'</span>';
-  return '<span class="mat-wrap"><span class="mat-fallback" style="'+st+'">'+ch+'</span><img class="mat-icon" loading="lazy" src="'+esc(u)+'" onerror="matIconErr(this)" data-u="'+esc(u)+'" alt=""/></span>';
+  return '<span class="mat-wrap"><span class="mat-fallback" style="'+st+'">'+ch+'</span><img class="mat-icon" loading="lazy" style="opacity:0" src="'+esc(u)+'" onerror="matIconErr(this)" onload="this.style.opacity=1" data-u="'+esc(u)+'" alt=""/></span>';
 }
 function matIconErr(im){
   if(im.dataset.rt){ try{ im.style.display='none'; }catch(e){} im.onerror=null; return; }
