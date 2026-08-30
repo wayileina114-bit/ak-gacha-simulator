@@ -1978,7 +1978,7 @@ function voiceHtml(vd){
       var audioUrl='https://torappu.prts.wiki/aud/'+path+'/'+it.file;
       audio='<audio controls preload="none" src="'+esc(audioUrl)+'" style="width:100%;height:34px;margin:4px 0"></audio>';
     }
-    h.push('<div class="voice-item"><div class="wskillname">'+esc(it.title)+'</div>'+(it.text?'<div class="voice-txt">'+esc(it.text)+'</div>':'')+audio+'</div>');
+    h.push('<div class="voice-item"><div class="wskillname">'+esc(it.title)+'</div>'+(it.text?'<div class="voice-txt">'+esc(it.text)+'</div><button class="mini-btn voice-copy" data-txt="'+esc(it.text)+'">📋 复制台词</button>':'')+audio+'</div>');
   }
   return h.join('');
 }
@@ -1991,6 +1991,17 @@ function attachVoiceHandlers(body, name, vd){
   var aus=body.querySelectorAll('audio');
   for(var ai=0;ai<aus.length;ai++){
     (function(au){ au.onerror=function(){ var p=au.parentNode; if(p&&!p.querySelector('.voice-err')){ try{ var d=document.createElement('div'); d.className='voice-err'; d.textContent='⚠ 该语音文件暂不可用（可能未收录）'; p.appendChild(d); }catch(e){} } }; })(aus[ai]);
+  }
+  var cps=body.querySelectorAll('.voice-copy');
+  for(var ci3=0;ci3<cps.length;ci3++){
+    (function(cp){ cp.onclick=function(){
+      var txt2=cp.getAttribute('data-txt')||'';
+      if(!txt2){ toast('该条语音无台词文本'); return; }
+      try{
+        if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt2).then(function(){ toast('台词已复制'); },function(){ window.prompt('复制以下台词：', txt2); }); }
+        else window.prompt('复制以下台词：', txt2);
+      }catch(e){ window.prompt('复制以下台词：', txt2); }
+    }; })(cps[ci3]);
   }
 }
 function renderVoiceHtml(name, vd, body){
@@ -2057,10 +2068,102 @@ function wikiSuggestHtml(v){
   }
   return html.join('');
 }
+function cmpAttr(txt, k){
+  var m=String(txt||'').match(new RegExp('\\|'+k+'=([^\\n|]*)'));
+  return m?m[1].trim():'';
+}
+function cmpNum(v){ var n=parseInt(String(v||'').replace(/[^0-9-]/g,''),10); return isNaN(n)?null:n; }
+function cmpHtml(a, c1a, c3a, b, c1b, c3b){
+  var oa=opOf(a), ob=opOf(b);
+  var h=['<div class="wikitbl"><table><tr><th></th><th>'+esc(oa?oa.name:a)+'</th><th>'+esc(ob?ob.name:b)+'</th></tr>'];
+  function row(label, ka, kb){
+    var va=cmpAttr(c1a||'',ka||label), vb=cmpAttr(c1b||'',kb||label);
+    var na=cmpNum(va), nb=cmpNum(vb);
+    var better='';
+    if(na!==null&&nb!==null&&na!==nb)better=na>nb?'<span class="cmp-better">▲</span>':'<span class="cmp-better">▼</span>';
+    if(!va&&!vb)return;
+    h.push('<tr><td>'+label+'</td><td>'+esc(va||'—')+' '+better+'</td><td>'+esc(vb||'—')+' '+(better&&na<nb?'<span class="cmp-better">▲</span>':(better&&na>nb?'<span class="cmp-better">▼</span>':''))+'</td></tr>');
+  }
+  row('职业','职业');
+  row('分支','分支');
+  row('位置','位置');
+  row('标签','标签');
+  row('特性','特性');
+  var stages=[['精英0·1级','精英0_1级'],['精英0·满级','精英0_满级'],['精英1·满级','精英1_满级'],['精英2·满级','精英2_满级']];
+  var sts=[['生命','_生命上限'],['攻击','_攻击'],['防御','_防御'],['法抗','_法术抗性']];
+  for(var si=0;si<stages.length;si++){
+    for(var sj=0;sj<sts.length;sj++){
+      row(stages[si][0]+'·'+sts[sj][0], stages[si][1]+sts[sj][1], stages[si][1]+sts[sj][1]);
+    }
+  }
+  row('再部署','再部署');
+  row('部署费用','部署费用');
+  row('阻挡数','阻挡数');
+  row('攻击速度','攻击速度');
+  row('信赖·生命','信赖加成_生命上限');
+  row('信赖·攻击','信赖加成_攻击');
+  row('信赖·防御','信赖加成_防御');
+  h.push('</table></div>');
+  if((!c1a&&!c3a)||(!c1b&&!c3b))h.push('<div class="notice">部分干员数据同步失败（需联网访问 PRTS，或该干员未收录）</div>');
+  return h.join('');
+}
+function openCompare(){
+  __wikiBack=openCompare;
+  var h=['<h4 class="sect" style="margin-top:0">⚖️ 干员对比</h4>'];
+  h.push('<div class="wikisearch"><input id="cmpA" placeholder="干员A，如：能天使"/><input id="cmpB" placeholder="干员B，如：艾雅法拉"/><button class="mini-btn" id="cmpGo">对比</button></div>');
+  h.push('<div class="wikihint">对比两位干员的基础信息与属性数值（实时同步 PRTS，已查询过的干员秒开）。▲为数值更高的一侧。</div>');
+  h.push('<div id="cmpOut"><div class="notice">输入两位干员名后点击「对比」，或直接点击下方干员头像选择</div></div>');
+  h.push('<div id="cmpPick" class="cmp-pick"></div>');
+  $('mBody').innerHTML=h.join('');
+  openModalBox();
+  var ca=$('cmpA'), cb=$('cmpB'), cg=$('cmpGo');
+  function go(){
+    var a=ca?ca.value.trim():'', b2=cb?cb.value.trim():'';
+    if(!a||!b2){ toast('请输入两位干员名'); return; }
+    renderCompare(a,b2);
+  }
+  if(cg)cg.onclick=go;
+  if(ca&&cb){ ca.onkeydown=function(e){ if(e.key==='Enter'&&cb)cb.focus(); }; cb.onkeydown=function(e){ if(e.key==='Enter')go(); }; }
+  // 热门干员快捷选择
+  var hot=['能天使','艾雅法拉','银灰','史尔特尔','玛恩纳','塞雷娅','凯尔希','棘刺','伊内丝','逻各斯'];
+  var ph=['<div class="cmp-hot">'];
+  for(var hi2=0;hi2<hot.length;hi2++){
+    var ho=opOf(hot[hi2]);
+    if(ho)ph.push('<span class="cmp-chip" data-n="'+esc(ho.name)+'">'+esc(ho.name)+'</span>');
+  }
+  ph.push('</div>');
+  var pk=$('cmpPick'); if(pk)pk.innerHTML=ph.join('');
+  var chips=pk?pk.querySelectorAll('.cmp-chip'):[];
+  for(var ci2=0;ci2<chips.length;ci2++){
+    (function(ch2){
+      ch2.onclick=function(){
+        var nn=ch2.getAttribute('data-n');
+        var a2=ca?ca.value.trim():'';
+        if(!a2||a2===nn){ if(ca)ca.value=nn; if(cb&&cb.value===nn)cb.value=''; }
+        else if(cb)cb.value=nn;
+        go();
+      };
+    })(chips[ci2]);
+  }
+}
+function renderCompare(a,b){
+  var out=$('cmpOut'); if(!out)return;
+  out.innerHTML='<div class="notice">正在同步 <b>'+esc(a)+'</b> 与 <b>'+esc(b)+'</b> 的数据…（需联网）</div>';
+  var gA={c1:'',c3:''}, gB={c1:'',c3:''}, done2=0;
+  function fin(){
+    done2++;
+    if(done2<4)return;
+    out.innerHTML=cmpHtml(a,gA.c1,gA.c3,b,gB.c1,gB.c3);
+  }
+  prtsFetch(a,1,function(t){ gA.c1=t||''; fin(); });
+  prtsFetch(a,3,function(t){ gA.c3=t||''; fin(); });
+  prtsFetch(b,1,function(t){ gB.c1=t||''; fin(); });
+  prtsFetch(b,3,function(t){ gB.c3=t||''; fin(); });
+}
 function openWikiSearch(){
   __wikiBack=openWikiSearch;
   var h=['<h4 class="sect" style="margin-top:0">🔍 干员Wiki查询</h4>'];
-  h.push('<div class="wikisearch"><input id="wikiSearchInput" placeholder="输入干员名，如：能天使 / 玛恩纳 / 缪尔赛思..."/><button class="mini-btn" id="wikiSearchGo">查询</button></div>');
+  h.push('<div class="wikisearch"><input id="wikiSearchInput" placeholder="输入干员名，如：能天使 / 玛恩纳 / 缪尔赛思..."/><button class="mini-btn" id="wikiSearchGo">查询</button><button class="mini-btn" id="wikiCmp">⚖️ 对比</button></div>');
   h.push('<div id="wikiSuggest" class="wikisuggest"></div>');
   h.push('<div class="wikihint">对接 <b>PRTS Wiki</b>（prts.wiki）实时同步干员数据：属性数值 · 天赋 · 技能（含专精） · 精英化/技能升级材料。<br/>输入时下方实时显示本工具收录的干员候选，点击直接查询；也可查询<b>任意</b>PRTS 上存在的干员。</div>');
   h.push('<div id="wikiOut"></div>');
@@ -2080,6 +2183,7 @@ function openWikiSearch(){
     }
   }
   if(wsgo)wsgo.onclick=go;
+  var wcmp=$('wikiCmp'); if(wcmp)wcmp.onclick=function(){ openCompare(); };
   if(wsi){ wsi.onkeydown=function(e){ if(e.key==='Enter')go(); }; wsi.oninput=function(){ var v=this.value.trim(); clearTimeout(window.__wsT); window.__wsT=setTimeout(function(){ renderSuggest(v); },120); }; setTimeout(function(){ try{ wsi.focus(); }catch(e){} },120); }
 }
 var skinCache={};
@@ -2194,15 +2298,36 @@ function preloadSkins(name, cb){
     if(cb)cb(skins);
   },12000);
 }
+function saveSkinCache(name, skins){
+  try{
+    var raw=localStorage.getItem('akgacha_skins_v1');
+    var o=raw?JSON.parse(raw):{};
+    o[name]={t:Date.now(), s:skins.slice(0,30)};
+    var ks=Object.keys(o);
+    if(ks.length>80){ ks.sort(function(a,b){ return (o[a].t||0)-(o[b].t||0); }); for(var i=0;i<ks.length-80;i++)delete o[ks[i]]; }
+    localStorage.setItem('akgacha_skins_v1', JSON.stringify(o));
+  }catch(e){}
+}
+function loadSkinCache(name){
+  try{
+    var raw=localStorage.getItem('akgacha_skins_v1');
+    if(!raw)return null;
+    var o=JSON.parse(raw), e=o[name];
+    if(e&&e.s&&Date.now()-e.t<30*86400000)return e.s;
+  }catch(e){}
+  return null;
+}
 function openSkins(opName){
   var o=opOf(opName); if(!o)return;
   var name=o.name;
   var cache=skinCache[name];
   if(cache&&Date.now()-cache.t<600000){ renderSkins(name,cache.skins); return; }
+  var ls=loadSkinCache(name);
+  if(ls){ skinCache[name]={t:Date.now(),skins:ls}; renderSkins(name,ls); return; }
   $('mBody').innerHTML='<div class="notice">正在加载 '+esc(name)+' 的皮肤…（需联网）</div>';
   openModalBox();
   jsonp(skinListUrl(name),function(data){
-    var skins=[];
+    var skins=[], failed=false;
     if(data&&data.query&&data.query.allimages){
       for(var i=0;i<data.query.allimages.length;i++){
         var it=data.query.allimages[i];
@@ -2210,18 +2335,22 @@ function openSkins(opName){
         var isLive=it.name.toLowerCase().indexOf('_live')>=0||it.name.toLowerCase().indexOf('.gif')>=0;
         if(m&&parseInt(m[1],10)>=0){ skins.push({name:it.name,url:it.url,no:m[1],live:isLive}); }
       }
-    }
+    } else failed=true;
     skinCache[name]={t:Date.now(),skins:skins};
-    renderSkins(name,skins);
+    if(!failed)saveSkinCache(name,skins);
+    renderSkins(name,skins,failed);
   },12000);
 }
-function renderSkins(name,skins){
+function renderSkins(name,skins,failed){
   var o=opOf(name), h=[];
   h.push('<button class="mini-btn" id="btnSkinsBack" style="margin-bottom:8px">← 返回干员详情</button>');
   var skinList=skins.filter(function(s){return !(s.no==='0'||s.no===0);});
   h.push('<div class="mhead"><div class="minfo"><h2>'+esc(name)+' · 皮肤图鉴</h2><div class="kv"><b>皮肤数量</b>'+skinList.length+' · <b>动态时装</b>'+skins.filter(function(s){return s.live;}).length+'</div></div></div>');
   h.push('<div class="wikihint">✨动态时装：动图请于游戏内查看（本工具显示静态图）。皮肤名称/系列/介绍来自 PRTS，获取方式/价格为社区整理，以游戏内为准。</div>');
-  if(!skins.length){ h.push('<div class="notice">该干员暂无皮肤，或加载失败（需联网访问 bilibili Wiki）</div>'); }
+  if(!skins.length){
+    h.push('<div class="notice">该干员暂无皮肤'+(failed?'，或加载失败（需联网访问 bilibili Wiki）':'')+'</div>');
+    if(failed)h.push('<div style="text-align:center;margin-top:6px"><button class="mini-btn" id="skinRetry">🔄 重试加载皮肤</button></div>');
+  }
   else {
     h.push('<div class="skingrid">');
     var ciInfo=wikiCache[name]?wikiCache[name].charInfo:'';
@@ -2256,6 +2385,7 @@ function renderSkins(name,skins){
   }
   $('mBody').innerHTML=h.join('');
   var bb=$('btnSkinsBack'); if(bb)bb.onclick=function(){ openModal(name); };
+  var sr=$('skinRetry'); if(sr)sr.onclick=function(){ try{ delete skinCache[name]; localStorage.removeItem('akgacha_skins_v1'); }catch(e){} openSkins(name); };
   var items=$('mBody').querySelectorAll('.skin-item');
   for(var j=0;j<items.length;j++){ (function(el){ el.onclick=function(){ openLightbox(el.getAttribute('data-url')); }; })(items[j]); }
   var simgs=$('mBody').querySelectorAll('.skin-item img');
