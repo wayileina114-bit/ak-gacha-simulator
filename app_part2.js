@@ -1632,11 +1632,19 @@ function pumpWiki(){
     doWikiFetch(it);
   }
 }
+var WIKI_METHODS=['JSONP 直连','CORS 直连','CORS 重试','allorigins 代理','corsproxy 代理','jina 代理(action=raw)'];
+var wikiStatusHook=null, wikiLastErr='';
 function wikiFinish(it, txt){
   wikiBusy--;
-  if(txt===null&&it.attempts<4){ it.attempts++; wikiQueue.push(it); setTimeout(pumpWiki,350); return; }
+  if(txt===null&&it.attempts<WIKI_METHODS.length-1){
+    var fIdx=it.attempts; it.attempts++;
+    wikiLastErr='方式 '+(fIdx+1)+'/'+WIKI_METHODS.length+'（'+WIKI_METHODS[fIdx]+'）失败';
+    if(wikiStatusHook)wikiStatusHook(it.attempts,false);
+    wikiQueue.push(it); setTimeout(pumpWiki,350); return;
+  }
   var key='pw:'+it.page+':'+(it.sec===null||it.sec===undefined?'all':it.sec);
-  if(typeof txt==='string'){ wikiSecCache[key]={t:Date.now(),v:txt}; persistSecCache(); }
+  if(typeof txt==='string'){ wikiSecCache[key]={t:Date.now(),v:txt}; persistSecCache(); wikiLastErr=''; }
+  if(wikiStatusHook)wikiStatusHook(it.attempts,typeof txt==='string');
   it.cb(typeof txt==='string'?txt:'');
   pumpWiki();
 }
@@ -1645,17 +1653,33 @@ function doWikiFetch(it){
   if(it.attempts===0){ wikiJsonp(url, function(d){ wikiFinish(it, extractWikiText(d)); }); return; }
   if(typeof fetch!=='function'||typeof window==='undefined'){ wikiFinish(it, null); return; }
   var ctl=null; try{ ctl=new AbortController(); }catch(e){}
-  var to=ctl?setTimeout(function(){ try{ctl.abort();}catch(e){} },10000):null;
-  var target=url+(url.indexOf('?')>=0?'&':'?')+'origin=*';
-  if(it.attempts>=3){
-    // 终极回退：CORS 代理（直连/jsonp 均失败时尝试，用户网络环境可能可达）
-    var proxy=it.attempts===3?'https://api.allorigins.win/raw?url=':'https://corsproxy.io/?url=';
-    target=proxy+encodeURIComponent(url);
+  var to=ctl?setTimeout(function(){ try{ctl.abort();}catch(e){} },12000):null;
+  var target=null, asText=false, outer=false;
+  if(it.attempts===1||it.attempts===2){
+    target=url+(url.indexOf('?')>=0?'&':'?')+'origin=*';
+  }else if(it.attempts===3){
+    target='https://api.allorigins.win/get?url='+encodeURIComponent(url); outer=true;
+  }else if(it.attempts===4){
+    target='https://corsproxy.io/?url='+encodeURIComponent(url);
+  }else{
+    // 最终回退：action=raw 直取 wikitext 纯文本，经 jina 代理（绕过 parse JSON 层与 CORS）
+    var raw='https://prts.wiki/index.php?title='+encodeURIComponent(it.page)+'&action=raw';
+    target='https://r.jina.ai/'+encodeURIComponent(raw); asText=true;
   }
   fetch(target,{signal:ctl?ctl.signal:undefined})
     .then(function(res){ return res.text(); })
-    .then(function(txt){ if(to)clearTimeout(to); var j=null; try{ j=JSON.parse(txt); }catch(e){} var w=extractWikiText(j); if(w===null)wikiFinish(it,null); else wikiFinish(it,w); })
+    .then(function(txt){ if(to)clearTimeout(to);
+      if(asText){ wikiFinish(it, looksLikeWiki(txt)?txt:null); return; }
+      var j=null; try{ j=JSON.parse(txt); }catch(e){}
+      if(outer&&j&&typeof j.contents==='string'){ try{ j=JSON.parse(j.contents); }catch(e){} }
+      var w=extractWikiText(j); if(w===null)wikiFinish(it,null); else wikiFinish(it,w);
+    })
     .catch(function(){ if(to)clearTimeout(to); wikiFinish(it,null); });
+}
+function looksLikeWiki(t){
+  if(!t||typeof t!=='string')return false;
+  var s=t.slice(0,400);
+  return s.indexOf('{{')>=0||s.indexOf('[[')>=0||/^=+[^=\n]+=+\s*$/m.test(s);
 }
 function wikiJsonp(url, cb){
   try{
@@ -1694,9 +1718,21 @@ function wikiFetch(name,target){
   if(wikiCache[ck]&&Date.now()-wikiCache[ck].t<600000){ renderWikiData(name,wikiCache[ck],box); return; }
   box.innerHTML='<h4 class="sect" style="margin-top:0">📊 '+esc(name)+' · Wiki数据</h4><div class="notice" id="wikiSync">正在从 PRTS Wiki 同步数据…（需联网）</div>';
   openModalBox();
+  if(typeof navigator!=='undefined'&&navigator.onLine===false){
+    box.innerHTML='<h4 class="sect" style="margin-top:0">📊 '+esc(name)+' · Wiki数据</h4><div class="notice">⚠️ 当前处于离线状态，无法同步 Wiki 数据，请联网后重试</div><div style="text-align:center;margin-top:8px"><button class="mini-btn" id="wikiRetry">🔄 重试</button></div>';
+    var wr0=$('wikiRetry'); if(wr0)wr0.onclick=function(){ wikiFetch(name,box); };
+    return;
+  }
+  wikiLastErr='';
+  wikiStatusHook=function(a,ok){
+    var el=$('wikiSync')||$('matLive'); if(!el)return;
+    if(ok)el.innerHTML='✅ 已获取 PRTS 数据（方式 '+(a+1)+'/'+WIKI_METHODS.length+'：'+WIKI_METHODS[a]+'）';
+    else el.innerHTML='⏳ 正在同步…（方式 '+(a+1)+'/'+WIKI_METHODS.length+'：'+WIKI_METHODS[a]+'）';
+  };
   prtsFetch(name, null, function(wt){
+    wikiStatusHook=null;
     if(!wt){
-      box.innerHTML='<h4 class="sect" style="margin-top:0">📊 '+esc(name)+' · Wiki数据</h4><div class="notice">同步失败：无法连接 PRTS Wiki（需联网/可能限流），请稍后重试</div><div style="text-align:center;margin-top:8px"><button class="mini-btn" id="wikiRetry">🔄 重试同步</button></div>';
+      box.innerHTML='<h4 class="sect" style="margin-top:0">📊 '+esc(name)+' · Wiki数据</h4><div class="notice">⚠️ 同步失败：已尝试 '+WIKI_METHODS.length+' 种方式均未成功（PRTS 限流 / 网络被拦截 / 广告拦截扩展干扰等）。'+(wikiLastErr?'最近一次：'+esc(wikiLastErr)+'。':'')+'请稍后重试</div><div style="text-align:center;margin-top:8px"><button class="mini-btn" id="wikiRetry">🔄 重试同步</button></div>';
       var wr=$('wikiRetry'); if(wr)wr.onclick=function(){ box.innerHTML='<div class="notice">正在从 PRTS Wiki 同步 <b>'+esc(name)+'</b> 的数据…（需联网）</div>'; wikiFetch(name,box); };
       return;
     }
@@ -2360,7 +2396,7 @@ function openAbout(){
   $('mBody').innerHTML=h.join('');
   var al=$('aboutLog');
   if(al){
-    var logTxt=['<b>v11.38</b> 关于面板 · README 全面更新','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
+    var logTxt=['<b>v11.48</b> Wiki同步六重回退 · 进度提示','<b>v11.47</b> Wiki返回按钮 · 材料PRTS链接','<b>v11.46</b> 材料图标彩色兜底','<b>v11.45</b> 材料入口去重 · 图标重试','<b>v11.44</b> 皮肤懒加载缓存 · 时装角标','<b>v11.43</b> 特性行 · 时装列表','<b>v11.42</b> 联动池300井','<b>v11.41</b> 手机端卡池列表可滑动','<b>v11.40</b> Wiki整页获取 · 五重回退','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
     al.innerHTML=logTxt;
   }
   openModalBox();

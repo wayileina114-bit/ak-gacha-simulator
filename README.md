@@ -1,6 +1,6 @@
 # 明日方舟抽卡模拟器（Arknights Gacha Simulator）
 
-![version](https://img.shields.io/badge/version-v11.38-blue) ![banners](https://img.shields.io/badge/卡池-442-orange) ![ops](https://img.shields.io/badge/干员-409-brightgreen) ![license](https://img.shields.io/badge/license-MIT-lightgrey)
+![version](https://img.shields.io/badge/version-v11.48-blue) ![banners](https://img.shields.io/badge/卡池-442-orange) ![ops](https://img.shields.io/badge/干员-409-brightgreen) ![license](https://img.shields.io/badge/license-MIT-lightgrey)
 
 > 单文件 HTML 的明日方舟抽卡模拟器 · 自选历史卡池 · 干员立绘 · 抽卡统计 · 皮肤图鉴
 
@@ -14,7 +14,7 @@
 | ⭐ 自选 UP | 定向甄选 / 中坚甄选卡池可自选 UP 干员（最少保留规则） |
 | 📊 统计 | 欧气评分（等级徽章）· 六星间隔 · UP 命中率 · 每月统计 · 每日出货 · 热力图 · 时段 · 保底总览 · 等价合成玉 · 限定图鉴完成度 · 限定/6★缺卡清单 |
 | 🧪 模拟 | 独立保底模拟（垫刀起始进度 · UP命中统计 · 10次分布 · 与真实对比），绝不污染存档 |
-| 📖 Wiki | 属性/技能/材料/模组/档案/密录/语音（多语言音频+台词复制）实时同步 PRTS · 分节缓存 · 搜索候选 · 双干员对比 |
+| 📖 Wiki | 属性/技能/材料/模组/档案/密录/语音（多语言台词复制）实时同步 PRTS · 六重回退自动获取（JSONP/CORS/多级代理）· 进度提示 · 分节缓存 · 搜索候选 · 双干员对比 |
 | 💝 心愿单 | 标记想要干员，抽到自动提醒并移除 |
 | 🏆 成就 | 22 项成就（限定收藏家 / 全图鉴 / 五星常客 / 深度博士 / 单日三黄…）+ 进度条 |
 | 📱 移动端 | 抽屉式卡池选择 · 底部操作栏 · iOS 安全区适配 |
@@ -29,18 +29,14 @@
 
 每个版本提供 `akgacha_vX.Y.zip`：包含成品 HTML、源码、数据与文档，见 [Releases](https://github.com/wayileina114-bit/ak-gacha-simulator/releases)。
 
-## 🔗 真实寻访记录（后端自动获取）
+## 🔗 真实寻访记录（纯前端分析）
 
-在 HTML 的「真实寻访记录 → 后端自动获取」中可连接本地后端自动拉取游戏抽卡记录：
+在 HTML 的「真实寻访记录」中可导入游戏抽卡记录做纯前端分析，数据不出浏览器：
 
-```bash
-node server/index.js        # 启动本地服务（默认端口 8723）
-```
-
-- 方式一：粘贴游戏内获取的 token → 自动换取凭证并拉取记录
-- 方式二：鹰角账号密码登录 → 自动获取凭证与记录
-- 接口：/api/ping 连接测试 · /api/login 账号登录 · /api/grant 换取凭证 · /api/gacha 拉取记录
-- ⚠️ 说明：鹰角官方接口为社区逆向公开，端点/签名可能随游戏版本变动（集中在 server/index.js 顶部常量，便于更新）；仅请查询本人账号，勿高频请求。
+- 使用市面现成的**寻访记录导出工具**（Android/iOS 均可）导出 JSON
+- 在本工具中**粘贴文本**或**选择/拖拽 .json 文件**导入
+- 自动统计：总抽数 · 六星出货率 · 六星间隔 · 各星占比 · 月度分布 · 保底情况
+- ⚠️ 说明：受限于第三方接口的不稳定性，本项目不做后端自动获取，也不收集任何账号数据；所有解析均在本地浏览器完成。
 
 ## 🛠️ 本地构建
 
