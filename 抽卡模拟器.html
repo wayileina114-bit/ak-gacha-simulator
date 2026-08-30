@@ -262,6 +262,11 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .wish-item .wishpool{display:block; margin:0 6px 6px; font-size:10px; color:var(--acc2); background:rgba(74,179,255,.08); border:1px solid rgba(74,179,255,.2); border-radius:5px; padding:2px 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .wish-item .wishpool:hover{border-color:var(--acc); color:#fff}
 .selop .ot{position:absolute; top:2px; left:2px; font-size:8px; padding:0 4px; border-radius:4px; z-index:2; pointer-events:none}
+.wikisearch{display:flex; gap:8px; margin-bottom:8px}
+.wikisearch input{flex:1; background:var(--bg2); border:1px solid var(--line); border-radius:8px; padding:8px 10px; color:var(--txt); font-family:inherit; font-size:13px; outline:none}
+.wikisearch input:focus{border-color:var(--acc2)}
+.wikihint{font-size:12px; color:var(--dim); background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:8px 10px; margin-bottom:10px; line-height:1.8}
+.wikihint b{color:var(--acc)}
 .selop .ot.new{background:rgba(255,93,58,.92); color:#fff}
 .selop .ot.have{background:rgba(12,24,40,.85); color:var(--dim)}
 #fortune.busy{color:var(--gold); font-weight:700; animation:urgentpulse 1s infinite}
@@ -514,6 +519,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
     <button class="mini-btn" id="utilToggle">⚙ 工具</button>
     <div class="utilbar" id="utilBar">
       <button class="mini-btn" id="btnTheme">🎨 默认黑金</button>
+      <button class="mini-btn" id="btnWikiSearch">🔍 Wiki查询</button>
       <button class="mini-btn" id="btnSound">音效: 开</button>
       <button class="mini-btn" id="btnSpeed">动画: 慢速</button>
       <button class="mini-btn" id="btnExport">💾 导出存档(文件)</button>
@@ -556,7 +562,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
       <div id="resultMsg"></div>
     </section>
     <section class="panel">
-      <div class="sectbar"><h4>抽卡统计</h4><button class="mini-btn" id="btnAch">🏆 成就</button><button class="mini-btn" id="btnStats">详细统计</button><button class="mini-btn" id="btnPityMap">🛡 保底一览</button><button class="mini-btn" id="btnSim">🧪 模拟抽卡</button><button class="mini-btn" id="btnOpStats">干员统计</button><button class="mini-btn" id="btnCopyStats">复制总结</button><button class="mini-btn" id="btnRules">规则说明</button><button class="mini-btn" id="btnReset2">清空记录</button></div>
+      <div class="sectbar"><h4>抽卡统计</h4><button class="mini-btn" id="btnAch">🏆 成就</button><button class="mini-btn" id="btnStats">详细统计</button><button class="mini-btn" id="btnPityMap">🛡 保底一览</button><button class="mini-btn" id="btnSim">🧪 模拟抽卡</button><button class="mini-btn" id="btnReport">📊 抽卡报告</button><button class="mini-btn" id="btnOpStats">干员统计</button><button class="mini-btn" id="btnCopyStats">复制总结</button><button class="mini-btn" id="btnRules">规则说明</button><button class="mini-btn" id="btnReset2">清空记录</button></div>
       <div class="stats-grid" id="statsGrid"></div>
       <div class="sectbar"><h4>寻访记录</h4><button class="mini-btn" id="btnExportHist">导出记录</button></div>
       <div class="histsearch"><input id="histSearch" placeholder="搜索干员/卡池..."/><button class="mini-btn" id="histClearSearch">✕</button></div>
@@ -565,6 +571,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
         <select id="histGapSel"><option value="all">全部</option><option value="gap1">0-20抽</option><option value="gap2">21-49抽</option><option value="gap3">50-89抽</option><option value="gap4">90-99抽</option><option value="gap5">100抽+</option></select>
         <span class="hq-label" style="margin-left:8px">稀有度：</span>
         <select id="histRarSel"><option value="all">全部</option><option value="6">6★</option><option value="5">5★</option><option value="4">4★</option><option value="3">3★</option></select>
+        <button class="mini-btn" id="btnHistCur" title="只看当前选中的卡池的抽卡记录">🎯 当前池</button>
       </div>
       <div class="filters" id="histChips"></div>
       <div class="filters" id="histTypeChips"></div>
@@ -581,7 +588,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.13（心愿单页·触控优化·评分统一）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.15（自选UP重做·Wiki查询·立绘修复）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -716,7 +723,7 @@ function thumbOf(art,name,variant,w){
 function avUrl(o){ return o.av?('https://media.prts.wiki/'+o.av+'/'+encodeURIComponent('头像_'+o.name+'.png')):(o.art||''); }
 var ART_CACHE={};
 function opArtT(o){ if(!o)return ''; var k=o.name+':'+(o.artV||2); if(ART_CACHE[k])return ART_CACHE[k]; return ART_CACHE[k]=thumbOf(o.art,o.name,'skin 0 '+(o.artV||2)+'.png',480)||o.art||avUrl(o); }
-function pityKey(b){ return b.type==='standard'?'std':(b.type==='zhongjian'?'zj':b.id); }
+function pityKey(b){ if(isSelect(b))return b.id+':'+selKey(b); return b.type==='standard'?'std':(b.type==='zhongjian'?'zj':b.id); }
 function calcPity(fails,n){
   var pNo=1, exp=0, i, p;
   for(i=1;i<=n;i++){
@@ -753,12 +760,13 @@ function isRestricted(b){ return b.type==='joint'||b.type==='direct'||b.type==='
 function isSelect(b){ return b.type==='direct'||b.type==='zjselect'; }
 function selMax(b,rar){ if(b.type==='zjselect')return rar===6?2:3; return 3; }
 function getSel(b){ if(!state.sel[b.id])state.sel[b.id]={six:[],five:[]}; return state.sel[b.id]; }
+function selKey(b){ var s=getSel(b); return ((s.six||[]).join('+'))+'|'+((s.five||[]).join('+')); }
 function minSel(b,rar){ if(b.type==='zjselect'&&rar===6)return 2; return 1; }
 function ensureDefaultSel(b){
   var s=getSel(b);
   var changed=false;
-  if(!s.six.length&&(b.six||[]).length){ s.six=b.six.slice(0,selMax(b,6)); changed=true; }
-  if(!s.five.length&&(b.five||[]).length){ s.five=b.five.slice(0,selMax(b,5)); changed=true; }
+  if(!s.six.length&&(b.six||[]).length&&!isSelect(b)){ s.six=b.six.slice(0,selMax(b,6)); changed=true; }
+  if(!s.five.length&&(b.five||[]).length&&!isSelect(b)){ s.five=b.five.slice(0,selMax(b,5)); changed=true; }
   if(changed)save();
   return s;
 }
@@ -977,6 +985,44 @@ function initFilters(){
   setChips($('yearChips'),yk,'all',function(){renderBannerList();});
   setChips($('typeChips'),[['fav','⭐收藏'],['limited','限定'],['event','活动'],['joint','联合行动'],['direct','定向甄选'],['standard','标准'],['zhongjian','中坚'],['zjselect','中坚甄选'],['special','特殊']],'all',function(){renderBannerList();});
 }
+function openSelModal(b){
+  ensureDefaultSel(b);
+  var h=['<h4 class="sect" style="margin-top:0">🎯 选择UP干员 · '+esc(b.full)+'</h4>'];
+  h.push('<div class="notice">'+(b.type==='zjselect'?'中坚甄选：选 <b>2</b> 位6★ + <b>3</b> 位5★':'定向甄选：选 <b>1-3</b> 位6★ + <b>1-3</b> 位5★')+' · 切换选择后，该选择的保底与寻访记录独立计算；切回原选择自动恢复</div>');
+  h.push(selBoxHtml(b,6));
+  h.push(selBoxHtml(b,5));
+  h.push('<button class="mini-btn" id="selConfirm" style="margin:10px auto;display:block">✅ 确定选择</button>');
+  $('mBody').innerHTML=h.join('');
+  openModalBox();
+  var sc=$('selConfirm'); if(sc)sc.onclick=function(){
+    var s2=getSel(b);
+    if(s2.six.length<minSel(b,6)){ toast('请至少选择 '+minSel(b,6)+' 位6★干员'); return; }
+    if(s2.five.length<minSel(b,5)){ toast('请至少选择 '+minSel(b,5)+' 位5★干员'); return; }
+    b._pool=null;
+    save();
+    closeModal();
+    renderBannerInfo(); renderStats(); renderHistory();
+    toast('✅ 已确认UP选择，保底已按当前选择独立计算');
+  };
+  var sels=$('mBody').querySelectorAll('.selop');
+  for(var si7=0;si7<sels.length;si7++){
+    (function(el){
+      el.onclick=function(){
+        var b2=bannerById(state.cur), rar=+el.getAttribute('data-rar'), op=el.getAttribute('data-op');
+        var s3=getSel(b2), key=rar===6?'six':'five', max=selMax(b2,rar), minN=minSel(b2,rar);
+        var cur=s3[key];
+        if(cur.indexOf(op)>=0){
+          if(cur.length<=minN){ toast('至少保留 '+minN+' 位UP干员'); return; }
+          s3[key]=cur.filter(function(x){return x!==op;});
+        }
+        else if(cur.length>=max){ toast('最多选择'+max+'位'); return; }
+        else{ cur.push(op); }
+        save();
+        openSelModal(b2);
+      };
+    })(sels[si7]);
+  }
+}
 function selBoxHtml(b,rar){
   var list=rar===6?b.six:b.five, s=ensureDefaultSel(b), key=rar===6?'six':'five';
   var sel=s[key]||[];
@@ -1038,8 +1084,20 @@ function bannerInfoHtml(b){
   h.push('<div class="pitybar"><div class="pbar"><i style="width:'+Math.min(100,st0.fails)+'%"></i></div><span>6★保底进度：已抽 <b>'+st0.fails+'</b> / 100（还剩 <b>'+(100-st0.fails)+'</b> 抽必出）</span></div>');
   h.push('<div class="calcrow"><span class="notice">保底预测：再抽</span><input id="calcN" type="number" min="1" max="200" value="10"/><span class="notice">抽 → 出6★概率</span><b id="calcP" style="color:var(--gold)">—</b><button class="mini-btn calcgo" data-n="10">10</button><button class="mini-btn calcgo" data-n="50">50</button><button class="mini-btn calcgo" data-n="100">100</button><span class="notice" id="calcNote"></span><button class="mini-btn" id="btnResetPity">重置本池保底</button><button class="mini-btn" id="btnCopyBanner">复制卡池信息</button></div>');
   if(isSelect(b)){
-    h.push(selBoxHtml(b,6));
-    h.push(selBoxHtml(b,5));
+    var sB=getSel(b);
+    if(!sB.six.length){
+      h.push('<div class="notice">🎯 该卡池需先选择 UP 干员才能抽卡（选择后保底/记录独立计算）</div>');
+      h.push('<button class="mini-btn" id="btnOpenSel" style="margin:4px auto;display:block">🎯 开始选择UP</button>');
+    } else {
+      h.push('<div class="rateup">');
+      var s6o,si6b;
+      for(si6b=0;si6b<sB.six.length;si6b++){ s6o=opOf(sB.six[si6b]); if(s6o)h.push('<div class="rup-card r6" data-op="'+esc(sB.six[si6b])+'"><img loading="lazy" src="'+esc(avUrl(s6o))+'" alt=""/><div class="rn">'+esc(s6o.name)+'</div><div class="rb">已选6★</div><div class="rr">'+stars(6)+'</div></div>'); }
+      var s5o,si5b;
+      for(si5b=0;si5b<sB.five.length;si5b++){ s5o=opOf(sB.five[si5b]); if(s5o)h.push('<div class="rup-card r5" data-op="'+esc(sB.five[si5b])+'"><img loading="lazy" src="'+esc(avUrl(s5o))+'" alt=""/><div class="rn">'+esc(s5o.name)+'</div><div class="rb">已选5★</div><div class="rr">'+stars(5)+'</div></div>'); }
+      h.push('</div>');
+      h.push('<button class="mini-btn" id="btnReSel" style="margin:4px auto;display:block">🔄 重新选择UP</button>');
+      h.push('<div class="notice">当前选择：6★ '+sB.six.map(function(x){var oo=opOf(x);return oo?oo.name:x;}).join('、')+' · 5★ '+sB.five.map(function(x){var oo=opOf(x);return oo?oo.name:x;}).join('、')+'<br/>切换选择后保底/寻访记录独立计算，切回原选择自动恢复</div>');
+    }
   }
   if(b.spark){
     var tok=state.spark[b.id]||0;
@@ -1093,6 +1151,8 @@ function renderBannerInfo(){
   var brp=$('btnResetPity'); if(brp)brp.onclick=function(){ state.pity[pityKey(b)]={fails:0,batch:[]}; save(); renderBannerInfo(); renderStats(); toast('已重置「'+esc(b.full)+'」的保底'); };
   var bcb=$('btnCopyBanner'); if(bcb)bcb.onclick=function(){ copyBannerInfo(b); };
   var bp=$('btnPool'); if(bp)bp.onclick=openPoolModal;
+  var bos=$('btnOpenSel'); if(bos)bos.onclick=function(){ openSelModal(b); };
+  var brs=$('btnReSel'); if(brs)brs.onclick=function(){ openSelModal(b); };
   var cn=$('calcN');
   if(cn){
     var doCalc=function(){
@@ -1212,6 +1272,7 @@ function doPull(n){
   var achBefore=achDoneSet();
   var b=bannerById(state.cur);
   if(!b)return;
+  if(isSelect(b)&&!getSel(b).six.length){ toast('请先选择UP干员'); openSelModal(b); return; }
   if(n<1)n=1; if(n>500)n=500;
   lastPullN=n;
   BUSY=true;
@@ -1223,7 +1284,7 @@ function doPull(n){
     r=pullOne(b);
     results.push(r);
     if(isNew(r.op))addCol(r.op);
-    state.history.unshift({op:r.op,rar:r.rar,t:Date.now(),type:b.type,bn:b.full,bid:b.id});
+    state.history.unshift({op:r.op,rar:r.rar,t:Date.now(),type:b.type,bn:b.full,bid:b.id,sel:isSelect(b)?selKey(b):''});
   }
   if(state.history.length>2000)state.history.length=2000;
   sessPulls+=n;
@@ -1266,7 +1327,7 @@ function openPityMap(){
     if(!stt||!stt.fails||stt.fails<=0)continue;
     if(pk2==='std')b3=findTypeBanner('standard');
     else if(pk2==='zj')b3=findTypeBanner('zhongjian');
-    else b3=bannerById(pk2);
+    else { var pkBid2=pk2.indexOf(':')>=0?pk2.slice(0,pk2.indexOf(':')):pk2; b3=bannerById(pkBid2); }
     if(!b3||seen[pk2])continue; seen[pk2]=1;
     arr.push({b:b3,fails:stt.fails,cnt:(state.cnt||{})[b3.id]||0});
   }
@@ -1275,7 +1336,7 @@ function openPityMap(){
     bk2=DATA.banners[bsi];
     var c2=(state.cnt||{})[bk2.id]||0;
     var pkx=pityKey(bk2);
-    if(c2>0&&!seen[pkx]&&!seen[bk2.id]){ seen[pkx]=1; arr.push({b:bk2,fails:(state.pity[pkx]||{}).fails||0,cnt:c2}); }
+    if(c2>0&&!seen[pkx]&&!seen[bk2.id]){ seen[pkx]=1; arr.push({b:bk2,fails:((state.pity[pkx]||{}).fails)||0,cnt:c2}); }
   }
   if(!arr.length){ h.push('<div class="notice">还没有抽过任何卡池，先去抽一发吧！</div>'); $('mBody').innerHTML=h.join(''); openModalBox(); return; }
   arr.sort(function(x,y){ return (y.fails*1000+y.cnt)-(x.fails*1000+x.cnt); });
@@ -1298,6 +1359,65 @@ function openPityMap(){
   for(var pi2=0;pi2<pcs.length;pi2++){
     (function(pc){ pc.onclick=function(){ state.cur=pc.getAttribute('data-bid'); save(); renderBannerList(); renderBannerInfo(); renderStats(); closeModal(); }; })(pcs[pi2]);
   }
+}
+function buildReport(days){
+  var cutoff=Date.now()-days*86400000;
+  var list=[], i, r;
+  for(i=0;i<state.history.length;i++){ r=state.history[i]; if(r.t&&r.t>=cutoff)list.push(r); }
+  var c6=0,c5=0,c4=0,c3=0, names6=[], firstSeen={}, nm2;
+  for(i=list.length-1;i>=0;i--){ r=list[i];
+    if(r.rar===6){ c6++; names6.push(opOf(r.op)?opOf(r.op).name:r.op); }
+    else if(r.rar===5)c5++; else if(r.rar===4)c4++; else c3++;
+    nm2=opOf(r.op)?opOf(r.op).name:r.op;
+    if(!firstSeen[nm2])firstSeen[nm2]=r.t;
+  }
+  var newOps=[];
+  for(nm2 in firstSeen){ if(firstSeen[nm2]>=cutoff)newOps.push(nm2); }
+  var total=list.length;
+  var bestTen=0;
+  for(i=0;i<list.length;i++){ var t10=0; for(var tj=i;tj<list.length&&tj<i+10;tj++){ if(list[tj].rar===6)t10++; } if(t10>bestTen)bestTen=t10; }
+  var maxG=0,last6=-1;
+  for(i=0;i<list.length;i++){ if(list[i].rar===6){ if(last6>=0){ var g=i-last6-1; if(g>maxG)maxG=g; } last6=i; } }
+  return {days:days,total:total,c6:c6,c5:c5,c4:c4,c3:c3,names6:names6,newOps:newOps,bestTen:bestTen,maxG:maxG,rate6:total?(c6/total*100):0};
+}
+function renderReport(days){
+  var rep=buildReport(days);
+  window.__lastReport=rep;
+  var h=[];
+  var label=days===7?'周报':'月报';
+  if(!rep.total){ h.push('<div class="notice">最近 '+days+' 天暂无抽卡记录</div>'); $('rpOut').innerHTML=h.join(''); return; }
+  h.push('<div class="luckbadge lv'+(rep.rate6>=3.4?5:(rep.rate6>=3.1?4:(rep.rate6>=2.6?3:(rep.rate6>=2.2?2:1))))+'"><div class="lb-score">'+rep.rate6.toFixed(2)+'%</div><div class="lb-label">'+label+' · 最近'+days+'天 '+rep.total+'抽 · 6★出率（期望2.89%）</div></div>');
+  h.push('<div class="stats-grid">');
+  h.push('<div class="stat"><div class="v red">'+rep.c6+'</div><div class="k">6★</div></div>');
+  h.push('<div class="stat"><div class="v gold">'+rep.c5+'</div><div class="k">5★（'+(rep.total?(rep.c5/rep.total*100).toFixed(1):0)+'%）</div></div>');
+  h.push('<div class="stat"><div class="v">'+rep.c4+'</div><div class="k">4★</div></div>');
+  h.push('<div class="stat"><div class="v">'+rep.c3+'</div><div class="k">3★</div></div>');
+  h.push('<div class="stat"><div class="v gold">'+rep.bestTen+'</div><div class="k">最欧十连</div></div>');
+  h.push('<div class="stat"><div class="v'+(rep.maxG>=70?' red':'')+'">'+(rep.maxG||0)+'</div><div class="k">最长非酋</div></div>');
+  h.push('</div>');
+  if(rep.names6.length)h.push('<div class="notice">✨ 期间6★：'+rep.names6.join('、')+'</div>');
+  if(rep.newOps.length)h.push('<div class="notice">🆕 期间新干员：'+rep.newOps.join('、')+'</div>');
+  $('rpOut').innerHTML=h.join('');
+}
+function copyReport(rep){
+  var NL=String.fromCharCode(10);
+  var lines=['【抽卡'+(rep.days===7?'周报':'月报')+'】','期间：最近 '+rep.days+' 天 · '+rep.total+' 抽','6★×'+rep.c6+'（'+rep.rate6.toFixed(2)+'%）· 5★×'+rep.c5+' · 4★×'+rep.c4+' · 3★×'+rep.c3,'最欧十连：'+rep.bestTen+'只6★ · 最长非酋：'+(rep.maxG||0)+'抽','期间6★：'+(rep.names6.join('、')||'无'),'期间新干员：'+(rep.newOps.join('、')||'无')];
+  var text=lines.join(NL);
+  var ta=document.createElement('textarea');
+  ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); toast('报告已复制'); }
+  catch(e){ window.prompt('复制以下内容：', text); }
+  ta.remove();
+}
+function openReport(){
+  var h=['<h4 class="sect" style="margin-top:0">📊 抽卡报告</h4><div class="controls" style="margin-bottom:8px"><button class="mini-btn" id="rpWeek">📅 周报（7天）</button><button class="mini-btn" id="rpMonth">📅 月报（30天）</button><button class="mini-btn" id="rpCopy">📋 复制报告</button></div><div id="rpOut"></div>'];
+  $('mBody').innerHTML=h.join('');
+  openModalBox();
+  var rw=$('rpWeek'); if(rw)rw.onclick=function(){ renderReport(7); };
+  var rm=$('rpMonth'); if(rm)rm.onclick=function(){ renderReport(30); };
+  var rc=$('rpCopy'); if(rc)rc.onclick=function(){ var rr=window.__lastReport; if(!rr){ toast('先生成报告'); return; } copyReport(rr); };
+  renderReport(7);
 }
 function simulatePull(){
   var b=bannerById(state.cur); if(!b)return;
@@ -1409,8 +1529,10 @@ function renderStats(){
   $('statsGrid').innerHTML=h.join('');
 }
 function totalOps(){ return Object.keys(opByName).length; }
-var histF='all', histT='all', histTime='all', histN=60, histOp='', histSearch='', histGap='all', histRar='all';
+var histF='all', histT='all', histTime='all', histN=60, histOp='', histSearch='', histGap='all', histRar='all', histBid='';
 function renderHistory(){
+  var hbc0=$('btnHistCur');
+  if(hbc0){ var curBid0=state.cur||''; var hbBid0=histBid?(histBid.indexOf(':')>=0?histBid.slice(0,histBid.indexOf(':')):histBid):''; if(histBid&&hbBid0!==curBid0)histBid=''; hbc0.classList.toggle('on',!!histBid); hbc0.textContent=histBid?'🎯 当前池 ✓':'🎯 当前池'; }
   var all=state.history;
   var nowH=new Date();
   var dayS=new Date(nowH.getFullYear(),nowH.getMonth(),nowH.getDate()).getTime();
@@ -1433,6 +1555,13 @@ function renderHistory(){
     if(histTime==='week'&&(!hh.t||hh.t<weekS))continue;
     if(histTime==='month'&&(!hh.t||hh.t<monthS))continue;
     if(histOp&&hh.op!==histOp)continue;
+    if(histBid){
+      var hbIdx=histBid.indexOf(':');
+      var wantBid=hbIdx>=0?histBid.slice(0,hbIdx):histBid;
+      var wantSel=hbIdx>=0?histBid.slice(hbIdx+1):'';
+      if(hh.bid!==wantBid)continue;
+      if(wantSel&&(hh.sel||'')!==wantSel)continue;
+    }
     if(histSearch){
       var o0=opOf(hh.op);
       var hay=(o0?o0.name:hh.op)+' '+(hh.bn||'');
@@ -1471,7 +1600,7 @@ function renderHistory(){
   h.push('<div class="hitem" style="justify-content:center">');
   if(show.length<list.length)h.push('<button class="mini-btn" id="histMore">加载更多（'+list.length+'条，已显示'+show.length+'）</button>');
   else if(list.length)h.push('<span style="color:#5a6c8e">共 '+list.length+' 条记录（6★×'+fc6+' · 5★×'+fc5+' · 6★率 '+(list.length?(fc6/list.length*100).toFixed(1):0)+'%）</span>');
-  else if(histF!=='all'||histRar!=='all'||histT!=='all'||histTime!=='all'||histOp||histSearch||histGap!=='all')h.push('<span style="color:#5a6c8e">没有符合条件的记录</span>');
+  else if(histF!=='all'||histRar!=='all'||histT!=='all'||histTime!=='all'||histOp||histSearch||histGap!=='all'||histBid)h.push('<span style="color:#5a6c8e">没有符合条件的记录</span>');
   else h.push('<span style="color:#5a6c8e">暂无记录，开始抽卡吧</span>');
   h.push('</div>');
   if(list.length>=30){
@@ -1534,7 +1663,7 @@ function openModal(opName){
   var o=opOf(opName); if(!o)return;
   var h=[];
   h.push('<button class="mini-btn" id="btnFavOp" style="margin-bottom:8px">'+(state.favOps&&state.favOps[opName]?'⭐ 已收藏':'☆ 收藏干员')+'</button><button class="mini-btn" id="btnWiki" style="margin-bottom:8px;margin-left:8px">📊 Wiki数据</button><button class="mini-btn" id="btnSkins" style="margin-bottom:8px;margin-left:8px">🎨 皮肤</button><button class="mini-btn" id="btnWish" style="margin-bottom:8px;margin-left:8px">'+(state.wish&&state.wish.indexOf(opName)>=0?'💝 已心愿':'💝 心愿单')+'</button>');
-  h.push('<div class="mhead"><div class="mart" style="cursor:zoom-in"><img loading="lazy" id="martImg" src="'+esc(opArtT(o))+'" data-a="'+esc(o.art||'')+'" data-b="'+esc(avUrl(o))+'" alt=""/><button class="mini-btn artToggle" id="artToggle" style="margin-top:4px;width:100%">🔄 切换立绘</button></div><div class="minfo">');
+  h.push('<div class="mhead"><div class="mart" style="cursor:zoom-in"><img loading="lazy" id="martImg" src="'+esc(opArtT(o))+'" data-a="'+esc(o.art||'')+'" data-b="'+esc(avUrl(o))+'" onerror="this.onerror=null;this.src=this.dataset.fb" data-fb="'+esc(opArtT(o))+'" alt=""/><button class="mini-btn artToggle" id="artToggle" style="margin-top:4px;width:100%">🔄 切换立绘</button></div><div class="minfo">');
   h.push('<h2>'+esc(o.name)+'</h2>');
   h.push('<div class="stars">'+stars(o.rarity)+'</div>');
   h.push('<div class="kv"><b>职业</b>'+esc(o.prof||'—')+'</div>');
@@ -1566,7 +1695,7 @@ function openModal(opName){
     var img=$('martImg'); if(!img)return;
     if(img._v===undefined)img._v=2;
     if(img._v===0){ img.src=opArtT(o); img._v=2; atg.textContent='🔄 切换立绘（当前：精二）'; }
-    else { img.src=thumbOf(o.art,o.name,'skin 0 0.png',480)||o.art||avUrl(o); img._v=0; atg.textContent='🔄 切换立绘（当前：初始）'; }
+    else { var initU=thumbOf(o.art,o.name,'skin 0 0.png',480)||o.art||avUrl(o); img.src=initU; img._v=0; try{ img.dataset.fb=opArtT(o); }catch(e){} atg.textContent='🔄 切换立绘（当前：初始）'; }
   };
   if(atg)atg.textContent='🔄 切换立绘（当前：精二）';
   var bfo=$('btnFavOp'); if(bfo)bfo.onclick=function(){
@@ -1604,21 +1733,18 @@ function persistWikiCache(){
     localStorage.setItem('akgacha_wiki_v1', JSON.stringify(wObj));
   }catch(e){}
 }
-function openWiki(opName){
-  var o=opOf(opName); if(!o)return;
-  var name=o.name;
-  $('mBody').innerHTML='<h4 class="sect" style="margin-top:0">📊 '+esc(name)+' · Wiki数据</h4><div class="notice">正在从 PRTS Wiki 同步数据…（需联网）</div>';
-  openModalBox();
+function wikiFetch(name,target){
+  var box=target||$('mBody');
   var ck=name;
-  if(wikiCache[ck]&&Date.now()-wikiCache[ck].t<600000){ renderWikiData(name,wikiCache[ck]); return; }
+  if(wikiCache[ck]&&Date.now()-wikiCache[ck].t<600000){ renderWikiData(name,wikiCache[ck],box); return; }
   var secs=[2,3,5,7,9,10], got={};
   var pending=secs.length;
   function done(){
     if(--pending>0)return;
-    if(!got[3]&&!got[7]){ $('mBody').innerHTML='<h4 class="sect" style="margin-top:0">📊 '+esc(name)+' · Wiki数据</h4><div class="notice">同步失败：无法连接 PRTS Wiki（需联网）</div><div style="text-align:center;margin-top:8px"><button class="mini-btn" id="wikiRetry">🔄 重试同步</button></div>'; var wr=$('wikiRetry'); if(wr)wr.onclick=function(){ openWiki(name); }; return; }
+    if(!got[3]&&!got[7]){ box.innerHTML='<h4 class="sect" style="margin-top:0">📊 '+esc(name)+' · Wiki数据</h4><div class="notice">同步失败：无法连接 PRTS Wiki（需联网），请确认网络后重试</div><div style="text-align:center;margin-top:8px"><button class="mini-btn" id="wikiRetry">🔄 重试同步</button></div>'; var wr=$('wikiRetry'); if(wr)wr.onclick=function(){ box.innerHTML='<div class="notice">正在从 PRTS Wiki 同步 <b>'+esc(name)+'</b> 的数据…（需联网）</div>'; wikiFetch(name,box); }; return; }
     wikiCache[ck]={t:Date.now(),acquire:got[2]||'',attr:got[3]||'',talents:got[5]||'',skills:got[7]||'',mats:got[9]||'',skillMats:got[10]||''};
     persistWikiCache();
-    renderWikiData(name,wikiCache[ck]);
+    renderWikiData(name,wikiCache[ck],box);
   }
   for(var si=0;si<secs.length;si++){
     (function(sec){
@@ -1628,6 +1754,27 @@ function openWiki(opName){
       },10000);
     })(secs[si]);
   }
+}
+function openWiki(opName){
+  var o=opOf(opName); if(!o)return;
+  __wikiBack=null;
+  var name=o.name;
+  $('mBody').innerHTML='<h4 class="sect" style="margin-top:0">📊 '+esc(name)+' · Wiki数据</h4><div class="notice">正在从 PRTS Wiki 同步数据…（需联网）</div>';
+  openModalBox();
+  wikiFetch(name);
+}
+function openWikiSearch(){
+  __wikiBack=openWikiSearch;
+  var h=['<h4 class="sect" style="margin-top:0">🔍 干员Wiki查询</h4>'];
+  h.push('<div class="wikisearch"><input id="wikiSearchInput" placeholder="输入干员名，如：能天使 / 玛恩纳 / 缪尔赛思..."/><button class="mini-btn" id="wikiSearchGo">查询</button></div>');
+  h.push('<div class="wikihint">对接 <b>PRTS Wiki</b>（prts.wiki）实时同步干员数据：属性数值 · 天赋 · 技能（含专精） · 精英化/技能升级材料。<br/>可查询<b>任意</b>PRTS 上存在的干员，不受本模拟器卡池数据限制。</div>');
+  h.push('<div id="wikiOut"></div>');
+  $('mBody').innerHTML=h.join('');
+  openModalBox();
+  var wsi=$('wikiSearchInput'), wsgo=$('wikiSearchGo');
+  function go(){ var v=wsi?wsi.value.trim():''; if(!v){ toast('请输入干员名'); return; } wikiFetch(v,$('wikiOut')); }
+  if(wsgo)wsgo.onclick=go;
+  if(wsi){ wsi.onkeydown=function(e){ if(e.key==='Enter')go(); }; setTimeout(function(){ try{ wsi.focus(); }catch(e){} },120); }
 }
 var skinCache={};
 function skinListUrl(name){
@@ -1649,7 +1796,9 @@ function jsonp(url,cb,timeout){
   sc.src=url+'&format=json&callback='+nm;
   document.body.appendChild(sc);
 }
-function renderWikiData(name,data){
+var __wikiBack=null;
+function renderWikiData(name,data,target){
+  var box=target||$('mBody');
   function parseMatsLine(line){
     var parts=String(line||'').split('}}').map(function(x){x=x.trim(); if(x.indexOf('材料消耗|')>=0){ var seg=x.split('材料消耗|')[1]; return seg; } return '';}).filter(function(x){return x;});
     return parts.map(function(x){ return x.split('|').join(' '); }).join(' + ');
@@ -1711,9 +1860,9 @@ function renderWikiData(name,data){
     if(smLines.length){ h.push('<div class="wikisec"><h4>📚 技能升级材料</h4><div class="wikirows">'+smLines.join('')+'</div></div>'); }
   }
   h.push('<div class="notice">数据来源：PRTS Wiki（实时同步）· 点击板块标题可折叠</div>');
-  $('mBody').innerHTML=h.join('');
-  var wb=$('wikiBack'); if(wb)wb.onclick=function(){ openModal(name); };
-  var wsecs=$('mBody').querySelectorAll('.wikisec');
+  box.innerHTML=h.join('');
+  var wb=$('wikiBack'); if(wb)wb.onclick=function(){ if(__wikiBack)__wikiBack(); else openModal(name); };
+  var wsecs=box.querySelectorAll('.wikisec');
   for(var wsi=0;wsi<wsecs.length;wsi++){
     (function(ws){
       var h4=ws.querySelector('h4');
@@ -1847,6 +1996,7 @@ function doUntil6(){
   if(BUSY)return;
   var achBefore=achDoneSet();
   var b=bannerById(state.cur); if(!b)return;
+  if(isSelect(b)&&!getSel(b).six.length){ toast('请先选择UP干员'); openSelModal(b); return; }
   var results=[];
   var hadSet={}, hi4;
   for(hi4=0;hi4<state.collection.length;hi4++)hadSet[state.collection[hi4]]=1;
@@ -1854,7 +2004,7 @@ function doUntil6(){
     var r=pullOne(b);
     results.push(r);
     if(isNew(r.op))addCol(r.op);
-    state.history.unshift({op:r.op,rar:r.rar,t:Date.now(),type:b.type,bn:b.full,bid:b.id});
+    state.history.unshift({op:r.op,rar:r.rar,t:Date.now(),type:b.type,bn:b.full,bid:b.id,sel:isSelect(b)?selKey(b):''});
     if(r.rar===6)break;
   }
   if(state.history.length>2000)state.history.length=2000;
@@ -1868,6 +2018,7 @@ function doUntil6(){
   msg=enhancePullMsg(results,hadSet,msg);
   var shown=results.slice(-12);
   lastBatch=results;
+  lastPullN=results.length;
   renderCards(shown,msg,names6.length>0,names6,false);
   setTimeout(function(){ BUSY=false; setBusyUI(false); }, 100+shown.length*SPEED+600);
   renderStats(); renderHistory(); renderCollection(); renderBannerInfo();
@@ -1938,7 +2089,7 @@ function renderGallery(){
     totalMatch++;
     if(shown>=GAL_N)break;
     shown++;
-    h.push('<div class="gal-item r'+o.rarity+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(galArt(o))+'" alt=""/><div class="gal-nm">'+esc(o.name)+'</div><div class="gal-st">'+stars(o.rarity)+'</div></div>');
+    h.push('<div class="gal-item r'+o.rarity+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(galArt(o))+'" onerror="this.onerror=null;this.src=this.dataset.fb" data-fb="'+esc(opArtT(o))+'" alt=""/><div class="gal-nm">'+esc(o.name)+'</div><div class="gal-st">'+stars(o.rarity)+'</div></div>');
   }
   if(totalMatch>shown)h.push('<button class="mini-btn" id="galMore" style="margin:8px auto;display:block">加载更多（'+(totalMatch-shown)+'）</button>');
   if(!h.length)h.push('<div class="notice">暂无符合条件的干员</div>');
@@ -2049,7 +2200,7 @@ function openAch(){
 }
 function openRules(){
   var NL=String.fromCharCode(10);
-  var txt=['【明日方舟干员寻访模拟器 · 规则说明】','','★ 出率（按官方规则模拟）','6★：2%（51抽起每抽+2%，100抽必出）','5★：8%（每次十连内必出5★以上）','4★：50% · 3★：40%','','★ 保底','· 常驻标准寻访之间保底共享；中坚寻访之间共享','· 限定/活动/联合行动/定向甄选各自独立','','★ UP 概率','· 单UP池：当期6★占6★出率的50%','· 双UP池（限定/标准轮换）：各占35%','· 定向甄选：只含选中的干员，等概率','· 中坚甄选：选2位各占35%','· 联合行动/跨年欢庆：池内等概率','','★ 限定寻访','· 每抽获得1张寻访数据契约','· 300契约可兑换限定干员，200契约兑换当期非限定6★','· 跨年欢庆池首次6★必为未拥有干员','','★ 其他','· 快捷键：1 单抽 · 2 十连 · 3 抽到6★','· 存档保存在浏览器本地，可导出/导入','· 干员立绘/头像为在线加载，需联网'].join(NL);
+  var txt=['【明日方舟干员寻访模拟器 · 规则说明】','','★ 出率（按官方规则模拟）','6★：2%（51抽起每抽+2%，100抽必出）','5★：8%（每次十连内必出5★以上）','4★：50% · 3★：40%','','★ 保底','· 常驻标准寻访之间保底共享；中坚寻访之间共享','· 限定/活动/联合行动/定向甄选各自独立','','★ UP 概率','· 单UP池：当期6★占6★出率的50%','· 双UP池（限定/标准轮换）：各占35%','· 定向甄选：只含选中的干员，等概率','· 中坚甄选：选2位各占35%','· 联合行动/跨年欢庆：池内等概率','','★ 限定寻访','· 每抽获得1张寻访数据契约','· 300契约可兑换限定干员，200契约兑换当期非限定6★','· 跨年欢庆池首次6★必为未拥有干员','','★ 工具功能','· 🛡 保底一览：所有卡池保底进度总览','· 🧪 模拟抽卡：独立保底模拟 N 抽，不污染存档','· 📊 抽卡报告：7天周报 / 30天月报 + 一键复制','· 💝 心愿单：集中查看心愿干员，抽到自动移出','· 🎨 主题切换：默认黑金 / 深空蓝 / 龙门暖','· 📖 Wiki数据：干员属性/技能/材料实时同步 PRTS','','★ 其他','· 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · G 画廊 · S 统计 · H 寻访记录 · F 收藏卡池','· 存档保存在浏览器本地，可导出/导入','· 干员立绘/头像为在线加载，需联网'].join(NL);
   var h=['<h4 class="sect" style="margin-top:0">规则说明</h4><pre class="rules">'+esc(txt)+'</pre>'];
   $('mBody').innerHTML=h.join('');
   openModalBox();
@@ -2148,7 +2299,8 @@ function openStats(){
   var PKCN={std:'常驻标准',zj:'中坚寻访'};
   for(i=0;i<Math.min(10,pkArr.length);i++){
     var pk=pkArr[i];
-    var pb=bannerById(pk.k);
+    var pbK3=pk.k.indexOf(':')>=0?pk.k.slice(0,pk.k.indexOf(':')):pk.k;
+    var pb=bannerById(pbK3);
     var lbl=PKCN[pk.k]||(pb&&pb.full?pb.full.slice(0,14):pk.k);
     h.push('<div class="crow"><span class="cl">'+esc(lbl)+'</span><div class="cbar"><i style="width:'+Math.max(2,Math.round(pk.f))+'%"></i></div><span class="cv">'+pk.f+'抽</span></div>');
   }
@@ -2479,11 +2631,13 @@ function init(){
   wire('btnStats',openStats);
   wire('btnPityMap',openPityMap);
   wire('btnSim',simulatePull);
+  wire('btnReport',openReport);
   wire('btnOpStats',openOpStats);
   wire('btnCopyStats',copyStats);
   wire('btnRules',openRules);
   wire('btnGallery',openGallery);
   wire('btnWishList',openWishList);
+  wire('btnWikiSearch',openWikiSearch);
   wire('btnRandOp',function(){ var keys=Object.keys(opByName); if(!keys.length)return; openModal(keys[Math.floor(Math.random()*keys.length)]); });
   wire('btnAch',openAch);
   wire('btnExportHist',exportHistory);
@@ -2552,6 +2706,7 @@ function init(){
   var hcs=$('histClearSearch'); if(hcs)hcs.onclick=function(){ histSearch=''; var hs2=$('histSearch'); if(hs2)hs2.value=''; histN=60; renderHistory(); };
   var hgs=$('histGapSel'); if(hgs)hgs.onchange=function(){ histGap=this.value; histN=60; renderHistory(); };
   var hrs=$('histRarSel'); if(hrs)hrs.onchange=function(){ histRar=this.value; histF='all'; var hc0=$('histChips'); if(hc0){ hc0._v='all'; var cbs0=hc0.querySelectorAll('.chip'); for(var cbi0=0;cbi0<cbs0.length;cbi0++)cbs0[cbi0].classList.remove('on'); if(cbs0.length)cbs0[0].classList.add('on'); } histN=60; renderHistory(); };
+  var hbc=$('btnHistCur'); if(hbc)hbc.onclick=function(){ if(histBid){ histBid=''; } else { var cb2=bannerById(state.cur); if(cb2){ histBid=cb2.id+(isSelect(cb2)?':'+selKey(cb2):''); } } histN=60; hbc.classList.toggle('on',!!histBid); hbc.textContent=histBid?'🎯 当前池 ✓':'🎯 当前池'; renderHistory(); };
 }
 init();
 </script></body></html>

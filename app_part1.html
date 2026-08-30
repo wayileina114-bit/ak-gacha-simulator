@@ -262,6 +262,11 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .wish-item .wishpool{display:block; margin:0 6px 6px; font-size:10px; color:var(--acc2); background:rgba(74,179,255,.08); border:1px solid rgba(74,179,255,.2); border-radius:5px; padding:2px 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .wish-item .wishpool:hover{border-color:var(--acc); color:#fff}
 .selop .ot{position:absolute; top:2px; left:2px; font-size:8px; padding:0 4px; border-radius:4px; z-index:2; pointer-events:none}
+.wikisearch{display:flex; gap:8px; margin-bottom:8px}
+.wikisearch input{flex:1; background:var(--bg2); border:1px solid var(--line); border-radius:8px; padding:8px 10px; color:var(--txt); font-family:inherit; font-size:13px; outline:none}
+.wikisearch input:focus{border-color:var(--acc2)}
+.wikihint{font-size:12px; color:var(--dim); background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:8px 10px; margin-bottom:10px; line-height:1.8}
+.wikihint b{color:var(--acc)}
 .selop .ot.new{background:rgba(255,93,58,.92); color:#fff}
 .selop .ot.have{background:rgba(12,24,40,.85); color:var(--dim)}
 #fortune.busy{color:var(--gold); font-weight:700; animation:urgentpulse 1s infinite}
@@ -514,6 +519,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
     <button class="mini-btn" id="utilToggle">⚙ 工具</button>
     <div class="utilbar" id="utilBar">
       <button class="mini-btn" id="btnTheme">🎨 默认黑金</button>
+      <button class="mini-btn" id="btnWikiSearch">🔍 Wiki查询</button>
       <button class="mini-btn" id="btnSound">音效: 开</button>
       <button class="mini-btn" id="btnSpeed">动画: 慢速</button>
       <button class="mini-btn" id="btnExport">💾 导出存档(文件)</button>
@@ -556,7 +562,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
       <div id="resultMsg"></div>
     </section>
     <section class="panel">
-      <div class="sectbar"><h4>抽卡统计</h4><button class="mini-btn" id="btnAch">🏆 成就</button><button class="mini-btn" id="btnStats">详细统计</button><button class="mini-btn" id="btnPityMap">🛡 保底一览</button><button class="mini-btn" id="btnSim">🧪 模拟抽卡</button><button class="mini-btn" id="btnOpStats">干员统计</button><button class="mini-btn" id="btnCopyStats">复制总结</button><button class="mini-btn" id="btnRules">规则说明</button><button class="mini-btn" id="btnReset2">清空记录</button></div>
+      <div class="sectbar"><h4>抽卡统计</h4><button class="mini-btn" id="btnAch">🏆 成就</button><button class="mini-btn" id="btnStats">详细统计</button><button class="mini-btn" id="btnPityMap">🛡 保底一览</button><button class="mini-btn" id="btnSim">🧪 模拟抽卡</button><button class="mini-btn" id="btnReport">📊 抽卡报告</button><button class="mini-btn" id="btnOpStats">干员统计</button><button class="mini-btn" id="btnCopyStats">复制总结</button><button class="mini-btn" id="btnRules">规则说明</button><button class="mini-btn" id="btnReset2">清空记录</button></div>
       <div class="stats-grid" id="statsGrid"></div>
       <div class="sectbar"><h4>寻访记录</h4><button class="mini-btn" id="btnExportHist">导出记录</button></div>
       <div class="histsearch"><input id="histSearch" placeholder="搜索干员/卡池..."/><button class="mini-btn" id="histClearSearch">✕</button></div>
@@ -565,6 +571,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
         <select id="histGapSel"><option value="all">全部</option><option value="gap1">0-20抽</option><option value="gap2">21-49抽</option><option value="gap3">50-89抽</option><option value="gap4">90-99抽</option><option value="gap5">100抽+</option></select>
         <span class="hq-label" style="margin-left:8px">稀有度：</span>
         <select id="histRarSel"><option value="all">全部</option><option value="6">6★</option><option value="5">5★</option><option value="4">4★</option><option value="3">3★</option></select>
+        <button class="mini-btn" id="btnHistCur" title="只看当前选中的卡池的抽卡记录">🎯 当前池</button>
       </div>
       <div class="filters" id="histChips"></div>
       <div class="filters" id="histTypeChips"></div>
@@ -581,7 +588,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.13（心愿单页·触控优化·评分统一）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.15（自选UP重做·Wiki查询·立绘修复）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
