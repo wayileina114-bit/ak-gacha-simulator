@@ -100,7 +100,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   background:var(--bg2); border:1px solid var(--line); color:var(--txt); font-family:inherit; font-size:13px;
 }
 #searchBox:focus{outline:none; border-color:var(--acc2)}
-#bannerList{overflow-y:auto; flex:1; padding-right:4px}
+#bannerList{overflow-y:auto; overflow-x:hidden; flex:1; min-height:0; padding-right:4px; -webkit-overflow-scrolling:touch; overscroll-behavior:contain}
 #bannerList::-webkit-scrollbar{width:6px}
 #bannerList::-webkit-scrollbar-thumb{background:var(--line); border-radius:3px}
 .bcard{
@@ -131,7 +131,32 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .favbtn:hover{color:var(--gold); transform:scale(1.2)}
 .favbtn.on{color:var(--gold); text-shadow:0 0 8px rgba(255,215,106,.6)}
 .main{display:flex; flex-direction:column; gap:12px; min-width:0}
-.panel{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px}
+.panel{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px; box-shadow:0 6px 24px rgba(0,0,0,.22)}
+.panel:hover{border-color:rgba(74,179,255,.35)}
+.mini-btn{
+  padding:5px 12px; border-radius:9px; cursor:pointer; font-size:12px;
+  background:linear-gradient(180deg,var(--panel2),var(--bg2)); border:1px solid var(--line); color:var(--acc2); font-family:inherit; transition:.18s;
+  box-shadow:0 2px 6px rgba(0,0,0,.2);
+}
+.mini-btn:hover{transform:translateY(-1px); border-color:var(--acc2); color:#fff; box-shadow:0 4px 12px rgba(74,179,255,.18)}
+.mini-btn:active{transform:translateY(0)}
+.mini-btn.on{background:linear-gradient(135deg,var(--acc2),#2f8fe0); border-color:var(--acc2); color:#fff; box-shadow:0 3px 10px rgba(74,179,255,.35)}
+.sectbar{border-left:3px solid var(--acc); padding-left:8px; background:linear-gradient(90deg,rgba(74,179,255,.05),transparent); border-radius:0 8px 8px 0}
+.sectbar h4{color:var(--acc2); letter-spacing:1px}
+.fhall-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:8px; margin-top:8px; max-height:62vh; overflow-y:auto}
+.fhall-item{position:relative; border-radius:10px; overflow:hidden; border:2px solid var(--line); cursor:pointer; background:var(--bg2); transition:.18s}
+.fhall-item:hover{transform:translateY(-3px); border-color:var(--acc2); box-shadow:0 6px 16px rgba(74,179,255,.2)}
+.fhall-item img{width:100%; height:110px; object-fit:contain; object-position:center; display:block; background:#0d1526}
+.fhall-item .fhall-nm{position:absolute; left:0; right:0; bottom:0; padding:16px 4px 4px; text-align:center; font-size:11px; font-weight:700; color:#fff; background:linear-gradient(transparent,rgba(0,0,0,.88))}
+.fhall-item.r6{border-color:var(--r6)}
+.fhall-item.r5{border-color:var(--r5)}
+.fhall-item.r4{border-color:var(--r4)}
+.bcard{transition:transform .18s, border-color .18s, box-shadow .18s}
+.bcard:hover{transform:translateY(-2px); box-shadow:0 6px 16px rgba(0,0,0,.3)}
+.cop{transition:transform .15s, border-color .15s}
+.cop:hover{transform:translateY(-2px); border-color:var(--acc2)}
+.hitem{transition:background .15s}
+.hitem:hover{background:rgba(74,179,255,.06)}
 #bannerInfo .row1{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
 #bannerInfo h2{font-size:20px; color:#fff; letter-spacing:1px}
 #bannerInfo .dates{font-size:12px; color:var(--dim)}
@@ -620,6 +645,8 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
     <div class="utilbar" id="utilBar">
       <button class="mini-btn" id="btnTheme">🎨 默认黑金</button>
       <button class="mini-btn" id="btnWikiSearch">🔍 Wiki查询</button>
+      <button class="mini-btn" id="btnMatQueryTop">🧱 材料刷取</button>
+      <button class="mini-btn" id="btnFashionHall">👗 时装回廊</button>
       <button class="mini-btn" id="btnAbout">ℹ️ 关于</button>
       <button class="mini-btn" id="btnSound">音效: 开</button>
       <button class="mini-btn" id="btnSpeed">动画: 慢速</button>
@@ -689,7 +716,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.38（关于面板·README更新）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.39（时装回廊·材料重构·纯前端记录分析）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>

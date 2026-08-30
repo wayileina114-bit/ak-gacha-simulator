@@ -3,6 +3,10 @@ const fs = require('fs');
 
 const ops = JSON.parse(fs.readFileSync('data/ops_urls.json', 'utf8'));
 const banners = JSON.parse(fs.readFileSync('data/banners.json', 'utf8'));
+// 联动寻访池（联动限定：活动期后不复刻，获取规则与常规限定不同）
+const COLLAB_POOL_NAMES = ['进攻、防守、战术交汇','进攻、防守、战术交汇·复刻','幽境狩人','砺火成锋','砺火成锋·复刻'];
+// 联动活动赠送干员（非寻访UP，通过活动任务/关卡赠送获得）
+const COLLAB_GIFT_OPS = ['麒麟R夜刀','火龙S黑角'];
 
 const opMap = {};
 for (const o of ops) {
@@ -11,6 +15,7 @@ for (const o of ops) {
     nation: o.nationId || '', tag: (o.tag || '').slice(0, 60),
     av: (o.avatar.match(/media\.prts\.wiki\/([0-9a-f]\/[0-9a-f]{2})\//) || [])[1] || '',
     art: o.art || '', artV: o.artV || 2,
+    gift: COLLAB_GIFT_OPS.indexOf(o.name) >= 0,
   };
 }
 
@@ -37,13 +42,15 @@ for (const b of banners) {
              ...fiveAll.filter(s => opMap[s.name] && opMap[s.name].rarity < 5).map(s => s.name)];
   if (!f6.length && !f5.length && !f4.length) continue;
   const type = b.type;
+  const isCollab = COLLAB_POOL_NAMES.indexOf(b.name) >= 0;
   outBanners.push({
     id: 'b' + (bid++),
     name: b.name.replace(/^【[^】]*】/, ''),
     full: b.name,
     type: type,
-    label: TYPE_LABEL[type] || type,
-    color: TYPE_COLOR[type] || '#888',
+    collab: isCollab,
+    label: isCollab ? ('🔗联动·' + (TYPE_LABEL[type] || type)) : (TYPE_LABEL[type] || type),
+    color: isCollab ? '#c96ab6' : (TYPE_COLOR[type] || '#888'),
     start: (b.start || '').slice(0, 10),
     end: (b.end || '').slice(0, 10),
     year: (b.start || '').slice(0, 4) || '—',

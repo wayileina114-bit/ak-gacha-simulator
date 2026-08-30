@@ -988,77 +988,7 @@ function realRarity(name){
   if(o)return o.rarity;
   return RAR_DB[name]||0;
 }
-function bkCall(base, path, data){
-  return fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(function(res){ return res.json().then(function(j){ if(!res.ok||j.ok===false)throw new Error((j&&j.error)||('HTTP '+res.status)); return j; }); });
-}
-function bkOut(msg,isErr){
-  var o=$('bkOut'); if(!o)return;
-  o.innerHTML='<div class="notice" style="color:'+(isErr?'var(--red)':'var(--acc2)')+'">'+esc(msg)+'</div>';
-}
-function wireBackend(){
-  var bp=$('bkPing');
-  if(bp)bp.onclick=function(){
-    var base=($('bkUrl')?$('bkUrl').value:'').trim()||'http://127.0.0.1:8723';
-    bkOut('正在连接后端…');
-    bkCall(base,'/api/ping',{}).then(function(j){ bkOut('✅ 后端连接成功：'+j.name+'（端口 '+j.port+'）'); }).catch(function(e){ bkOut('❌ 连接失败：'+e.message,true); });
-  };
-  var bf=$('bkFetch');
-  if(bf)bf.onclick=function(){
-    var base=($('bkUrl')?$('bkUrl').value:'').trim()||'http://127.0.0.1:8723';
-    var tok=($('bkToken')?$('bkToken').value:'').trim();
-    if(!tok){ bkOut('请先粘贴 token',true); return; }
-    bkOut('正在换取凭证…');
-    bkCall(base,'/api/grant',{token:tok}).then(function(g){
-      bkOut('凭证获取成功，正在拉取抽卡记录…');
-      return bkCall(base,'/api/gacha',{cred:g.cred,platform:g.platform||1});
-    }).then(function(d){
-      var out=$('realOut'); if(out)out.innerHTML=renderRealAnalysis(parseRealRecords(JSON.stringify({records:d.records||[]})));
-      bkOut('✅ 获取成功：共 '+d.total+' 条记录');
-    }).catch(function(e){ bkOut('❌ 获取失败：'+e.message,true); });
-  };
-  var sk=$('skFetch');
-  if(sk)sk.onclick=function(){
-    var base=($('bkUrl')?$('bkUrl').value:'').trim()||'http://127.0.0.1:8723';
-    var tok=($('skToken')?$('skToken').value:'').trim();
-    if(!tok){ bkOut('请先粘贴森空岛 token',true); return; }
-    bkOut('正在通过后端拉取森空岛账号数据…');
-    bkCall(base,'/api/skland',{token:tok}).then(function(d){
-      var p=d.player||{};
-      var nick=p.nickName||p.name||p.昵称||'未知博士';
-      var uid=p.uid||p.userId||p.UID||'';
-      var lv=p.level||'';
-      var pAv=p.avatarUrl||p.avatar||p.headUrl||p.picture||p.头像||'';
-      var skh=['<div class="sk-card">'];
-      skh.push('<div class="sk-head">');
-      skh.push(pAv?'<img class="sk-avatar" src="'+esc(pAv)+'" alt="" onerror="this.remove()"/>':'<div class="sk-avatar ph">博</div>');
-      skh.push('<div class="sk-meta">');
-      skh.push('<div class="sk-name">'+esc(nick)+'</div>');
-      skh.push('<div class="sk-sub">'+(uid?'UID '+esc(uid):'')+(lv?' · LV '+esc(lv):'')+'</div>');
-      skh.push('</div></div></div>');
-      var out=$('skOut'); if(out)out.innerHTML=skh.join('');
-      var realOut=$('realOut'); if(realOut)realOut.innerHTML=renderRealAnalysis(parseRealRecords(JSON.stringify({records:d.records||[]})));
-      bkOut('✅ 森空岛数据获取成功：共 '+d.total+' 条记录'+(d.records&&d.records.length?'':'（抽卡接口可能变动，仅显示账号信息）'));
-    }).catch(function(e){ bkOut('❌ 获取失败：'+e.message,true); });
-  };
-  var bl=$('bkLogin');
-  if(bl)bl.onclick=function(){
-    var base=($('bkUrl')?$('bkUrl').value:'').trim()||'http://127.0.0.1:8723';
-    var ph=($('bkPhone')?$('bkPhone').value:'').trim();
-    var pw=($('bkPwd')?$('bkPwd').value:'').trim();
-    if(!ph||!pw){ bkOut('请输入手机号与密码',true); return; }
-    bkOut('正在登录鹰角账号…');
-    bkCall(base,'/api/login',{phone:ph,password:pw}).then(function(t){
-      bkOut('登录成功，正在获取凭证…');
-      return bkCall(base,'/api/grant',{token:t.token});
-    }).then(function(g){
-      bkOut('凭证获取成功，正在拉取抽卡记录…');
-      return bkCall(base,'/api/gacha',{cred:g.cred,platform:g.platform||1});
-    }).then(function(d){
-      var out=$('realOut'); if(out)out.innerHTML=renderRealAnalysis(parseRealRecords(JSON.stringify({records:d.records||[]})));
-      bkOut('✅ 获取成功：共 '+d.total+' 条记录');
-    }).catch(function(e){ bkOut('❌ 获取失败：'+e.message,true); });
-  };
-}
+
 function renderRealAnalysis(recs){
   var h=[];
   var total=recs.length, c6=0, c5=0, sixList=[], poolMap={}, i, r;
@@ -1188,53 +1118,72 @@ function renderMatGrid(q){
   var items=$('matGrid').querySelectorAll('.mat-item');
   for(i=0;i<items.length;i++){
     (function(el){
-      el.onclick=function(){
-        var det=el.querySelector('.mat-det');
-        if(det){ el.removeChild(det); return; }
-        var dd=document.createElement('div');
-        dd.className='mat-det';
-        dd.innerHTML=matStagesHtml(el.getAttribute('data-m'));
-        el.appendChild(dd);
-      };
+      el.onclick=function(){ openMatDetail(el.getAttribute('data-m')); };
     })(items[i]);
   }
 }
+function openMatDetail(mn){
+  var h=['<h4 class="sect" style="margin-top:0">🧱 材料详情 · '+esc(mn)+'</h4>'];
+  h.push('<button class="mini-btn" id="matBack" style="margin-bottom:8px">← 返回材料列表</button>');
+  h.push('<div class="mat-detail-head">'+matIconHtml(mn)+'<span class="mat-detail-name">'+esc(mn)+'</span></div>');
+  h.push(matStagesHtml(mn));
+  $('mBody').innerHTML=h.join('');
+  var mb=$('matBack'); if(mb)mb.onclick=function(){ openMatQuery(); };
+  openModalBox();
+}
 function openRealGacha(){
   var h=['<h4 class="sect" style="margin-top:0">🎯 真实寻访记录分析</h4>'];
-  h.push('<div class="wikihint">从游戏本地数据提取真实抽卡记录（可用市面工具导出 JSON）后粘贴/上传，分析真实出货。<br/><b>获取方式：</b>明日方舟 Android 端可借助工具导出寻访记录 JSON；iOS 端需对应导出工具。<br/>支持：records/gacha/list 数组格式（含 char/name、ts/time、pool/banner 字段）。</div>');
-  h.push('<textarea id="realInput" placeholder="粘贴寻访记录 JSON 数据..."></textarea>');
+  h.push('<div class="wikihint">使用市面现成的<b>寻访记录导出工具</b>（Android/iOS 均有）导出 JSON 后，<b>粘贴</b>或<b>选择文件</b>导入，本工具纯前端解析分析，数据不出浏览器。<br/>支持 records/gacha/list 数组格式（含 char/name、ts/time、pool/banner 字段）。</div>');
+  h.push('<div class="imp-drop" id="realFileDrop">📂 点击选择 或 拖拽 .json 寻访记录文件</div>');
+  h.push('<input type="file" id="realFile" accept=".json,application/json" style="display:none"/>');
+  h.push('<textarea id="realInput" placeholder="或直接粘贴寻访记录 JSON 文本…"></textarea>');
   h.push('<div class="wikisearch"><button class="mini-btn" id="realParse">🔍 解析分析</button><button class="mini-btn" id="realSample">填入示例</button></div>');
-  h.push('<div class="wikisec" style="margin-top:10px"><h4>🔗 后端自动获取（本地服务）</h4>');
-  h.push('<div class="wikisearch"><input id="bkUrl" placeholder="后端地址" value="http://127.0.0.1:8723"/><button class="mini-btn" id="bkPing">连接测试</button></div>');
-  h.push('<div class="controls" style="margin-bottom:6px"><span class="notice">方式一：粘贴游戏内 token → 自动换取凭证并拉取记录</span></div>');
-  h.push('<input id="bkToken" placeholder="粘贴游戏内获取的 token..."/>');
-  h.push('<div class="wikisearch"><button class="mini-btn" id="bkFetch">🔑 Token获取记录</button></div>');
-  h.push('<div class="controls" style="margin-bottom:6px"><span class="notice">方式二：鹰角账号密码登录 → 自动获取凭证与记录</span></div>');
-  h.push('<div class="wikisearch"><input id="bkPhone" placeholder="手机号"/><input id="bkPwd" type="password" placeholder="密码"/><button class="mini-btn" id="bkLogin">📱 登录并拉取</button></div>');
-  h.push('<div id="bkOut" style="margin-top:6px"></div>');
-  h.push('<div class="wikisec" style="margin-top:10px"><h4>🏝 森空岛账号数据</h4></div>');
-  h.push('<div class="wikihint">从 <b>森空岛 APP</b>（明日方舟官方社区）获取账号 token 后，通过本地后端拉取账号信息与抽卡记录。<br/>获取方式：森空岛 APP → 我的 → 设置 → 开发者选项 → 复制 token（社区教程一致）。</div>');
-  h.push('<div class="wikisearch"><input id="skToken" placeholder="粘贴森空岛 token..."/><button class="mini-btn" id="skFetch">🏝 拉取账号数据</button></div>');
-  h.push('<div id="skOut"></div>');
   h.push('<div id="realOut"></div>');
   $('mBody').innerHTML=h.join('');
   openModalBox();
-  var rp=$('realParse');
-  if(rp)rp.onclick=function(){
+  function doParse(){
     var txt=($('realInput')?$('realInput').value:'').trim();
-    if(!txt){ toast('请先粘贴 JSON 数据'); return; }
+    if(!txt){ toast('请先粘贴 JSON 或选择文件'); return; }
     try{
       var recs=parseRealRecords(txt);
       if(!recs.length){ toast('未解析到有效记录'); return; }
       $('realOut').innerHTML=renderRealAnalysis(recs);
       toast('解析成功：'+recs.length+' 条记录');
     }catch(e){ toast('JSON 解析失败：'+e.message); }
+  }
+  var rp=$('realParse');
+  if(rp)rp.onclick=doParse;
+  var drop=$('realFileDrop'), fileIn=$('realFile');
+  if(drop)drop.onclick=function(){ try{ fileIn.click(); }catch(e){} };
+  if(fileIn)fileIn.onchange=function(){
+    var f=fileIn.files&&fileIn.files[0];
+    if(!f||typeof FileReader==='undefined')return;
+    if(f.size>20*1024*1024){ toast('文件过大'); return; }
+    var rd=new FileReader();
+    rd.onload=function(){ try{ var txtEl=$('realInput'); if(txtEl)txtEl.value=String(rd.result||''); toast('已读取 '+f.name+'，点击「解析分析」'); }catch(e){} };
+    rd.onerror=function(){ toast('文件读取失败'); };
+    rd.readAsText(f);
   };
+  try{
+    var dz=$('mBody');
+    if(dz&&dz.addEventListener){
+      dz.addEventListener('dragover',function(e){ try{e.preventDefault();}catch(x){} if(drop)drop.classList.add('over'); });
+      dz.addEventListener('dragleave',function(){ if(drop)drop.classList.remove('over'); });
+      dz.addEventListener('drop',function(e){
+        try{e.preventDefault();}catch(x){}
+        if(drop)drop.classList.remove('over');
+        var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
+        if(!f||typeof FileReader==='undefined')return;
+        var rd=new FileReader();
+        rd.onload=function(){ try{ var txtEl=$('realInput'); if(txtEl)txtEl.value=String(rd.result||''); toast('已读取 '+f.name+'，点击「解析分析」'); }catch(e){} };
+        rd.readAsText(f);
+      });
+    }
+  }catch(e){}
   var rs=$('realSample');
   if(rs)rs.onclick=function(){
     var inp=$('realInput'); if(inp)inp.value=JSON.stringify({records:[{pool:'感谢庆典·寻访',char:'维什戴尔',ts:Date.now()-86400000*30},{pool:'感谢庆典·寻访',char:'能天使',ts:Date.now()-86400000*28},{pool:'常驻标准寻访',char:'德克萨斯',ts:Date.now()-86400000*20},{pool:'常驻标准寻访',char:'能天使',ts:Date.now()-86400000*18},{pool:'常驻标准寻访',char:'白面鸮',ts:Date.now()-86400000*10}]});
   };
-  wireBackend();
 }
 function openReport(){
   var h=['<h4 class="sect" style="margin-top:0">📊 抽卡报告</h4><div class="controls" style="margin-bottom:8px"><button class="mini-btn" id="rpWeek">📅 周报（7天）</button><button class="mini-btn" id="rpMonth">📅 月报（30天）</button><button class="mini-btn" id="rpCopy">📋 复制报告</button></div><div id="rpOut"></div>'];
@@ -2111,16 +2060,11 @@ function voiceHtml(vd){
     }
     h.push('</div>');
   }
-  var path=vd.paths[selLang]||'';
   for(var i=0;i<vd.items.length;i++){
     var it=vd.items[i];
-    var audio='';
-    if(it.file&&path){
-      var audioUrl='https://torappu.prts.wiki/aud/'+path+'/'+it.file;
-      audio='<audio controls preload="none" src="'+esc(audioUrl)+'" style="width:100%;height:34px;margin:4px 0"></audio>';
-    }
-    h.push('<div class="voice-item"><div class="wskillname">'+esc(it.title)+'</div>'+(it.text?'<div class="voice-txt">'+esc(it.text)+'</div><button class="mini-btn voice-copy" data-txt="'+esc(it.text)+'">📋 复制台词</button>':'')+audio+'</div>');
+    h.push('<div class="voice-item"><div class="wskillname">'+esc(it.title)+'</div>'+(it.text?'<div class="voice-txt">'+esc(it.text)+'</div><button class="mini-btn voice-copy" data-txt="'+esc(it.text)+'">📋 复制台词</button>':'')+'</div>');
   }
+  h.push('<div class="notice">🔇 语音音频受 PRTS 反爬保护（返回验证页），无法在页面内播放；台词文本已完整展示，可前往 <a href="https://prts.wiki/w/'+esc(encodeURIComponent(vd.pageName||''))+'/语音记录" target="_blank" rel="noopener" style="color:var(--acc2)">PRTS 语音页试听</a>。</div>');
   return h.join('');
 }
 function attachVoiceHandlers(body, name, vd){
@@ -2128,10 +2072,6 @@ function attachVoiceHandlers(body, name, vd){
   var btns=body.querySelectorAll('.voice-lang');
   for(var bi=0;bi<btns.length;bi++){
     (function(btn){ btn.onclick=function(){ vd.selLang=btn.getAttribute('data-lg'); renderVoiceHtml(name, vd, body); }; })(btns[bi]);
-  }
-  var aus=body.querySelectorAll('audio');
-  for(var ai=0;ai<aus.length;ai++){
-    (function(au){ au.onerror=function(){ var p=au.parentNode; if(p&&!p.querySelector('.voice-err')){ try{ var d=document.createElement('div'); d.className='voice-err'; d.textContent='⚠ 该语音文件暂不可用（可能未收录）'; p.appendChild(d); }catch(e){} } }; })(aus[ai]);
   }
   var cps=body.querySelectorAll('.voice-copy');
   for(var ci3=0;ci3<cps.length;ci3++){
@@ -2193,7 +2133,7 @@ function wikiVoiceTab(name,data){
       }
     }
     var langOrder=['中文','日文','英文','韩文'].filter(function(x){ return paths[x]; });
-    var vd={t:Date.now(), items:items, langs:langOrder, paths:paths, selLang:(paths['中文']?'中文':(langOrder[0]||'中文'))};
+    var vd={t:Date.now(), items:items, langs:langOrder, paths:paths, selLang:(paths['中文']?'中文':(langOrder[0]||'中文')), pageName:name};
     wikiVoiceCache[name]=vd;
     renderVoiceHtml(name, vd, body);
   });
@@ -2300,6 +2240,34 @@ function renderCompare(a,b){
   prtsFetch(a,3,function(t){ gA.c3=t||''; fin(); });
   prtsFetch(b,1,function(t){ gB.c1=t||''; fin(); });
   prtsFetch(b,3,function(t){ gB.c3=t||''; fin(); });
+}
+var fhallF='all', fhallQ='';
+function renderFashionHall(){
+  var grid=$('fhallGrid'); if(!grid)return;
+  var names=Object.keys(opByName).sort(function(a,b){ return opByName[b].rarity-opByName[a].rarity||a.localeCompare(b,'zh'); });
+  var h=[], i, o;
+  for(i=0;i<names.length;i++){
+    o=opByName[names[i]];
+    if(fhallF!=='all'&&String(o.rarity)!==fhallF)continue;
+    if(fhallQ&&o.name.indexOf(fhallQ)<0)continue;
+    h.push('<div class="fhall-item r'+o.rarity+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/><div class="fhall-nm">'+esc(o.name)+'</div></div>');
+  }
+  grid.innerHTML=h.join('');
+  var items=grid.querySelectorAll('.fhall-item');
+  for(i=0;i<items.length;i++){ (function(el){ el.onclick=function(){ openSkins(el.getAttribute('data-op')); }; })(items[i]); }
+}
+function openFashionHall(){
+  __wikiBack=openFashionHall;
+  var h=['<h4 class="sect" style="margin-top:0">👗 时装回廊</h4>'];
+  h.push('<div class="wikisearch"><input id="fhallSearch" placeholder="搜索干员名称..."/></div>');
+  h.push('<div class="filters" id="fhallChips"></div>');
+  h.push('<div class="notice">点击干员查看其全部时装（名称/系列/获取方式/价格）</div>');
+  h.push('<div class="fhall-grid" id="fhallGrid"></div>');
+  $('mBody').innerHTML=h.join('');
+  openModalBox();
+  setChips($('fhallChips'),[['all','全部'],['6','6★'],['5','5★'],['4','4★'],['3','3★']],'all',function(){ fhallF=$('fhallChips')._v; renderFashionHall(); });
+  var fi=$('fhallSearch'); if(fi){ var fT=null; fi.oninput=function(){ fhallQ=this.value.trim(); clearTimeout(fT); fT=setTimeout(function(){ renderFashionHall(); },150); }; }
+  renderFashionHall();
 }
 function openAbout(){
   __wikiBack=openAbout;
@@ -2527,16 +2495,20 @@ function renderSkins(name,skins,failed){
         var cim=ciInfo.match(new RegExp('\\|时装'+no+'名称=([^\\n|]*)'));
         var cim2=ciInfo.match(new RegExp('\\|时装'+no+'系列=([^\\n|]*)'));
         var cim3=ciInfo.match(new RegExp('\\|时装'+no+'介绍=([\\s\\S]*?)(?=\\n\\|时装|\\n}}|$)'));
+        var cim4=ciInfo.match(new RegExp('\\|时装'+no+'价格=([^\\n|]*)'))||ciInfo.match(new RegExp('\\|时装'+no+'售价=([^\\n|]*)'));
+        var cim5=ciInfo.match(new RegExp('\\|时装'+no+'获取方式=([^\\n|]*)'))||ciInfo.match(new RegExp('\\|时装'+no+'获取=([^\\n|]*)'))||ciInfo.match(new RegExp('\\|时装'+no+'获得方式=([^\\n|]*)'));
         if(cim)sName=wikiClean(cim[1]);
         if(cim2)sSeries=wikiClean(cim2[1]);
         if(cim3)sIntro=wikiClean(cim3[1]);
+        if(cim4)sPrice=wikiClean(cim4[1]);
+        if(cim5)sObtain=wikiClean(cim5[1]);
       }
       var sm=(SKIN_META[name]||{})[no]||{};
       if(!sName)sName=sm.name||('皮肤 '+s.no);
       if(!sSeries)sSeries=sm.series||'';
       if(!sIntro)sIntro='';
-      sObtain=sm.obtain||'游戏内时装商店';
-      sPrice=sm.price||'以游戏内为准';
+      if(!sObtain)sObtain=sm.obtain||'游戏内时装商店';
+      if(!sPrice)sPrice=sm.price||'以游戏内为准';
       var infoLine='<div class="skin-info"><b>'+esc(sName)+'</b>'+(sSeries?'（'+esc(sSeries)+'）':'')+'<br/>获取：'+esc(sObtain)+' · 价格：'+esc(sPrice)+(s.live?' · ✨动态时装（动图请于游戏内查看）':'')+(sIntro?'<br/>介绍：'+esc(sIntro):'')+'</div>';
       h.push('<div class="skin-item'+(s.live?' live':'')+'" data-url="'+esc(s.url)+'"><img loading="lazy" src="'+esc(src)+'" data-fb="'+esc(t200||s.url)+'" data-fb2="'+esc(s.url)+'" alt=""/><div class="skin-nm">'+esc(sName)+dynTag+'</div>'+infoLine+'</div>');
     }
@@ -2814,6 +2786,36 @@ var MAT_FARM_DB={
  "白马醇":{stages:[{stage:"7-15",ap:30,drops:["扭转醇"]},{stage:"9-15",ap:31,drops:["扭转醇","晶体元件"]},]},
  "褐素纤维":{stages:[{stage:"7-12",ap:30,drops:["酮阵列"]},{stage:"9-12",ap:31,drops:["酮阵列"]},]},
  "紫薯":{stages:[{stage:"6-16",ap:30,drops:["固源岩组"]},]},
+ "切削液":{stages:[]},
+ "化合切削液":{stages:[]},
+ "半自然溶剂":{stages:[]},
+ "精炼溶剂":{stages:[]},
+ "干冰":{stages:[]},
+ "转质盐组":{stages:[]},
+ "转质盐聚块":{stages:[]},
+ "环烃聚质":{stages:[]},
+ "环烃预制体":{stages:[]},
+ "异极矿":{stages:[]},
+ "近卫芯片":{stages:[{stage:"PR-D-1",ap:36},{stage:"PR-D-2",ap:45},]},
+ "重装芯片":{stages:[{stage:"PR-B-1",ap:36},{stage:"PR-B-2",ap:45},]},
+ "狙击芯片":{stages:[{stage:"PR-C-1",ap:36},{stage:"PR-C-2",ap:45},]},
+ "术师芯片":{stages:[{stage:"PR-A-1",ap:36},{stage:"PR-A-2",ap:45},]},
+ "医疗芯片":{stages:[{stage:"PR-A-1",ap:36},{stage:"PR-A-2",ap:45},]},
+ "辅助芯片":{stages:[{stage:"PR-B-1",ap:36},{stage:"PR-B-2",ap:45},]},
+ "先锋芯片":{stages:[{stage:"PR-D-1",ap:36},{stage:"PR-D-2",ap:45},]},
+ "特种芯片":{stages:[{stage:"PR-C-1",ap:36},{stage:"PR-C-2",ap:45},]},
+ "近卫双芯片":{stages:[{stage:"PR-D-1",ap:36,drops:[],note:"小概率掉落"},{stage:"PR-D-2",ap:45,drops:[],note:"小概率掉落"},]},
+ "重装双芯片":{stages:[{stage:"PR-B-1",ap:36,drops:[],note:"小概率掉落"},{stage:"PR-B-2",ap:45,drops:[],note:"小概率掉落"},]},
+ "狙击双芯片":{stages:[{stage:"PR-C-1",ap:36,drops:[],note:"小概率掉落"},{stage:"PR-C-2",ap:45,drops:[],note:"小概率掉落"},]},
+ "术师双芯片":{stages:[{stage:"PR-A-1",ap:36,drops:[],note:"小概率掉落"},{stage:"PR-A-2",ap:45,drops:[],note:"小概率掉落"},]},
+ "医疗双芯片":{stages:[{stage:"PR-A-1",ap:36,drops:[],note:"小概率掉落"},{stage:"PR-A-2",ap:45,drops:[],note:"小概率掉落"},]},
+ "辅助双芯片":{stages:[{stage:"PR-B-1",ap:36,drops:[],note:"小概率掉落"},{stage:"PR-B-2",ap:45,drops:[],note:"小概率掉落"},]},
+ "先锋双芯片":{stages:[{stage:"PR-D-1",ap:36,drops:[],note:"小概率掉落"},{stage:"PR-D-2",ap:45,drops:[],note:"小概率掉落"},]},
+ "特种双芯片":{stages:[{stage:"PR-C-1",ap:36,drops:[],note:"小概率掉落"},{stage:"PR-C-2",ap:45,drops:[],note:"小概率掉落"},]},
+ "初级作战记录":{stages:[{stage:"LS-4",ap:30,drops:[],note:"经验本"},{stage:"LS-5",ap:36,drops:[],note:"经验本"},]},
+ "中级作战记录":{stages:[{stage:"LS-5",ap:36,drops:[],note:"经验本"},{stage:"LS-6",ap:45,drops:[],note:"经验本"},]},
+ "高级作战记录":{stages:[{stage:"LS-6",ap:45,drops:[],note:"经验本"},]},
+ "顶级作战记录":{stages:[{stage:"LS-6",ap:45,drops:[],note:"小概率掉落"},]},
 };
 var MAT_RECIPE={
  '固源岩组':{from:[['固源岩',3]]},'提纯源岩':{from:[['固源岩组',2]]},
@@ -3575,6 +3577,8 @@ function init(){
   wire('btnWishList',openWishList);
   wire('btnWikiSearch',openWikiSearch);
   wire('btnAbout',openAbout);
+  wire('btnMatQueryTop',openMatQuery);
+  wire('btnFashionHall',openFashionHall);
   wire('btnRandOp',function(){ var keys=Object.keys(opByName); if(!keys.length)return; openModal(keys[Math.floor(Math.random()*keys.length)]); });
   wire('btnAch',openAch);
   wire('btnExportHist',exportHistory);
