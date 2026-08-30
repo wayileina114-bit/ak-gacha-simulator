@@ -21,6 +21,13 @@ body.theme-amber{
   --line:#5c4528; --txt:#f3e6d2; --dim:#c0a888; --acc:#ffb45e; --acc2:#ff9a2e;
 }
 body.theme-amber header{background:linear-gradient(90deg,#2c1a08 0%,#36220c 55%,#402d14 100%)}
+body.theme-green{
+  --bg:#081410; --bg2:#0c1f16; --panel:#112b1d; --panel2:#173a26;
+  --line:#23523a; --txt:#d9f2e4; --dim:#7fb89a; --acc:#5fe6a0; --acc2:#3dd68c;
+}
+body.theme-green header{background:linear-gradient(90deg,#0a2015 0%,#0e2d1d 55%,#123b26 100%)}
+body.theme-green header::after{background:radial-gradient(circle, rgba(95,230,160,.15), transparent 70%)}
+body.theme-green .bcard.active{border-color:var(--acc); background:linear-gradient(90deg, rgba(61,214,140,.16), var(--bg2))}
 body.theme-blue header::after{background:radial-gradient(circle, rgba(120,200,255,.16), transparent 70%)}
 body.theme-blue .bcard.active{border-color:var(--acc); background:linear-gradient(90deg, rgba(74,179,255,.16), var(--bg2))}
 body.theme-amber header::after{background:radial-gradient(circle, rgba(255,180,94,.16), transparent 70%)}
@@ -677,7 +684,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.29（卡池倒计时·成就扩充·统计修复）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.30（模拟10次统计·源石绿主题·缓存防抖）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
