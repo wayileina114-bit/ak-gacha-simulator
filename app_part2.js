@@ -1213,7 +1213,7 @@ function openModal(opName){
     var img=$('martImg'); if(!img)return;
     if(img._v===undefined)img._v=2;
     if(img._v===0){ img.src=opArtT(o); img._v=2; atg.textContent='🔄 切换立绘（当前：精二）'; }
-    else { var initU=thumbOf(o.art,o.name,'skin 0 0.png',480)||o.art||avUrl(o); var scInit=skinCache[o.name]; if(scInit&&scInit.skins){ for(var ski=0;ski<scInit.skins.length;ski++){ if(scInit.skins[ski].no==='0'||scInit.skins[ski].no===0){ initU=scInit.skins[ski].url; break; } } } img.src=initU; img._v=0; try{ img.dataset.fb=opArtT(o); }catch(e){} atg.textContent='🔄 切换立绘（当前：初始）'; if(!scInit||!scInit.skins.length){ toast('初始立绘获取中…'); openSkins(o.name); } }
+    else { var initU=thumbOf(o.art,o.name,'skin 0 0.png',480)||o.art||avUrl(o); var scInit=skinCache[o.name]; if(scInit&&scInit.skins){ for(var ski=0;ski<scInit.skins.length;ski++){ if(scInit.skins[ski].no==='0'||scInit.skins[ski].no===0){ initU=scInit.skins[ski].url; break; } } } img.src=initU; img._v=0; try{ img.dataset.fb=opArtT(o); }catch(e){} atg.textContent='🔄 切换立绘（当前：初始）'; if(!scInit||!scInit.skins.length){ preloadSkins(o.name,function(skins){ var mi3=$('martImg'); if(!mi3||mi3._v!==0)return; for(var ski2=0;ski2<skins.length;ski2++){ if(skins[ski2].no==='0'||skins[ski2].no===0){ mi3.src=skins[ski2].url; break; } } }); } }
   };
   if(atg)atg.textContent='🔄 切换立绘（当前：精二）';
   var bfo=$('btnFavOp'); if(bfo)bfo.onclick=function(){
@@ -1235,6 +1235,7 @@ function openModal(opName){
   var links=$('mBody').querySelectorAll('.srcLink');
   for(var li=0;li<links.length;li++){ links[li].onclick=function(){ jumpBanner(this.getAttribute('data-bid')); }; }
   var bwk=$('btnWiki'); if(bwk)bwk.onclick=function(){ __wikiBack=function(){ openModal(opName); }; $('mBody').innerHTML='<div id="wikiOut"></div>'; wikiDetail(opName,$('wikiOut')); };
+  preloadSkins(opName);
   openModalBox();
 }
 function prtsApiUrl(page, section){
@@ -1281,6 +1282,7 @@ function openWiki(opName){
   openModalBox();
   wikiFetch(name);
 }
+function wikiClean(t){ return stripWiki(wikiColor(String(t||''))); }
 var WD={};
 function wikiDetail(name, container){
   var box=container||$('wikiOut');
@@ -1294,7 +1296,7 @@ function wikiDetail(name, container){
   if(sd){ h.push('<div class="wikid-tierline"><span class="wikid-tier t'+(sd.tier==='T0'?0:(sd.tier==='T1'?1:(sd.tier==='T2'?2:3)))+'">'+sd.tier+'</span><span class="wikid-tag">'+esc(sd.tag)+'</span></div>'); }
   h.push('</div></div>');
   h.push('<div class="wikid-tabs">');
-  var tabs=[['base','📋 基础'],['attr','📈 属性'],['skill','⚔️ 技能'],['mat','🧱 材料'],['file','📜 档案'],['rate','⭐ 评价']];
+  var tabs=[['base','📋 基础'],['attr','📈 属性'],['skill','⚔️ 技能'],['pot','📊 潜能'],['mod','🧩 模组'],['mat','🧱 材料'],['file','📜 档案'],['rate','⭐ 评价']];
   for(var i=0;i<tabs.length;i++){ h.push('<button class="wikid-tab'+(i===0?' on':'')+'" data-t="'+tabs[i][0]+'">'+tabs[i][1]+'</button>'); }
   h.push('</div>');
   h.push('<div id="wikiBody"><div class="notice">正在从 PRTS Wiki 同步数据…（需联网）</div></div>');
@@ -1306,12 +1308,12 @@ function wikiDetail(name, container){
 function wikiFetchDetail(name, box){
   var ck=name;
   if(wikiCache[ck]&&wikiCache[ck].file!==undefined&&Date.now()-wikiCache[ck].t<600000){ WD[name]=wikiCache[ck]; renderWikiTab(name,'base'); return; }
-  var secs=[2,3,5,7,9,10,16], got={};
+  var secs=[2,3,5,6,7,8,9,10,11,16], got={};
   var pending=secs.length;
   function done(){
     if(--pending>0)return;
     if(!got[3]&&!got[7]&&!got[16]){ var b2=$('wikiBody'); if(b2)b2.innerHTML='<div class="notice">同步失败：无法连接 PRTS Wiki（需联网）</div><div style="text-align:center;margin-top:8px"><button class="mini-btn" id="wikiRetry3">🔄 重试</button></div>'; var wr=$('wikiRetry3'); if(wr)wr.onclick=function(){ wikiFetchDetail(name,box); }; return; }
-    var data={t:Date.now(),acquire:got[2]||'',attr:got[3]||'',talents:got[5]||'',skills:got[7]||'',mats:got[9]||'',skillMats:got[10]||'',file:got[16]||''};
+    var data={t:Date.now(),acquire:got[2]||'',attr:got[3]||'',talents:got[5]||'',potential:got[6]||'',skills:got[7]||'',support:got[8]||'',mats:got[9]||'',skillMats:got[10]||'',module:got[11]||'',file:got[16]||''};
     wikiCache[ck]=data; persistWikiCache();
     WD[name]=data;
     renderWikiTab(name,'base');
@@ -1333,6 +1335,8 @@ function renderWikiTab(name, tab){
   else if(tab==='attr')h.push(wikiAttrTab(name,data));
   else if(tab==='skill')h.push(wikiSkillTab(name,data));
   else if(tab==='mat')h.push(wikiMatTab(name,data));
+  else if(tab==='pot')h.push(wikiPotTab(name,data));
+  else if(tab==='mod')h.push(wikiModTab(name,data));
   else if(tab==='file')h.push(wikiFileTab(name,data));
   else h.push(wikiRateTab(name,data));
   if(body)body.innerHTML=h.join('');
@@ -1455,6 +1459,72 @@ function wikiMatTab(name,data){
     h.push('</div></div>');
   }
   h.push('<div class="wikihint">📌 刷取关卡与理智为社区参考值（数据可能存在版本变动），绿色高亮为推荐。</div>');
+  return h.join('');
+}
+function wikiPotTab(name,data){
+  var h=[];
+  if(data&&data.potential){
+    var p=String(data.potential||'');
+    h.push('<div class="wikisec"><h4>📊 潜能提升</h4><div class="wikirows">');
+    var found=false;
+    for(var pi=2;pi<=6;pi++){
+      var m=p.match(new RegExp('\\|潜能'+pi+'=([^\\n]*)'));
+      if(m){ found=true; h.push('<div class="wrow"><b>潜能'+pi+'</b><span>'+esc(wikiClean(m[1]))+'</span></div>'); }
+    }
+    if(!found)h.push('<div class="notice">暂无潜能数据</div>');
+    h.push('</div></div>');
+  }
+  if(data&&data.support){
+    var sp=String(data.support||'');
+    h.push('<div class="wikisec"><h4>🏠 后勤技能</h4><div class="wikirows">');
+    var idx=1, found2=false;
+    while(idx<=6){
+      var m1=sp.match(new RegExp('\\|后勤技能'+idx+'-1=([^\\n]*)'));
+      var m1s=sp.match(new RegExp('\\|后勤技能'+idx+'-1阶段=([^\\n]*)'));
+      var m2=sp.match(new RegExp('\\|后勤技能'+idx+'-2=([^\\n]*)'));
+      var m2s=sp.match(new RegExp('\\|后勤技能'+idx+'-2阶段=([^\\n]*)'));
+      if(!m1&&!m2)break;
+      found2=true;
+      if(m1)h.push('<div class="wrow"><b>'+(m1s&&m1s[1]?esc(wikiClean(m1s[1])):'')+'</b><span>'+esc(wikiClean(m1[1]))+'</span></div>');
+      if(m2)h.push('<div class="wrow"><b>'+(m2s&&m2s[1]?esc(wikiClean(m2s[1])):'')+'</b><span>'+esc(wikiClean(m2[1]))+'</span></div>');
+      idx++;
+    }
+    if(!found2)h.push('<div class="notice">暂无后勤技能数据</div>');
+    h.push('</div></div>');
+  }
+  if(!h.length)h.push('<div class="notice">暂无数据</div>');
+  return h.join('');
+}
+function wikiModTab(name,data){
+  var mt=String((data&&data.module)||'');
+  if(!mt.trim())return '<div class="notice">暂无模组数据</div>';
+  var h=['<div class="wikisec"><h4>🧩 模组</h4>'];
+  var segs=mt.split(/^===/m);
+  var found=false;
+  for(var si=1;si<segs.length;si++){
+    var seg=segs[si];
+    var closeIdx=seg.indexOf('===');
+    var title=closeIdx>=0?seg.slice(0,closeIdx).trim():('模组'+si);
+    var body=closeIdx>=0?seg.slice(closeIdx+3):seg;
+    function kv(k){ var m=body.match(new RegExp('\\|'+k+'=([^\\n]*)')); return m?m[1].trim():''; }
+    var type=kv('类型'), branch=kv('分支'), base=kv('基础证章');
+    var hp=kv('生命'), atk=kv('攻击'), hp2=kv('生命2'), atk2=kv('攻击2'), hp3=kv('生命3'), atk3=kv('攻击3');
+    var feat=kv('特性'), talent=kv('天赋2')||kv('天赋3');
+    found=true;
+    h.push('<div class="wskill"><div class="wskillname">'+esc(title)+'</div>');
+    if(type||branch)h.push('<div class="wskilltype">'+esc(wikiClean(type))+(type&&branch?' · ':'')+esc(wikiClean(branch))+'</div>');
+    if(base){ h.push('<div class="wskillnum">基础证章</div>'); }
+    else if(hp||atk){
+      h.push('<div class="wskillnum">'+(hp?esc('生命 +'+wikiClean(hp)):'')+(hp&&atk?' · ':'')+(atk?esc('攻击 +'+wikiClean(atk)):'')+'（1级）</div>');
+      if(hp2||atk2)h.push('<div class="wskillnum">'+(hp2?esc('生命 +'+wikiClean(hp2)):'')+(hp2&&atk2?' · ':'')+(atk2?esc('攻击 +'+wikiClean(atk2)):'')+'（2级）</div>');
+      if(hp3||atk3)h.push('<div class="wskillnum">'+(hp3?esc('生命 +'+wikiClean(hp3)):'')+(hp3&&atk3?' · ':'')+(atk3?esc('攻击 +'+wikiClean(atk3)):'')+'（3级）</div>');
+    }
+    if(feat)h.push('<div class="wskilldesc">特性：'+esc(wikiClean(feat))+'</div>');
+    if(talent)h.push('<div class="wskilldesc m">天赋：'+esc(wikiClean(talent))+'</div>');
+    h.push('</div>');
+  }
+  if(!found)h.push('<div class="notice">暂无模组数据</div>');
+  h.push('</div>');
   return h.join('');
 }
 function wikiFileTab(name,data){
@@ -1590,6 +1660,23 @@ function renderWikiData(name,data,target){
     })(wsecs[wsi]);
   }
   openModalBox();
+}
+function preloadSkins(name, cb){
+  var cache=skinCache[name];
+  if(cache&&Date.now()-cache.t<600000){ if(cb)cb(cache.skins); return; }
+  jsonp(skinListUrl(name),function(data){
+    var skins=[];
+    if(data&&data.query&&data.query.allimages){
+      for(var i=0;i<data.query.allimages.length;i++){
+        var it=data.query.allimages[i];
+        var m=it.name.match(/skin_(\d+)(?:_live)?\.(png|gif)$/i);
+        var isLive=it.name.toLowerCase().indexOf('_live')>=0||it.name.toLowerCase().indexOf('.gif')>=0;
+        if(m&&parseInt(m[1],10)>=0){ skins.push({name:it.name,url:it.url,no:m[1],live:isLive}); }
+      }
+    }
+    skinCache[name]={t:Date.now(),skins:skins};
+    if(cb)cb(skins);
+  },12000);
 }
 function openSkins(opName){
   var o=opOf(opName); if(!o)return;
