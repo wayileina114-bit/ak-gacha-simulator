@@ -571,7 +571,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .wikisec h4{cursor:pointer; user-select:none}
 .wikisec h4::after{content:'▾'; float:right; color:var(--dim); font-size:12px; transition:transform .2s}
 .wikisec.collapsed h4::after{transform:rotate(-90deg)}
-.wikisec h4{color:var(--acc); font-size:14px; margin:0 0 8px}
+.wikisec h4{color:var(--acc); font-size:14px; margin:0 0 8px; border-left:3px solid var(--acc2); padding-left:8px}
 .wikitbl{overflow-x:auto}
 .bst{font-size:11px; font-weight:700}
 .bst.active{color:var(--acc)}
@@ -597,7 +597,8 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .wikirows{display:flex; flex-wrap:wrap; gap:8px; margin-top:6px}
 .wrow{background:var(--bg2); border:1px solid var(--line); border-radius:6px; padding:3px 10px; font-size:12px}
 .wrow b{color:var(--dim); margin-right:6px}
-.wskill{border-left:3px solid var(--acc2); padding:6px 10px; margin:8px 0; background:rgba(74,179,255,.05); border-radius:0 8px 8px 0}
+.wskill{border-left:3px solid var(--acc2); padding:6px 10px; margin:8px 0; background:rgba(74,179,255,.05); border-radius:0 8px 8px 0; transition:transform .15s, box-shadow .15s, background .15s; box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.wskill:hover{transform:translateX(2px); box-shadow:0 4px 12px rgba(74,179,255,.18); background:rgba(74,179,255,.09); border-radius:0 8px 8px 0}
 .wskillname{font-weight:800; color:var(--txt); font-size:13px}
 .wskillnm{color:var(--acc); font-size:12px; margin:2px 0}
 .wskilldesc{font-size:12px; color:var(--dim); margin-top:4px; line-height:1.7}
@@ -748,7 +749,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员/Wiki数据，更新至 2026-08-29）· bilibili Wiki（精二立绘/皮肤/材料图标与掉落）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.70（模拟自选池拦截·空池防护·当前池高亮）</b>
+  数据来源：PRTS Wiki（卡池/干员/Wiki数据，更新至 2026-08-29）· bilibili Wiki（精二立绘/皮肤/材料图标与掉落）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.71（开启倒计时小时·关卡缓存·Wiki美化）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
