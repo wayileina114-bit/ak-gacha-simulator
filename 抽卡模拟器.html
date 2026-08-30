@@ -281,6 +281,19 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .wikid-tab.on{background:var(--acc2); border-color:var(--acc2); color:#fff; font-weight:700}
 .wikid-tabs + #wikiBody .wskill{margin-bottom:8px}
 .lg-desc{font-size:11px; color:var(--acc2); margin-top:2px}
+.matgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:8px; max-height:60vh; overflow-y:auto; margin-top:8px}
+.mat-item{position:relative; background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:8px; cursor:pointer; text-align:center; transition:.15s}
+.mat-item:hover{border-color:var(--acc2); transform:translateY(-2px)}
+.mat-item .mat-icon{width:44px; height:44px; object-fit:contain; display:block; margin:0 auto 4px}
+.mat-item .mat-nm{font-size:11px; color:var(--txt)}
+.mat-wrap{position:relative; display:inline-block; width:44px; height:44px; margin:0 auto 4px}
+.mat-wrap .mat-fallback{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:var(--bg2); border:1px solid var(--line); border-radius:8px; font-size:16px; font-weight:800; color:var(--acc2)}
+.mat-wrap .mat-icon{position:absolute; inset:0; width:100%; height:100%}
+.mat-item .mat-det{grid-column:1/-1; background:var(--bg2); border:1px solid var(--line); border-radius:8px; padding:8px; margin-top:6px; text-align:left}
+.mat-item .mat-det .wrow span{font-size:11px; line-height:1.8}
+.mat-drop{font-size:11px; margin-right:6px}
+.mat-det .mat-wrap{width:22px; height:22px; margin:0 2px 0 0; vertical-align:middle}
+.mat-det .mat-wrap .mat-fallback{font-size:10px}
 .lg-link{font-size:11px; color:var(--acc2); margin-left:6px}
 .wikirows .wrow .farm{color:#7bd88f; font-style:normal; font-size:11px; margin-left:6px}
 .wskilltype{font-size:11px; color:var(--acc2); margin-bottom:4px}
@@ -597,7 +610,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
       <div id="resultMsg"></div>
     </section>
     <section class="panel">
-      <div class="sectbar"><h4>抽卡统计</h4><button class="mini-btn" id="btnAch">🏆 成就</button><button class="mini-btn" id="btnStats">详细统计</button><button class="mini-btn" id="btnPityMap">🛡 保底一览</button><button class="mini-btn" id="btnSim">🧪 模拟抽卡</button><button class="mini-btn" id="btnReport">📊 抽卡报告</button><button class="mini-btn" id="btnOpStats">干员统计</button><button class="mini-btn" id="btnCopyStats">复制总结</button><button class="mini-btn" id="btnRules">规则说明</button><button class="mini-btn" id="btnReset2">清空记录</button></div>
+      <div class="sectbar"><h4>抽卡统计</h4><button class="mini-btn" id="btnAch">🏆 成就</button><button class="mini-btn" id="btnStats">详细统计</button><button class="mini-btn" id="btnPityMap">🛡 保底一览</button><button class="mini-btn" id="btnSim">🧪 模拟抽卡</button><button class="mini-btn" id="btnReport">📊 抽卡报告</button><button class="mini-btn" id="btnMatQuery">🧱 材料刷取</button><button class="mini-btn" id="btnReal">🎯 真实记录</button><button class="mini-btn" id="btnOpStats">干员统计</button><button class="mini-btn" id="btnCopyStats">复制总结</button><button class="mini-btn" id="btnRules">规则说明</button><button class="mini-btn" id="btnReset2">清空记录</button></div>
       <div class="stats-grid" id="statsGrid"></div>
       <div class="sectbar"><h4>寻访记录</h4><button class="mini-btn" id="btnExportHist">导出记录</button></div>
       <div class="histsearch"><input id="histSearch" placeholder="搜索干员/卡池..."/><button class="mini-btn" id="histClearSearch">✕</button></div>
@@ -623,7 +636,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.21（Wiki全信息·皮肤信息写明）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.22（材料刷取查询·预加载缓存·移除初始立绘）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -1287,6 +1300,8 @@ function renderCards(results,msg,has6,names6,has5){
   }
   wrap.innerHTML=html.join('');
   var cards=wrap.querySelectorAll('.card');
+  var cimgs=wrap.querySelectorAll('img');
+  for(var ci5=0;ci5<cimgs.length;ci5++){ (function(im){ idbSrc(im.getAttribute('src'), im); })(cimgs[ci5]); }
   var order=[];
   for(i=0;i<results.length;i++)order.push(i);
   order.sort(function(a,b){ return results[a].rar-results[b].rar; });
@@ -1645,6 +1660,53 @@ function renderRealAnalysis(recs){
   }
   return h.join('');
 }
+function matStagesHtml(mn){
+  var d=MAT_FARM_DB[mn];
+  if(!d||!d.stages||!d.stages.length)return '<div class="notice">该材料暂未收录刷取数据</div>';
+  var h=['<div class="wikirows">'];
+  for(var i=0;i<d.stages.length;i++){
+    var st=d.stages[i];
+    var ch=chapterOf(st.stage);
+    var dropsHtml=(st.drops&&st.drops.length)?('<br/>其他产物：'+st.drops.map(function(x){return matIconHtml(x)+'<span class="mat-drop">'+esc(x)+'</span>';}).join(' ')):'';
+    h.push('<div class="wrow"><b>'+esc(st.stage)+'</b><span>'+(ch?esc(ch)+' · ':'')+'期望 '+(st.ap<1?'理智效率极高':(st.ap.toFixed(1)+' 理智/个'))+dropsHtml+(st.note?'<br/>'+esc(st.note):'')+'</span></div>');
+  }
+  h.push('</div>');
+  return h.join('');
+}
+function openMatQuery(){
+  var h=['<h4 class="sect" style="margin-top:0">🧱 材料刷取查询</h4>'];
+  h.push('<div class="wikisearch"><input id="matSearch" placeholder="搜索材料，如：固源岩 / 技巧概要..."/></div>');
+  h.push('<div class="matgrid" id="matGrid"></div>');
+  $('mBody').innerHTML=h.join('');
+  openModalBox();
+  renderMatGrid('');
+  var ms=$('matSearch');
+  if(ms){ var msDl=null; ms.oninput=function(){ clearTimeout(msDl); var v=this.value.trim(); msDl=setTimeout(function(){ renderMatGrid(v); },150); }; }
+}
+function renderMatGrid(q){
+  var names=Object.keys(MAT_FARM_DB).sort();
+  var h=[], shown=0, i;
+  for(i=0;i<names.length;i++){
+    if(q&&names[i].indexOf(q)<0)continue;
+    shown++;
+    h.push('<div class="mat-item" data-m="'+esc(names[i])+'">'+matIconHtml(names[i])+'<div class="mat-nm">'+esc(names[i])+'</div></div>');
+  }
+  if(!shown)h.push('<div class="notice">没有匹配的材料</div>');
+  $('matGrid').innerHTML=h.join('');
+  var items=$('matGrid').querySelectorAll('.mat-item');
+  for(i=0;i<items.length;i++){
+    (function(el){
+      el.onclick=function(){
+        var det=el.querySelector('.mat-det');
+        if(det){ el.removeChild(det); return; }
+        var dd=document.createElement('div');
+        dd.className='mat-det';
+        dd.innerHTML=matStagesHtml(el.getAttribute('data-m'));
+        el.appendChild(dd);
+      };
+    })(items[i]);
+  }
+}
 function openRealGacha(){
   var h=['<h4 class="sect" style="margin-top:0">🎯 真实寻访记录分析</h4>'];
   h.push('<div class="wikihint">从游戏本地数据提取真实抽卡记录（可用市面工具导出 JSON）后粘贴/上传，分析真实出货。<br/><b>获取方式：</b>明日方舟 Android 端可借助工具导出寻访记录 JSON；iOS 端需对应导出工具。<br/>支持：records/gacha/list 数组格式（含 char/name、ts/time、pool/banner 字段）。</div>');
@@ -1932,7 +1994,7 @@ function openModal(opName){
   var o=opOf(opName); if(!o)return;
   var h=[];
   h.push('<button class="mini-btn" id="btnFavOp" style="margin-bottom:8px">'+(state.favOps&&state.favOps[opName]?'⭐ 已收藏':'☆ 收藏干员')+'</button><button class="mini-btn" id="btnWiki" style="margin-bottom:8px;margin-left:8px">📊 Wiki数据</button><button class="mini-btn" id="btnSkins" style="margin-bottom:8px;margin-left:8px">🎨 皮肤</button><button class="mini-btn" id="btnWish" style="margin-bottom:8px;margin-left:8px">'+(state.wish&&state.wish.indexOf(opName)>=0?'💝 已心愿':'💝 心愿单')+'</button>');
-  h.push('<div class="mhead"><div class="mart" style="cursor:zoom-in"><img loading="lazy" id="martImg" src="'+esc(opArtT(o))+'" data-a="'+esc(o.art||'')+'" data-b="'+esc(avUrl(o))+'" onerror="this.onerror=null;this.src=this.dataset.fb" data-fb="'+esc(opArtT(o))+'" alt=""/><button class="mini-btn artToggle" id="artToggle" style="margin-top:4px;width:100%">🔄 切换立绘</button></div><div class="minfo">');
+  h.push('<div class="mhead"><div class="mart" style="cursor:zoom-in"><img loading="lazy" id="martImg" src="'+esc(opArtT(o))+'" data-a="'+esc(o.art||'')+'" data-b="'+esc(avUrl(o))+'" onerror="this.onerror=null;this.src=this.dataset.fb" data-fb="'+esc(opArtT(o))+'" alt=""/></div><div class="minfo">');
   h.push('<h2>'+esc(o.name)+'</h2>');
   h.push('<div class="stars">'+stars(o.rarity)+'</div>');
   h.push('<div class="kv"><b>职业</b>'+esc(o.prof||'—')+'</div>');
@@ -1969,24 +2031,7 @@ function openModal(opName){
     img.dataset.fb=fb;
     img.dataset.fb2=fb2||'';
   }
-  function initArtUrlOf(){ var scI=skinCache[o.name]; if(scI&&scI.skins){ for(var skj=0;skj<scI.skins.length;skj++){ if(scI.skins[skj].no==='0'||scI.skins[skj].no===0)return scI.skins[skj].url; } } return ''; }
-  var atg=$('artToggle'); if(atg)atg.onclick=function(){
-    var img=$('martImg'); if(!img)return;
-    if(img._v===undefined)img._v=2;
-    if(img._v===0){
-      setMartImg2(img, opArtT(o), opArtT(o));
-      img._v=2; atg.textContent='🔄 切换立绘（当前：精二）';
-    }
-    else {
-      var realInit=initArtUrlOf();
-      var initU=realInit||thumbOf(o.art,o.name,'skin 0 0.png',480)||o.art||avUrl(o);
-      setMartImg2(img, initU, opArtT(o), realInit);
-      img._v=0; atg.textContent='🔄 切换立绘（当前：初始）';
-      if(!realInit){ preloadSkins(o.name,function(skins){ var mi3=$('martImg'); if(!mi3||mi3._v!==0)return; for(var ski2=0;ski2<skins.length;ski2++){ if(skins[ski2].no==='0'||skins[ski2].no===0){ setMartImg2(mi3, skins[ski2].url, opArtT(o)); break; } } }); }
-    }
-  };
-  if(atg)atg.textContent='🔄 切换立绘（当前：精二）';
-  var miInit=$('martImg'); if(miInit){ miInit.dataset.fb=opArtT(o); miInit.dataset.fb2=''; }
+  var miInit2=$('martImg'); if(miInit2){ try{ miInit2.dataset.fb=opArtT(o); }catch(e){} idbSrc(opArtT(o), miInit2); }
   var bfo=$('btnFavOp'); if(bfo)bfo.onclick=function(){
     if(!state.favOps)state.favOps={};
     if(state.favOps[opName]){ delete state.favOps[opName]; bfo.textContent='☆ 收藏干员'; }
@@ -2737,20 +2782,13 @@ function openPoolModal(){
 }
 var galF='all', galV=2, galMode='art', galSearch='';
 var GAL_ART_CACHE={};
-function galArt(o){ if(!o||!o.name)return ''; var ck=o.name+':'+galV; if(GAL_ART_CACHE[ck])return GAL_ART_CACHE[ck];
-  var u=thumbOf(o.art,o.name,'skin 0 '+(galV===0?0:2)+'.png',480)||o.art||avUrl(o);
-  if(galV===0){
-    var scG=skinCache[o.name];
-    if(scG&&scG.skins){ for(var sg2=0;sg2<scG.skins.length;sg2++){ if(scG.skins[sg2].no==='0'||scG.skins[sg2].no===0){ u=scG.skins[sg2].url; break; } } }
-    else { preloadSkins(o.name); }
-  }
-  return GAL_ART_CACHE[ck]=u; }
+function galArt(o){ if(!o||!o.name)return ''; var ck=o.name+':2'; if(GAL_ART_CACHE[ck])return GAL_ART_CACHE[ck];
+  return GAL_ART_CACHE[ck]=thumbOf(o.art,o.name,'skin 0 2.png',480)||o.art||avUrl(o); }
 function openGallery(){
-  var h=['<h4 class="sect" style="margin-top:0">立绘画廊</h4><input id="galSearch" placeholder="搜索干员..." value="'+esc(galSearch)+'"/><div class="filters" id="galChips"></div><div class="galbar"><button class="mini-btn" id="galV2"'+(galV===2?' style="border-color:var(--acc)"':'')+'>精二立绘</button><button class="mini-btn" id="galV0"'+(galV===0?' style="border-color:var(--acc)"':'')+'>初始立绘</button><button class="mini-btn" id="galSkin"'+(galMode==='skin'?' style="border-color:var(--acc)"':'')+'>🎨 皮肤模式</button></div><div class="gallery" id="galGrid"></div>'];
+  var h=['<h4 class="sect" style="margin-top:0">立绘画廊</h4><input id="galSearch" placeholder="搜索干员..." value="'+esc(galSearch)+'"/><div class="filters" id="galChips"></div><div class="galbar"><button class="mini-btn" id="galV2"'+(galV===2?' style="border-color:var(--acc)"':'')+'>精二立绘</button><button class="mini-btn" id="galSkin"'+(galMode==='skin'?' style="border-color:var(--acc)"':'')+'>🎨 皮肤模式</button></div><div class="gallery" id="galGrid"></div>'];
   $('mBody').innerHTML=h.join('');
   setChips($('galChips'),[['all','全部'],['6','6★'],['5','5★'],['4','4★'],['3','3★']],galF,function(){ galF=$('galChips')._v; renderGallery(); });
   var gv2=$('galV2'); if(gv2)gv2.onclick=function(){ galV=2; galMode='art'; openGallery(); };
-  var gv0=$('galV0'); if(gv0)gv0.onclick=function(){ galV=0; galMode='art'; openGallery(); };
   var gsk=$('galSkin'); if(gsk)gsk.onclick=function(){ galMode=(galMode==='skin')?'art':'skin'; openGallery(); };
   var gsr=$('galSearch'); if(gsr){ var gst=null; gsr.oninput=function(){ galSearch=this.value.trim(); GAL_N=120; clearTimeout(gst); gst=setTimeout(function(){ renderGallery(); },180); }; }
   renderGallery();
@@ -2778,53 +2816,123 @@ function renderGallery(){
   var items=$('galGrid').querySelectorAll('.gal-item');
   for(i=0;i<items.length;i++){ (function(it){ it.onclick=function(){ if(galMode==='skin'){ openSkins(it.getAttribute('data-op')); } else { openModal(it.getAttribute('data-op')); } }; })(items[i]); }
   var gm=$('galMore'); if(gm)gm.onclick=function(){ GAL_N+=120; renderGallery(); };
+  var gimgs=$('galGrid').querySelectorAll('img');
+  for(var gi3=0;gi3<gimgs.length;gi3++){ (function(im){ idbSrc(im.getAttribute('src'), im); })(gimgs[gi3]); }
 }
-var MAT_FARM_DB={
- '源岩':{stage:'1-7',ap:4.4,note:'前期稳定低费刷取'},
- '固源岩':{stage:'1-7',ap:5.0,note:'主线 1-7 公认最佳'},
- '固源岩组':{stage:'4-6',ap:12.0,note:'也可 2-4 刷取'},
- '提纯源岩':{stage:'7-10',ap:32.0,note:'高费材料'},
- '聚酸酯':{stage:'S2-5',ap:5.0,note:'也可 1-8'},
- '聚酸酯组':{stage:'4-4',ap:12.5,note:'活动本更优'},
- '聚酸酯块':{stage:'7-12',ap:32.0,note:''},
- '装置':{stage:'S2-6',ap:7.5,note:'也可 2-2'},
- '全新装置':{stage:'4-10',ap:16.0,note:'也可 5-10'},
- '改量装置':{stage:'7-11',ap:35.0,note:''},
- '异铁':{stage:'S2-4',ap:6.5,note:'也可 2-5'},
- '异铁组':{stage:'4-5',ap:15.0,note:''},
- '异铁块':{stage:'7-11',ap:35.0,note:''},
- '酮凝集':{stage:'2-6',ap:6.5,note:''},
- '酮凝集组':{stage:'4-7',ap:15.0,note:''},
- '酮阵列':{stage:'7-13',ap:32.0,note:''},
- '糖':{stage:'S2-9',ap:6.5,note:'也可 1-10'},
- '糖组':{stage:'4-2',ap:14.0,note:''},
- '糖聚块':{stage:'7-14',ap:32.0,note:''},
- '酯原料':{stage:'1-9',ap:5.0,note:''},
- '研磨石':{stage:'S3-5',ap:9.0,note:'也可 3-3'},
- '五水研磨石':{stage:'4-8',ap:25.0,note:'也可 7-12'},
- '扭转醇':{stage:'4-4',ap:9.5,note:'也可 7-15'},
- '轻锰矿':{stage:'5-3',ap:9.5,note:'也可 3-2'},
- '三水锰矿':{stage:'7-16',ap:25.0,note:''},
- '凝胶':{stage:'4-9',ap:9.0,note:'也可 6-7'},
- '聚合凝胶':{stage:'7-13',ap:40.0,note:''},
- '炽合金':{stage:'6-8',ap:9.5,note:'也可 4-4'},
- '炽合金块':{stage:'7-15',ap:40.0,note:''},
- 'RMA70-12':{stage:'6-11',ap:9.5,note:'也可 4-10'},
- 'RMA70-24':{stage:'7-11',ap:40.0,note:''},
- '晶体元件':{stage:'7-9',ap:9.5,note:''},
- '晶体电路':{stage:'7-15',ap:32.0,note:''},
- '晶体电子单元':{stage:'9-11',ap:45.0,note:'也可 12-5'},
- '龙门币':{stage:'CE-5',ap:0.04,note:'CE-5 一次约 7500 龙门币，理智效率极高'},
- '技巧概要·卷1':{stage:'CA-1',ap:1.0,note:'CA-1 一次 5 个'},
- '技巧概要·卷2':{stage:'CA-3',ap:1.0,note:'CA-3 一次 5 个'},
- '技巧概要·卷3':{stage:'CA-5',ap:1.0,note:'CA-5 一次 5 个'},
- '双极纳米片':{stage:'9-19',ap:45.0,note:''},
- '聚合剂':{stage:'9-9',ap:45.0,note:'也可 12-9'},
- 'D32钢':{stage:'9-6',ap:45.0,note:''},
- '白马醇':{stage:'7-15',ap:30.0,note:''},
- '褐素纤维':{stage:'7-12',ap:30.0,note:''},
- '紫薯':{stage:'6-16',ap:30.0,note:''},
+var CHAPTER_MAP={
+"1-":{ch:"第一章 黑暗时代·上"},
+"2-":{ch:"第二章 乌萨斯的孩子"},
+"3-":{ch:"第三章 二次呼吸"},
+"4-":{ch:"第四章 急性衰竭"},
+"5-":{ch:"第五章 靶向药物"},
+"6-":{ch:"第六章 局部坏死"},
+"7-":{ch:"第七章 苦难摇篮"},
+"8-":{ch:"第八章 怒号光明"},
+"9-":{ch:"第九章 风暴瞭望"},
+"10-":{ch:"第十章 破碎日冕"},
+"11-":{ch:"第十一章 淬火尘霾"},
+"12-":{ch:"第十二章 惊霆无声"},
+"13-":{ch:"第十三章 恶兆湍流"},
+"14-":{ch:"第十四章 慈悲灯塔"},
+"CE-":{ch:"龙门币本"},
+"CA-":{ch:"技巧概要本"},
+"PR-":{ch:"芯片本"},
+ "S1-":{ch:"第一章 黑暗时代·上（突袭）"},"S2-":{ch:"第二章 乌萨斯的孩子（突袭）"},"S3-":{ch:"第三章 二次呼吸（突袭）"},"S4-":{ch:"第四章 急性衰竭（突袭）"},"S5-":{ch:"第五章 靶向药物（突袭）"},"S6-":{ch:"第六章 局部坏死（突袭）"},"S7-":{ch:"第七章 苦难摇篮（突袭）"},"S8-":{ch:"第八章 怒号光明（突袭）"},"S9-":{ch:"第九章 风暴瞭望（突袭）"},"S10-":{ch:"第十章 破碎日冕（突袭）"},"S11-":{ch:"第十一章 淬火尘霾（突袭）"},"S12-":{ch:"第十二章 惊霆无声（突袭）"},"S13-":{ch:"第十三章 恶兆湍流（突袭）"},"S14-":{ch:"第十四章 慈悲灯塔（突袭）"},
 };
+var MAT_FARM_DB={
+ "源岩":{stages:[{stage:"1-7",ap:4.4,drops:["固源岩","龙门币"]},{stage:"S2-1",ap:4.6,drops:["固源岩","龙门币"]},]},
+ "固源岩":{stages:[{stage:"1-7",ap:5,drops:["源岩","龙门币"]},{stage:"2-4",ap:6.5,drops:["源岩","装置"]},{stage:"4-6",ap:6,drops:["源岩"]},]},
+ "固源岩组":{stages:[{stage:"4-6",ap:12,drops:["源岩","固源岩"]},{stage:"2-4",ap:14,drops:["固源岩","装置"]},{stage:"S3-3",ap:12.5,drops:["固源岩"]},]},
+ "提纯源岩":{stages:[{stage:"7-10",ap:32,drops:["固源岩组"]},{stage:"9-9",ap:33,drops:["固源岩组","固源岩"]},]},
+ "酯原料":{stages:[{stage:"1-9",ap:5,drops:["源岩","龙门币"]},]},
+ "聚酸酯":{stages:[{stage:"S2-5",ap:5,drops:["酯原料","源岩"]},{stage:"1-8",ap:5.5,drops:["酯原料","龙门币"]},]},
+ "聚酸酯组":{stages:[{stage:"4-4",ap:12.5,drops:["聚酸酯"]},{stage:"S3-4",ap:13,drops:["聚酸酯","酯原料"]},]},
+ "聚酸酯块":{stages:[{stage:"7-12",ap:32,drops:["聚酸酯组"]},]},
+ "装置":{stages:[{stage:"S2-6",ap:7.5,drops:["源岩","龙门币"]},{stage:"2-2",ap:8.5,drops:["源岩"]},]},
+ "全新装置":{stages:[{stage:"4-10",ap:16,drops:["装置"]},{stage:"5-10",ap:17,drops:["装置","研磨石"]},]},
+ "改量装置":{stages:[{stage:"7-11",ap:35,drops:["全新装置"]},]},
+ "异铁":{stages:[{stage:"S2-4",ap:6.5,drops:["源岩"]},{stage:"2-5",ap:7,drops:["源岩","龙门币"]},]},
+ "异铁组":{stages:[{stage:"4-5",ap:15,drops:["异铁"]},{stage:"5-1",ap:16,drops:["异铁","酮凝集"]},]},
+ "异铁块":{stages:[{stage:"7-11",ap:35,drops:["异铁组"]},]},
+ "酮凝集":{stages:[{stage:"2-6",ap:6.5,drops:["源岩"]},{stage:"2-8",ap:7,drops:["源岩","龙门币"]},]},
+ "酮凝集组":{stages:[{stage:"4-7",ap:15,drops:["酮凝集"]},{stage:"3-1",ap:16,drops:["酮凝集","糖"]},]},
+ "酮阵列":{stages:[{stage:"7-13",ap:32,drops:["酮凝集组"]},]},
+ "糖":{stages:[{stage:"S2-9",ap:6.5,drops:["源岩"]},{stage:"1-10",ap:7,drops:["源岩","龙门币"]},]},
+ "糖组":{stages:[{stage:"4-2",ap:14,drops:["糖"]},{stage:"3-1",ap:15,drops:["糖","酮凝集"]},]},
+ "糖聚块":{stages:[{stage:"7-14",ap:32,drops:["糖组"]},]},
+ "研磨石":{stages:[{stage:"S3-5",ap:9,drops:["源岩","固源岩"]},{stage:"3-3",ap:10,drops:["固源岩"]},]},
+ "五水研磨石":{stages:[{stage:"4-8",ap:25,drops:["研磨石"]},{stage:"7-12",ap:26,drops:["研磨石","聚酸酯组"]},]},
+ "扭转醇":{stages:[{stage:"4-4",ap:9.5,drops:["聚酸酯","聚酸酯组"]},{stage:"7-15",ap:10,drops:["聚酸酯"]},]},
+ "轻锰矿":{stages:[{stage:"5-3",ap:9.5,drops:["异铁","异铁组"]},{stage:"3-2",ap:10.5,drops:["异铁"]},]},
+ "三水锰矿":{stages:[{stage:"7-16",ap:25,drops:["轻锰矿"]},{stage:"4-8",ap:26,drops:["轻锰矿","研磨石"]},]},
+ "凝胶":{stages:[{stage:"4-9",ap:9,drops:["固源岩组"]},{stage:"6-7",ap:9.5,drops:["固源岩组","源岩"]},]},
+ "聚合凝胶":{stages:[{stage:"7-13",ap:40,drops:["凝胶"]},{stage:"12-7",ap:41,drops:["凝胶"]},]},
+ "炽合金":{stages:[{stage:"6-8",ap:9.5,drops:["研磨石"]},{stage:"4-4",ap:10,drops:["研磨石","聚酸酯组"]},]},
+ "炽合金块":{stages:[{stage:"7-15",ap:40,drops:["炽合金"]},]},
+ "RMA70-12":{stages:[{stage:"6-11",ap:9.5,drops:["异铁组"]},{stage:"4-10",ap:10,drops:["异铁组","装置"]},]},
+ "RMA70-24":{stages:[{stage:"7-11",ap:40,drops:["RMA70-12"]},{stage:"12-9",ap:41,drops:["RMA70-12"]},]},
+ "晶体元件":{stages:[{stage:"7-9",ap:9.5,drops:["固源岩组"]},{stage:"9-3",ap:10,drops:["固源岩组"]},]},
+ "晶体电路":{stages:[{stage:"7-15",ap:32,drops:["晶体元件"]},{stage:"9-15",ap:33,drops:["晶体元件"]},]},
+ "晶体电子单元":{stages:[{stage:"9-11",ap:45,drops:["晶体电路"]},{stage:"12-5",ap:46,drops:["晶体电路"]},]},
+ "龙门币":{stages:[{stage:"CE-5",ap:0.04,drops:[],note:"一次约7500"},{stage:"CE-6",ap:0.03,drops:[],note:"一次约10000"},]},
+ "技巧概要·卷1":{stages:[{stage:"CA-1",ap:1,drops:[],note:"一次5个"},]},
+ "技巧概要·卷2":{stages:[{stage:"CA-3",ap:1,drops:[],note:"一次5个"},]},
+ "技巧概要·卷3":{stages:[{stage:"CA-5",ap:1,drops:[],note:"一次5个"},]},
+ "双极纳米片":{stages:[{stage:"9-19",ap:45,drops:["晶体电子单元"]},]},
+ "聚合剂":{stages:[{stage:"9-9",ap:45,drops:["提纯源岩"]},{stage:"12-9",ap:46,drops:["提纯源岩","RMA70-24"]},]},
+ "D32钢":{stages:[{stage:"9-6",ap:45,drops:["五水研磨石"]},]},
+ "白马醇":{stages:[{stage:"7-15",ap:30,drops:["扭转醇"]},{stage:"9-15",ap:31,drops:["扭转醇","晶体元件"]},]},
+ "褐素纤维":{stages:[{stage:"7-12",ap:30,drops:["酮阵列"]},{stage:"9-12",ap:31,drops:["酮阵列"]},]},
+ "紫薯":{stages:[{stage:"6-16",ap:30,drops:["固源岩组"]},]},
+};
+var MTL_ICON={
+ "源岩":"MTL_SL_G1",
+ "固源岩":"MTL_SL_G2",
+ "固源岩组":"MTL_SL_G3",
+ "提纯源岩":"MTL_SL_G4",
+ "酯原料":"MTL_PA_P1",
+ "聚酸酯":"MTL_PA_P2",
+ "聚酸酯组":"MTL_PA_P3",
+ "聚酸酯块":"MTL_PA_P4",
+ "糖":"MTL_SM_S1",
+ "糖组":"MTL_SM_S2",
+ "糖聚块":"MTL_SM_S3",
+ "异铁":"MTL_IR_I1",
+ "异铁组":"MTL_IR_I2",
+ "异铁块":"MTL_IR_I3",
+ "酮凝集":"MTL_OR_O1",
+ "酮凝集组":"MTL_OR_O2",
+ "酮阵列":"MTL_OR_O3",
+ "研磨石":"MTL_GR_G1",
+ "五水研磨石":"MTL_GR_G2",
+ "扭转醇":"MTL_CN_C1",
+ "白马醇":"MTL_CN_C2",
+ "轻锰矿":"MTL_MN_M1",
+ "三水锰矿":"MTL_MN_M2",
+ "凝胶":"MTL_GL_G1",
+ "聚合凝胶":"MTL_GL_G2",
+ "炽合金":"MTL_HT_H1",
+ "炽合金块":"MTL_HT_H2",
+ "RMA70-12":"MTL_RM_R1",
+ "RMA70-24":"MTL_RM_R2",
+ "晶体元件":"MTL_EL_E1",
+ "晶体电路":"MTL_EL_E2",
+ "晶体电子单元":"MTL_EL_E3",
+ "双极纳米片":"MTL_DN_D1",
+ "聚合剂":"MTL_PG_P1",
+ "D32钢":"MTL_D32_D1",
+ "技巧概要·卷1":"MTL_SK1",
+ "技巧概要·卷2":"MTL_SK2",
+ "技巧概要·卷3":"MTL_SK3",
+ "装置":"MTL_PA_A1",
+ "全新装置":"MTL_PA_A2",
+ "改量装置":"MTL_PA_A3",
+ "褐素纤维":"MTL_FI_H1",
+ "紫薯":"MTL_FI_S1",
+};
+function chapterOf(stage){ var k=String(stage||'').match(/^[A-Z]?\d+-/); return (k&&CHAPTER_MAP[k[0]])?CHAPTER_MAP[k[0]].ch:''; }
+function matIconUrl(mn){ var id=MTL_ICON[String(mn||'').trim()]; return id?('https://torappu.prts.wiki/assets/item_icon/'+id+'.png'):''; }
+function matIconHtml(mn){ var u=matIconUrl(mn); var ch=esc(String(mn||'').charAt(0)||'?'); if(!u)return '<span class="mat-fallback">'+ch+'</span>'; return '<span class="mat-wrap"><span class="mat-fallback">'+ch+'</span><img class="mat-icon" loading="lazy" src="'+esc(u)+'" onerror="this.remove()" alt=""/></span>'; }
 function calcLuck(){
   var hist=state.history, i, c6=0,c5=0,bestTen=0,maxG=0,last6=-1;
   for(i=0;i<hist.length;i++){ var r=hist[i]; if(r.rar===6)c6++; else if(r.rar===5)c5++; }
@@ -3337,6 +3445,59 @@ function toggleSpeed(){
   btn.classList.toggle('off',SPEED===0);
   if(SPEED===0&&cardsEl){ cardsEl.querySelectorAll('.card').forEach(function(c){ if(c.classList&&!c.classList.contains('flip'))c.classList.add('flip'); }); }
 }
+var IDB=null, IDB_READY=false, IDB_STORE='img';
+function idbOpen(){
+  try{
+    if(typeof indexedDB==='undefined')return;
+    var req=indexedDB.open('akgacha_img',1);
+    req.onupgradeneeded=function(e){ var db=e.target.result; if(!db.objectStoreNames.contains(IDB_STORE))db.createObjectStore(IDB_STORE); };
+    req.onsuccess=function(e){ IDB=e.target.result; IDB_READY=true; };
+    req.onerror=function(){};
+  }catch(e){}
+}
+function idbGet(url, cb){
+  if(!IDB_READY||!IDB||!url)return cb(null);
+  try{
+    var tx=IDB.transaction(IDB_STORE,'readonly').objectStore(IDB_STORE).get(url);
+    tx.onsuccess=function(){ cb(tx.result||null); };
+    tx.onerror=function(){ cb(null); };
+  }catch(e){ cb(null); }
+}
+function idbPut(url, blob){
+  if(!IDB_READY||!IDB||!url||!blob)return;
+  try{ IDB.transaction(IDB_STORE,'readwrite').objectStore(IDB_STORE).put(blob,url); }catch(e){}
+}
+function preloadImg(url){
+  if(!url)return;
+  if(typeof Image==='undefined')return;
+  idbGet(url,function(blob){
+    if(blob)return;
+    var im=new Image();
+    im.onload=function(){
+      try{ fetch(url).then(function(res){ return res.blob(); }).then(function(b){ idbPut(url,b); }).catch(function(){}); }catch(e){}
+    };
+    im.src=url;
+  });
+}
+function idbSrc(url, imgEl){
+  if(!url||!imgEl)return;
+  idbGet(url,function(blob){
+    if(blob&&typeof URL!=='undefined'&&URL.createObjectURL){ try{ imgEl.src=URL.createObjectURL(blob); }catch(e){} }
+  });
+}
+function preloadAllArt(){
+  idbOpen();
+  var keys=Object.keys(opByName);
+  var order=keys.slice().sort(function(a,b){ return (opByName[b].rarity||0)-(opByName[a].rarity||0); });
+  var idx=0;
+  function next(){
+    if(idx>=order.length)return;
+    var o=opByName[order[idx++]];
+    preloadImg(opArtT(o));
+    setTimeout(next, 25);
+  }
+  next();
+}
 function init(){
   var bs=DATA.banners, i;
   if(!state.cur||!bannerById(state.cur))state.cur=bs[0].id;
@@ -3344,6 +3505,7 @@ function init(){
   initFilters();
   renderBannerList();
   renderBannerInfo();
+  setTimeout(preloadAllArt, 800);
   renderStats();
   renderHistory();
   renderCollection();
@@ -3360,6 +3522,7 @@ function init(){
   wire('btnSim',simulatePull);
   wire('btnReport',openReport);
   wire('btnReal',openRealGacha);
+  wire('btnMatQuery',openMatQuery);
   wire('btnOpStats',openOpStats);
   wire('btnCopyStats',copyStats);
   wire('btnRules',openRules);
