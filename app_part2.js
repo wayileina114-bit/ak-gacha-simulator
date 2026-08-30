@@ -703,7 +703,7 @@ function sparkExchange(cost){
 function renderCards(results,msg,has6,names6,has5){
   var wrap=$('cards'), html=[], i;
   for(i=0;i<results.length;i++){
-    var r=results[i], o=opOf(r.op), nw=isNew(r.op);
+    var r=results[i], o=opOf(r.op)||{name:r.op,rarity:r.rar,art:'',av:''}, nw=isNew(r.op);
     html.push('<div class="card r'+r.rar+'" data-i="'+i+'">');
     html.push('<div class="face back">罗德岛</div>');
     html.push('<div class="face front"><img loading="lazy" src="'+esc(opArtT(o))+'" data-a="'+esc(o.art||'')+'" data-b="'+esc(avUrl(o))+'" alt=""/>');
@@ -851,8 +851,9 @@ function openPityMap(){
 }
 function buildReport(days){
   var cutoff=Date.now()-days*86400000;
-  var list=[], i, r;
-  for(i=0;i<state.history.length;i++){ r=state.history[i]; if(r.t&&r.t>=cutoff)list.push(r); }
+  var prevCutoff=cutoff-days*86400000;
+  var list=[], prevList=[], i, r;
+  for(i=0;i<state.history.length;i++){ r=state.history[i]; if(r.t&&r.t>=cutoff)list.push(r); else if(r.t&&r.t>=prevCutoff)prevList.push(r); }
   var c6=0,c5=0,c4=0,c3=0, names6=[], firstSeen={}, nm2;
   for(i=list.length-1;i>=0;i--){ r=list[i];
     if(r.rar===6){ c6++; names6.push(opOf(r.op)?opOf(r.op).name:r.op); }
@@ -867,7 +868,9 @@ function buildReport(days){
   for(i=0;i<list.length;i++){ var t10=0; for(var tj=i;tj<list.length&&tj<i+10;tj++){ if(list[tj].rar===6)t10++; } if(t10>bestTen)bestTen=t10; }
   var maxG=0,last6=-1;
   for(i=0;i<list.length;i++){ if(list[i].rar===6){ if(last6>=0){ var g=i-last6-1; if(g>maxG)maxG=g; } last6=i; } }
-  return {days:days,total:total,c6:c6,c5:c5,c4:c4,c3:c3,names6:names6,newOps:newOps,bestTen:bestTen,maxG:maxG,rate6:total?(c6/total*100):0};
+  var prevC6=0;
+  for(i=0;i<prevList.length;i++){ if(prevList[i].rar===6)prevC6++; }
+  return {days:days,total:total,c6:c6,c5:c5,c4:c4,c3:c3,names6:names6,newOps:newOps,bestTen:bestTen,maxG:maxG,rate6:total?(c6/total*100):0,prevTotal:prevList.length,prevC6:prevC6};
 }
 function renderReport(days){
   var rep=buildReport(days);
@@ -884,13 +887,18 @@ function renderReport(days){
   h.push('<div class="stat"><div class="v gold">'+rep.bestTen+'</div><div class="k">最欧十连</div></div>');
   h.push('<div class="stat"><div class="v'+(rep.maxG>=70?' red':'')+'">'+(rep.maxG||0)+'</div><div class="k">最长非酋</div></div>');
   h.push('</div>');
+  if(rep.prevTotal){
+    var d6=rep.c6-rep.prevC6, prevLabel='上一'+(days===7?'周':'月');
+    h.push('<div class="notice">📈 环比'+prevLabel+'：'+prevLabel+' '+rep.prevTotal+' 抽 · 6★×'+rep.prevC6+' → 本期 '+rep.c6+' 只'+(d6!==0?'（'+(d6>0?'⏫ 有进步 +'+d6:'⏬ 回落 '+d6)+'）':'（持平）')+'</div>');
+  }
+  h.push('<div class="notice">⏱ 日均 '+(rep.total/days).toFixed(1)+' 抽 · 日均6★ '+(rep.c6/days).toFixed(2)+' 只</div>');
   if(rep.names6.length)h.push('<div class="notice">✨ 期间6★：'+rep.names6.join('、')+'</div>');
   if(rep.newOps.length)h.push('<div class="notice">🆕 期间新干员：'+rep.newOps.join('、')+'</div>');
   $('rpOut').innerHTML=h.join('');
 }
 function copyReport(rep){
   var NL=String.fromCharCode(10);
-  var lines=['【抽卡'+(rep.days===7?'周报':'月报')+'】','期间：最近 '+rep.days+' 天 · '+rep.total+' 抽','6★×'+rep.c6+'（'+rep.rate6.toFixed(2)+'%）· 5★×'+rep.c5+' · 4★×'+rep.c4+' · 3★×'+rep.c3,'最欧十连：'+rep.bestTen+'只6★ · 最长非酋：'+(rep.maxG||0)+'抽','期间6★：'+(rep.names6.join('、')||'无'),'期间新干员：'+(rep.newOps.join('、')||'无')];
+  var lines=['【抽卡'+(rep.days===7?'周报':'月报')+'】','期间：最近 '+rep.days+' 天 · '+rep.total+' 抽','6★×'+rep.c6+'（'+rep.rate6.toFixed(2)+'%）· 5★×'+rep.c5+' · 4★×'+rep.c4+' · 3★×'+rep.c3,'最欧十连：'+rep.bestTen+'只6★ · 最长非酋：'+(rep.maxG||0)+'抽','环比上一'+(rep.days===7?'周':'月')+'：'+(rep.prevTotal?rep.prevTotal+' 抽 · 6★×'+rep.prevC6:'暂无数据')+(rep.prevTotal?(' → 本期 '+rep.c6+' 只'+(rep.c6-rep.prevC6>=0?'（+'+(rep.c6-rep.prevC6)+'）':'（'+(rep.c6-rep.prevC6)+'）')):''),'日均 '+(rep.total/rep.days).toFixed(1)+' 抽 · 日均6★ '+(rep.c6/rep.days).toFixed(2),'期间6★：'+(rep.names6.join('、')||'无'),'期间新干员：'+(rep.newOps.join('、')||'无')];
   var text=lines.join(NL);
   var ta=document.createElement('textarea');
   ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
