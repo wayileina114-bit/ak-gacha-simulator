@@ -508,9 +508,16 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .wikisec h4::after{content:'▾'; float:right; color:var(--dim); font-size:12px; transition:transform .2s}
 .wikisec.collapsed h4::after{transform:rotate(-90deg)}
 .wikisec h4{color:var(--acc); font-size:14px; margin:0 0 8px}
+.wikitbl{overflow-x:auto}
 .wikitbl table{width:100%; border-collapse:collapse; font-size:12px; margin-top:6px}
-.wikitbl th,.wikitbl td{border:1px solid var(--line); padding:4px 8px; text-align:center}
+.wikitbl th,.wikitbl td{border:1px solid var(--line); padding:4px 8px; text-align:center; white-space:nowrap}
 .wikitbl th{background:rgba(74,179,255,.1); color:var(--acc)}
+.wikisuggest{display:flex; flex-direction:column; gap:3px; margin:-4px 0 8px}
+.wikisuggest-item{display:flex; align-items:center; gap:8px; background:var(--bg2); border:1px solid var(--line); border-radius:8px; padding:6px 10px; cursor:pointer; font-size:12px; transition:.12s}
+.wikisuggest-item:hover{border-color:var(--acc2); background:rgba(74,179,255,.08); transform:translateX(2px)}
+.wikisuggest-item .ws-name{font-weight:700; color:var(--txt)}
+.wikisuggest-item .ws-stars{color:var(--gold); font-size:10px}
+.wikisuggest-item .ws-prof{margin-left:auto; color:var(--dim); font-size:11px}
 .wikirows{display:flex; flex-wrap:wrap; gap:8px; margin-top:6px}
 .wrow{background:var(--bg2); border:1px solid var(--line); border-radius:6px; padding:3px 10px; font-size:12px}
 .wrow b{color:var(--dim); margin-right:6px}
@@ -660,7 +667,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.26（Wiki引用重构·皮肤显示修复·语音多语言）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.27（档案解析修复·搜索候选·并行预加载）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>

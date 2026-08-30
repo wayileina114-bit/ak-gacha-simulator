@@ -1674,7 +1674,11 @@ function wikiBaseTab(name,data){
   if(data&&data.charInfo){
     var ci=String(data.charInfo||'');
     function ckv(k){ var m=ci.match(new RegExp('\\|'+k+'=([^\\n|]*)')); return m?m[1].trim():''; }
-    var feat=ckv('特性'), prof=ckv('职业'), branch=ckv('分支'), pos=ckv('位置'), tags=ckv('标签'), code=ckv('情报编号'), nation=ckv('所属国家'), org=ckv('所属组织'), painter=ckv('画师'), cnv=ckv('中文配音'), jpv=ckv('日文配音'), intro0=ckv('精英0介绍'), intro2=ckv('精英2介绍');
+    function pick(){ for(var pi2=0;pi2<arguments.length;pi2++){ var v=ckv(arguments[pi2]); if(v)return v; } return ''; }
+    var feat=ckv('特性'), prof=ckv('职业'), branch=ckv('分支'), pos=ckv('位置'), tags=ckv('标签'), code=ckv('情报编号');
+    var nation=pick('所属国家','阵营','国家'), org=pick('所属组织','组织'), painter=ckv('画师');
+    var cnv=pick('中文配音','中文CV','中文声优','配音'), jpv=pick('日文配音','日文CV','日文声优');
+    var intro0=ckv('精英0介绍'), intro2=ckv('精英2介绍');
     h.push('<div class="wikisec"><h4>🔎 干员档案</h4><div class="wikirows">');
     if(feat)h.push('<div class="wrow"><b>特性</b><span>'+esc(wikiClean(feat))+'</span></div>');
     if(prof)h.push('<div class="wrow"><b>职业</b><span>'+esc(wikiClean(prof))+(branch?' · '+esc(wikiClean(branch)):'')+'</span></div>');
@@ -1791,10 +1795,10 @@ function wikiMatTab(name,data){
   var hasAny=false;
   function parseMatsLine(line){
     var parts=String(line||'').split('}}').map(function(x){x=x.trim(); if(x.indexOf('材料消耗|')>=0){ return x.split('材料消耗|')[1]; } return '';}).filter(function(x){return x;});
-    return parts.map(function(x){ return x.split('|').join(' '); }).join(' + ');
+    return parts.map(function(x){ var seg2=x.split('|'); return (seg2[0]||'')+(seg2[1]?'×'+seg2[1]:''); }).join(' + ');
   }
   function farmHtml(matName){
-    var mn=String(matName||'').split(' ')[0].trim();
+    var mn=String(matName||'').replace(/×[0-9]+/,'').split(' ')[0].trim();
     var f=MAT_FARM_DB[mn]||MAT_FARM_DB[String(matName||'').trim()];
     if(!f||!f.stages||!f.stages.length)return '';
     var h=' <em class="farm">📌';
@@ -1895,11 +1899,28 @@ function wikiModTab(name,data){
 function wikiFileTab(name,data){
   var wt=String((data&&data.file)||'');
   var h=['<div class="wikisec"><h4>📜 干员档案（PRTS）</h4>'];
-  var re=/档案(\d+)=([^\n|]*)\|档案\1条件=([^\n|]*)\|档案\1文本=([\s\S]*?)(?=\n\|档案\d+=|\n}}|}})/g;
-  var m, n=0;
-  while((m=re.exec(wt))&&n<8){ n++;
-    var title=stripWiki(m[2]), cond=stripWiki(m[3]), txt=stripWiki(m[4]);
-    if(title)h.push('<div class="wikisec" style="border-left:2px solid var(--acc);padding-left:8px"><h5>'+esc(title)+'</h5>'+(cond&&cond!==title?'<div class="wikihint" style="margin:2px 0">🔒 '+esc(cond)+'</div>':'')+'<div class="notice" style="white-space:pre-wrap;line-height:2">'+esc(txt)+'</div></div>');
+  var fLines=String(wt||'').split('\n');
+  var fCur=null, fArr=[], fi2;
+  for(fi2=0;fi2<fLines.length;fi2++){
+    var fl2=fLines[fi2];
+    if(fl2.indexOf('}}')>=0){ if(fCur)fArr.push(fCur); fCur=null; continue; }
+    var fm2=fl2.match(/^\|档案(\d+)=(.+)$/);
+    if(fm2){ if(fCur)fArr.push(fCur); fCur={no:fm2[1], title:stripWiki(fm2[2]), cond:'', txt:[]}; continue; }
+    if(!fCur)continue;
+    var fc2=fl2.match(/^\|档案\d+条件=(.*)$/);
+    var ft2=fl2.match(/^\|档案\d+文本=(.*)$/);
+    if(fc2){ fCur.cond=stripWiki(fc2[1]); }
+    else if(ft2){ fCur.txt.push(ft2[1]); }
+    else if(fCur.txt.length&&fl2.trim()!==''){ fCur.txt.push(fl2.trim()); }
+  }
+  if(fCur)fArr.push(fCur);
+  var n=0;
+  for(var fi3=0;fi3<fArr.length&&n<8;fi3++){
+    var fe=fArr[fi3];
+    if(!fe.title)continue;
+    n++;
+    var ftxt=stripWiki(fe.txt.join('\n'));
+    if(ftxt)h.push('<div class="wikisec" style="border-left:2px solid var(--acc);padding-left:8px"><h5>'+esc(fe.title)+'</h5>'+(fe.cond&&fe.cond!==fe.title?'<div class="wikihint" style="margin:2px 0">🔒 '+esc(fe.cond)+'</div>':'')+'<div class="notice" style="white-space:pre-wrap;line-height:2">'+esc(ftxt)+'</div></div>');
   }
   if(!n)h.push('<div class="notice">该干员暂无档案数据（部分联动干员未收录）</div>');
   h.push('</div>');
@@ -2026,18 +2047,40 @@ function wikiVoiceTab(name,data){
   });
   return h.join('');
 }
+function wikiSuggestHtml(v){
+  var names=Object.keys(opByName).filter(function(k){ return opByName[k].name.indexOf(v)>=0; }).slice(0,8);
+  if(!names.length)return '';
+  var html=[];
+  for(var i2=0;i2<names.length;i2++){
+    var o2=opByName[names[i2]];
+    html.push('<div class="wikisuggest-item" data-n="'+esc(o2.name)+'"><span class="ws-name">'+esc(o2.name)+'</span><span class="ws-stars">'+stars(o2.rarity)+'</span>'+(o2.prof?'<span class="ws-prof">'+esc(o2.prof)+'</span>':'')+'</div>');
+  }
+  return html.join('');
+}
 function openWikiSearch(){
   __wikiBack=openWikiSearch;
   var h=['<h4 class="sect" style="margin-top:0">🔍 干员Wiki查询</h4>'];
   h.push('<div class="wikisearch"><input id="wikiSearchInput" placeholder="输入干员名，如：能天使 / 玛恩纳 / 缪尔赛思..."/><button class="mini-btn" id="wikiSearchGo">查询</button></div>');
-  h.push('<div class="wikihint">对接 <b>PRTS Wiki</b>（prts.wiki）实时同步干员数据：属性数值 · 天赋 · 技能（含专精） · 精英化/技能升级材料。<br/>可查询<b>任意</b>PRTS 上存在的干员，不受本模拟器卡池数据限制。</div>');
+  h.push('<div id="wikiSuggest" class="wikisuggest"></div>');
+  h.push('<div class="wikihint">对接 <b>PRTS Wiki</b>（prts.wiki）实时同步干员数据：属性数值 · 天赋 · 技能（含专精） · 精英化/技能升级材料。<br/>输入时下方实时显示本工具收录的干员候选，点击直接查询；也可查询<b>任意</b>PRTS 上存在的干员。</div>');
   h.push('<div id="wikiOut"></div>');
   $('mBody').innerHTML=h.join('');
   openModalBox();
   var wsi=$('wikiSearchInput'), wsgo=$('wikiSearchGo');
-  function go(){ var v=wsi?wsi.value.trim():''; if(!v){ toast('请输入干员名'); return; } wikiDetail(v,$('wikiOut')); }
+  function go(){ var v=wsi?wsi.value.trim():''; if(!v){ toast('请输入干员名'); return; } var sb=$('wikiSuggest'); if(sb)sb.innerHTML=''; wikiDetail(v,$('wikiOut')); }
+  function renderSuggest(v){
+    var sb=$('wikiSuggest'); if(!sb)return;
+    if(!v){ sb.innerHTML=''; return; }
+    var hh=wikiSuggestHtml(v);
+    sb.innerHTML=hh;
+    if(!hh)return;
+    var its=sb.querySelectorAll('.wikisuggest-item');
+    for(var si3=0;si3<its.length;si3++){
+      (function(it){ it.onclick=function(){ var nn=it.getAttribute('data-n'); if(wsi)wsi.value=nn; sb.innerHTML=''; wikiDetail(nn,$('wikiOut')); }; })(its[si3]);
+    }
+  }
   if(wsgo)wsgo.onclick=go;
-  if(wsi){ wsi.onkeydown=function(e){ if(e.key==='Enter')go(); }; setTimeout(function(){ try{ wsi.focus(); }catch(e){} },120); }
+  if(wsi){ wsi.onkeydown=function(e){ if(e.key==='Enter')go(); }; wsi.oninput=function(){ var v=this.value.trim(); clearTimeout(window.__wsT); window.__wsT=setTimeout(function(){ renderSuggest(v); },120); }; setTimeout(function(){ try{ wsi.focus(); }catch(e){} },120); }
 }
 var skinCache={};
 function skinListUrl(name){
@@ -2064,7 +2107,7 @@ function renderWikiData(name,data,target){
   var box=target||$('mBody');
   function parseMatsLine(line){
     var parts=String(line||'').split('}}').map(function(x){x=x.trim(); if(x.indexOf('材料消耗|')>=0){ var seg=x.split('材料消耗|')[1]; return seg; } return '';}).filter(function(x){return x;});
-    return parts.map(function(x){ return x.split('|').join(' '); }).join(' + ');
+    return parts.map(function(x){ var seg2=x.split('|'); return (seg2[0]||'')+(seg2[1]?'×'+seg2[1]:''); }).join(' + ');
   }
   var h=['<h4 class="sect" style="margin-top:0">📊 '+esc(name)+' · Wiki数据</h4><button class="mini-btn" id="wikiBack">← 返回干员详情</button>'];
   var o=opOf(name);
@@ -3120,14 +3163,14 @@ function preloadAllArt(){
   idbOpen();
   var keys=Object.keys(opByName);
   var order=keys.slice().sort(function(a,b){ return (opByName[b].rarity||0)-(opByName[a].rarity||0); });
-  var idx=0;
+  var idx=0, WORKERS=3;
   function next(){
     if(idx>=order.length)return;
     var o=opByName[order[idx++]];
     preloadImg(opArtT(o));
-    setTimeout(next, 25);
+    setTimeout(next, 8);
   }
-  next();
+  for(var w=0;w<WORKERS;w++)setTimeout(next, w*16);
 }
 function init(){
   var bs=DATA.banners, i;
