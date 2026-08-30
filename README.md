@@ -27,6 +27,19 @@
 
 每个版本提供 `akgacha_vX.Y.zip`：包含成品 HTML、源码、数据与文档，见 [Releases](https://github.com/wayileina114-bit/ak-gacha-simulator/releases)。
 
+## 🔗 真实寻访记录（后端自动获取）
+
+在 HTML 的「真实寻访记录 → 后端自动获取」中可连接本地后端自动拉取游戏抽卡记录：
+
+```bash
+node server/index.js        # 启动本地服务（默认端口 8723）
+```
+
+- 方式一：粘贴游戏内获取的 token → 自动换取凭证并拉取记录
+- 方式二：鹰角账号密码登录 → 自动获取凭证与记录
+- 接口：/api/ping 连接测试 · /api/login 账号登录 · /api/grant 换取凭证 · /api/gacha 拉取记录
+- ⚠️ 说明：鹰角官方接口为社区逆向公开，端点/签名可能随游戏版本变动（集中在 server/index.js 顶部常量，便于更新）；仅请查询本人账号，勿高频请求。
+
 ## 🛠️ 本地构建
 
 ```bash

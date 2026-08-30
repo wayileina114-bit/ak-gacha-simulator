@@ -847,6 +847,7 @@ function parseRealRecords(text){
     var name=r.char||r.charName||r.name||r.op||r.干员||r.operator;
     var ts=r.ts||r.time||r.timestamp||r.t;
     if(ts&&typeof ts==='string'&&ts.indexOf('-')>0){ var d=new Date(ts); if(!isNaN(d.getTime()))ts=d.getTime(); }
+    if(ts&&Number(ts)>0&&Number(ts)<1e12)ts=Number(ts)*1000;
     out.push({name:String(name||''),ts:(ts?Number(ts):null),pool:r.pool||r.banner||r.卡池||''});
   }
   return out.filter(function(x){return x.name&&x.name!=='undefined';});
@@ -855,6 +856,53 @@ function realRarity(name){
   var o=opOf(name);
   if(o)return o.rarity;
   return RAR_DB[name]||0;
+}
+function bkCall(base, path, data){
+  return fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(function(res){ return res.json().then(function(j){ if(!res.ok||j.ok===false)throw new Error((j&&j.error)||('HTTP '+res.status)); return j; }); });
+}
+function bkOut(msg,isErr){
+  var o=$('bkOut'); if(!o)return;
+  o.innerHTML='<div class="notice" style="color:'+(isErr?'var(--red)':'var(--acc2)')+'">'+esc(msg)+'</div>';
+}
+function wireBackend(){
+  var bp=$('bkPing');
+  if(bp)bp.onclick=function(){
+    var base=($('bkUrl')?$('bkUrl').value:'').trim()||'http://127.0.0.1:8723';
+    bkOut('正在连接后端…');
+    bkCall(base,'/api/ping',{}).then(function(j){ bkOut('✅ 后端连接成功：'+j.name+'（端口 '+j.port+'）'); }).catch(function(e){ bkOut('❌ 连接失败：'+e.message,true); });
+  };
+  var bf=$('bkFetch');
+  if(bf)bf.onclick=function(){
+    var base=($('bkUrl')?$('bkUrl').value:'').trim()||'http://127.0.0.1:8723';
+    var tok=($('bkToken')?$('bkToken').value:'').trim();
+    if(!tok){ bkOut('请先粘贴 token',true); return; }
+    bkOut('正在换取凭证…');
+    bkCall(base,'/api/grant',{token:tok}).then(function(g){
+      bkOut('凭证获取成功，正在拉取抽卡记录…');
+      return bkCall(base,'/api/gacha',{cred:g.cred,platform:g.platform||1});
+    }).then(function(d){
+      var out=$('realOut'); if(out)out.innerHTML=renderRealAnalysis(parseRealRecords(JSON.stringify({records:d.records||[]})));
+      bkOut('✅ 获取成功：共 '+d.total+' 条记录');
+    }).catch(function(e){ bkOut('❌ 获取失败：'+e.message,true); });
+  };
+  var bl=$('bkLogin');
+  if(bl)bl.onclick=function(){
+    var base=($('bkUrl')?$('bkUrl').value:'').trim()||'http://127.0.0.1:8723';
+    var ph=($('bkPhone')?$('bkPhone').value:'').trim();
+    var pw=($('bkPwd')?$('bkPwd').value:'').trim();
+    if(!ph||!pw){ bkOut('请输入手机号与密码',true); return; }
+    bkOut('正在登录鹰角账号…');
+    bkCall(base,'/api/login',{phone:ph,password:pw}).then(function(t){
+      bkOut('登录成功，正在获取凭证…');
+      return bkCall(base,'/api/grant',{token:t.token});
+    }).then(function(g){
+      bkOut('凭证获取成功，正在拉取抽卡记录…');
+      return bkCall(base,'/api/gacha',{cred:g.cred,platform:g.platform||1});
+    }).then(function(d){
+      var out=$('realOut'); if(out)out.innerHTML=renderRealAnalysis(parseRealRecords(JSON.stringify({records:d.records||[]})));
+      bkOut('✅ 获取成功：共 '+d.total+' 条记录');
+    }).catch(function(e){ bkOut('❌ 获取失败：'+e.message,true); });
+  };
 }
 function renderRealAnalysis(recs){
   var h=[];
@@ -908,6 +956,14 @@ function openRealGacha(){
   h.push('<div class="wikihint">从游戏本地数据提取真实抽卡记录（可用市面工具导出 JSON）后粘贴/上传，分析真实出货。<br/><b>获取方式：</b>明日方舟 Android 端可借助工具导出寻访记录 JSON；iOS 端需对应导出工具。<br/>支持：records/gacha/list 数组格式（含 char/name、ts/time、pool/banner 字段）。</div>');
   h.push('<textarea id="realInput" placeholder="粘贴寻访记录 JSON 数据..."></textarea>');
   h.push('<div class="wikisearch"><button class="mini-btn" id="realParse">🔍 解析分析</button><button class="mini-btn" id="realSample">填入示例</button></div>');
+  h.push('<div class="wikisec" style="margin-top:10px"><h4>🔗 后端自动获取（本地服务）</h4>');
+  h.push('<div class="wikisearch"><input id="bkUrl" placeholder="后端地址" value="http://127.0.0.1:8723"/><button class="mini-btn" id="bkPing">连接测试</button></div>');
+  h.push('<div class="controls" style="margin-bottom:6px"><span class="notice">方式一：粘贴游戏内 token → 自动换取凭证并拉取记录</span></div>');
+  h.push('<input id="bkToken" placeholder="粘贴游戏内获取的 token..."/>');
+  h.push('<div class="wikisearch"><button class="mini-btn" id="bkFetch">🔑 Token获取记录</button></div>');
+  h.push('<div class="controls" style="margin-bottom:6px"><span class="notice">方式二：鹰角账号密码登录 → 自动获取凭证与记录</span></div>');
+  h.push('<div class="wikisearch"><input id="bkPhone" placeholder="手机号"/><input id="bkPwd" type="password" placeholder="密码"/><button class="mini-btn" id="bkLogin">📱 登录并拉取</button></div>');
+  h.push('<div id="bkOut" style="margin-top:6px"></div>');
   h.push('<div id="realOut"></div>');
   $('mBody').innerHTML=h.join('');
   openModalBox();
@@ -926,6 +982,7 @@ function openRealGacha(){
   if(rs)rs.onclick=function(){
     var inp=$('realInput'); if(inp)inp.value=JSON.stringify({records:[{pool:'感谢庆典·寻访',char:'维什戴尔',ts:Date.now()-86400000*30},{pool:'感谢庆典·寻访',char:'能天使',ts:Date.now()-86400000*28},{pool:'常驻标准寻访',char:'德克萨斯',ts:Date.now()-86400000*20},{pool:'常驻标准寻访',char:'能天使',ts:Date.now()-86400000*18},{pool:'常驻标准寻访',char:'白面鸮',ts:Date.now()-86400000*10}]});
   };
+  wireBackend();
 }
 function openReport(){
   var h=['<h4 class="sect" style="margin-top:0">📊 抽卡报告</h4><div class="controls" style="margin-bottom:8px"><button class="mini-btn" id="rpWeek">📅 周报（7天）</button><button class="mini-btn" id="rpMonth">📅 月报（30天）</button><button class="mini-btn" id="rpCopy">📋 复制报告</button></div><div id="rpOut"></div>'];
@@ -1209,13 +1266,33 @@ function openModal(opName){
   h.push('<div class="mdesc">立绘来源于 bilibili Wiki 与 PRTS，仅供娱乐参考。<a href="'+esc(o.art||'#')+'" target="_blank" rel="noopener">查看高清原图</a></div>');
   $('mBody').innerHTML=h.join('');
   var mi=$('martImg'); if(mi)mi.onclick=function(){ openLightbox(o.art||opArtT(o)); };
+  function setMartImg2(img, src, fb, fb2){
+    img.src=src;
+    img.onerror=function(){
+      if(this.dataset.fb2){ var fb2v=this.dataset.fb2; this.dataset.fb2=''; this.src=fb2v; return; }
+      this.onerror=null; this.src=this.dataset.fb;
+    };
+    img.dataset.fb=fb;
+    img.dataset.fb2=fb2||'';
+  }
+  function initArtUrlOf(){ var scI=skinCache[o.name]; if(scI&&scI.skins){ for(var skj=0;skj<scI.skins.length;skj++){ if(scI.skins[skj].no==='0'||scI.skins[skj].no===0)return scI.skins[skj].url; } } return ''; }
   var atg=$('artToggle'); if(atg)atg.onclick=function(){
     var img=$('martImg'); if(!img)return;
     if(img._v===undefined)img._v=2;
-    if(img._v===0){ img.src=opArtT(o); img._v=2; atg.textContent='🔄 切换立绘（当前：精二）'; }
-    else { var initU=thumbOf(o.art,o.name,'skin 0 0.png',480)||o.art||avUrl(o); var scInit=skinCache[o.name]; if(scInit&&scInit.skins){ for(var ski=0;ski<scInit.skins.length;ski++){ if(scInit.skins[ski].no==='0'||scInit.skins[ski].no===0){ initU=scInit.skins[ski].url; break; } } } img.src=initU; img._v=0; try{ img.dataset.fb=opArtT(o); }catch(e){} atg.textContent='🔄 切换立绘（当前：初始）'; if(!scInit||!scInit.skins.length){ preloadSkins(o.name,function(skins){ var mi3=$('martImg'); if(!mi3||mi3._v!==0)return; for(var ski2=0;ski2<skins.length;ski2++){ if(skins[ski2].no==='0'||skins[ski2].no===0){ mi3.src=skins[ski2].url; break; } } }); } }
+    if(img._v===0){
+      setMartImg2(img, opArtT(o), opArtT(o));
+      img._v=2; atg.textContent='🔄 切换立绘（当前：精二）';
+    }
+    else {
+      var realInit=initArtUrlOf();
+      var initU=realInit||thumbOf(o.art,o.name,'skin 0 0.png',480)||o.art||avUrl(o);
+      setMartImg2(img, initU, opArtT(o), realInit);
+      img._v=0; atg.textContent='🔄 切换立绘（当前：初始）';
+      if(!realInit){ preloadSkins(o.name,function(skins){ var mi3=$('martImg'); if(!mi3||mi3._v!==0)return; for(var ski2=0;ski2<skins.length;ski2++){ if(skins[ski2].no==='0'||skins[ski2].no===0){ setMartImg2(mi3, skins[ski2].url, opArtT(o)); break; } } }); }
+    }
   };
   if(atg)atg.textContent='🔄 切换立绘（当前：精二）';
+  var miInit=$('martImg'); if(miInit){ miInit.dataset.fb=opArtT(o); miInit.dataset.fb2=''; }
   var bfo=$('btnFavOp'); if(bfo)bfo.onclick=function(){
     if(!state.favOps)state.favOps={};
     if(state.favOps[opName]){ delete state.favOps[opName]; bfo.textContent='☆ 收藏干员'; }
@@ -1702,16 +1779,18 @@ function openSkins(opName){
 function renderSkins(name,skins){
   var o=opOf(name), h=[];
   h.push('<button class="mini-btn" id="btnSkinsBack" style="margin-bottom:8px">← 返回干员详情</button>');
-  h.push('<div class="mhead"><div class="minfo"><h2>'+esc(name)+' · 皮肤图鉴</h2><div class="kv"><b>皮肤数量</b>'+skins.length+'</div></div></div>');
+  var skinList=skins.filter(function(s){return !(s.no==='0'||s.no===0);});
+  h.push('<div class="mhead"><div class="minfo"><h2>'+esc(name)+' · 皮肤图鉴</h2><div class="kv"><b>皮肤数量</b>'+skinList.length+'</div></div></div>');
   if(!skins.length){ h.push('<div class="notice">该干员暂无皮肤，或加载失败（需联网访问 bilibili Wiki）</div>'); }
   else {
     h.push('<div class="skingrid">');
     var avf=esc(avUrl(o)||'');
     for(var i=0;i<skins.length;i++){
       var s=skins[i];
+      if(s.no==='0'||s.no===0)continue;
       var src=s.live&&s.url? s.url : (skinThumb(s,480)||s.url);
       var dynTag=s.live?'<span class="skin-dyn">✨动态</span>':'';
-      h.push('<div class="skin-item'+(s.live?' live':'')+'" data-url="'+esc(s.url)+'"><img loading="lazy" src="'+esc(src)+'" onerror="this.onerror=null;this.src=this.dataset.fb" data-fb="'+avf+'"/><div class="skin-nm">'+(s.no==='0'||s.no===0?'初始立绘':'皮肤 '+s.no)+dynTag+'</div></div>');
+      h.push('<div class="skin-item'+(s.live?' live':'')+'" data-url="'+esc(s.url)+'"><img loading="lazy" src="'+esc(src)+'" onerror="this.onerror=null;this.src=this.dataset.fb" data-fb="'+avf+'"/><div class="skin-nm">皮肤 '+s.no+dynTag+'</div></div>');
     }
     h.push('</div><div class="notice">点击皮肤查看高清原图</div>');
   }
@@ -1873,7 +1952,14 @@ function openPoolModal(){
 }
 var galF='all', galV=2, galMode='art', galSearch='';
 var GAL_ART_CACHE={};
-function galArt(o){ if(!o||!o.name)return ''; var ck=o.name+':'+galV; if(GAL_ART_CACHE[ck])return GAL_ART_CACHE[ck]; return GAL_ART_CACHE[ck]=thumbOf(o.art,o.name,'skin 0 '+(galV===0?0:2)+'.png',480)||o.art||avUrl(o); }
+function galArt(o){ if(!o||!o.name)return ''; var ck=o.name+':'+galV; if(GAL_ART_CACHE[ck])return GAL_ART_CACHE[ck];
+  var u=thumbOf(o.art,o.name,'skin 0 '+(galV===0?0:2)+'.png',480)||o.art||avUrl(o);
+  if(galV===0){
+    var scG=skinCache[o.name];
+    if(scG&&scG.skins){ for(var sg2=0;sg2<scG.skins.length;sg2++){ if(scG.skins[sg2].no==='0'||scG.skins[sg2].no===0){ u=scG.skins[sg2].url; break; } } }
+    else { preloadSkins(o.name); }
+  }
+  return GAL_ART_CACHE[ck]=u; }
 function openGallery(){
   var h=['<h4 class="sect" style="margin-top:0">立绘画廊</h4><input id="galSearch" placeholder="搜索干员..." value="'+esc(galSearch)+'"/><div class="filters" id="galChips"></div><div class="galbar"><button class="mini-btn" id="galV2"'+(galV===2?' style="border-color:var(--acc)"':'')+'>精二立绘</button><button class="mini-btn" id="galV0"'+(galV===0?' style="border-color:var(--acc)"':'')+'>初始立绘</button><button class="mini-btn" id="galSkin"'+(galMode==='skin'?' style="border-color:var(--acc)"':'')+'>🎨 皮肤模式</button></div><div class="gallery" id="galGrid"></div>'];
   $('mBody').innerHTML=h.join('');
