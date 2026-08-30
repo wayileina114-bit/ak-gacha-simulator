@@ -509,6 +509,10 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .wikisec.collapsed h4::after{transform:rotate(-90deg)}
 .wikisec h4{color:var(--acc); font-size:14px; margin:0 0 8px}
 .wikitbl{overflow-x:auto}
+.bst{font-size:11px; font-weight:700}
+.bst.active{color:var(--acc)}
+.bst.soon{color:var(--gold)}
+.bst.ended{color:var(--dim)}
 .cmp-better{color:var(--gold); font-size:10px; margin-left:2px}
 .cmp-pick{margin-top:8px}
 .cmp-hot{display:flex; flex-wrap:wrap; gap:6px}
@@ -673,7 +677,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.28（干员对比·皮肤图鉴缓存·语音复制）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · <b>v11.29（卡池倒计时·成就扩充·统计修复）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -1017,6 +1021,24 @@ var B_SEARCH=null, B_STAT=null;
 function bannerHay(b){ return b.name+' '+b.six.join(' ')+' '+b.five.join(' ')+' '+(b.limitedSix||[]).join(' ')+' '+(b.four||[]).join(' '); }
 function buildBStat(){ B_STAT={}; var hi5; for(hi5=0;hi5<state.history.length;hi5++){ var hh5=state.history[hi5]; if(!hh5||!hh5.bid)continue; if(!B_STAT[hh5.bid])B_STAT[hh5.bid]={n:0,s6:0}; B_STAT[hh5.bid].n++; if(hh5.rar===6)B_STAT[hh5.bid].s6++; } }
 var B_STAT_VER=-1;
+function bannerStatus(b){
+  try{
+    var d=new Date();
+    var today=d.getFullYear()+'-'+(d.getMonth()<9?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate();
+    if(!b||!b.start||!b.end)return {s:'unknown',txt:''};
+    if(b.start<=today&&today<=b.end){
+      var ms=Math.max(0,new Date(b.end+'T03:59:59').getTime()-d.getTime());
+      var days=Math.ceil(ms/86400000);
+      return {s:'active',txt:'⏳ 剩 '+days+' 天',days:days};
+    }
+    if(today<b.start){
+      var ms2=Math.max(0,new Date(b.start+'T04:00:00').getTime()-d.getTime());
+      var days2=Math.ceil(ms2/86400000);
+      return {s:'soon',txt:'🔜 '+days2+' 天后开启',days:days2};
+    }
+    return {s:'ended',txt:'已结束'};
+  }catch(e){ return {s:'unknown',txt:''}; }
+}
 function renderBannerList(){
   var list=$('bannerList'), bs=DATA.banners, html=[], i, b;
   if(B_STAT_VER!==state.history.length){ B_STAT_VER=state.history.length; buildBStat(); }
@@ -1052,7 +1074,8 @@ function renderBannerList(){
     html.push('<div class="meta"><div class="name">'+esc(b.name)+(b.start===maxStart?'<span class="now-badge">当前</span>':'')+'<span class="badge" style="background:'+b.color+'">'+esc(b.label)+'</span><span class="favbtn'+(state.fav[b.id]?' on':'')+'" data-id="'+b.id+'" title="收藏/取消收藏">★</span></div>');
     var cnt=(state.cnt||{})[b.id]||0;
     var bs2=B_STAT&&B_STAT[b.id];
-    html.push('<div class="sub">'+esc(b.start)+' ~ '+esc(b.end)+(cnt>0?' · 已抽 <b style="color:var(--gold)">'+cnt+'</b> 抽':'')+(bs2&&bs2.n>0&&bs2.s6>0?' · 6★率 <b style="color:#ff6e6e">'+(bs2.s6/bs2.n*100).toFixed(1)+'%</b>':'')+'</div></div>');
+    var bst3=bannerStatus(b);
+    html.push('<div class="sub">'+esc(b.start)+' ~ '+esc(b.end)+(bst3.txt?' · <span class="bst '+bst3.s+'">'+esc(bst3.txt)+'</span>':'')+(cnt>0?' · 已抽 <b style="color:var(--gold)">'+cnt+'</b> 抽':'')+(bs2&&bs2.n>0&&bs2.s6>0?' · 6★率 <b style="color:#ff6e6e">'+(bs2.s6/bs2.n*100).toFixed(1)+'%</b>':'')+'</div></div>');
     html.push('</div>');
   }
   if(!matched.length)html.push('<div class="notice" style="padding:16px;text-align:center">没有符合条件的卡池，试试其他筛选或搜索</div>');
@@ -1145,7 +1168,8 @@ function selBoxHtml(b,rar,selQ){
 function bannerInfoHtml(b){
   var h=[];
   h.push('<button class="mini-btn" id="mBannerOpen">🎴 切换卡池</button>');
-  h.push('<div class="row1"><button class="mini-btn navB" data-dir="-1">◀ 上期</button><h2>'+esc(b.full)+'</h2><span class="badge" style="background:'+b.color+'">'+esc(b.label)+'</span><span class="dates">'+esc(b.start)+' ~ '+esc(b.end)+'</span><button class="mini-btn navB" data-dir="1">下期 ▶</button></div>');
+  var bst4=bannerStatus(b);
+  h.push('<div class="row1"><button class="mini-btn navB" data-dir="-1">◀ 上期</button><h2>'+esc(b.full)+'</h2><span class="badge" style="background:'+b.color+'">'+esc(b.label)+'</span><span class="dates">'+esc(b.start)+' ~ '+esc(b.end)+(bst4.txt?'<span class="bst '+bst4.s+'" style="margin-left:6px">'+esc(bst4.txt)+'</span>':'')+'</span><button class="mini-btn navB" data-dir="1">下期 ▶</button></div>');
   h.push('<div class="rateup">');
   var colSet3={}, ci3;
   for(ci3=0;ci3<state.collection.length;ci3++)colSet3[state.collection[ci3]]=1;
@@ -3463,6 +3487,13 @@ function calcAch(){
   var limCol=0, lk2, colSet2={}, csi2;
   for(csi2=0;csi2<state.collection.length;csi2++)colSet2[state.collection[csi2]]=1;
   for(lk2 in limitedOps){ if(colSet2[lk2])limCol++; }
+  var col5N=0, col4N=0;
+  for(csi2=0;csi2<state.collection.length;csi2++){ var co=opByName[state.collection[csi2]]; if(co){ if(co.rarity===5)col5N++; else if(co.rarity===4)col4N++; } }
+  var dayMap6={}, d6k, day3=false;
+  for(csi2=0;csi2<hist.length;csi2++){ if(hist[csi2].rar===6&&hist[csi2].t){ var d6=new Date(hist[csi2].t); var d6key=d6.getFullYear()+'-'+(d6.getMonth()+1)+'-'+d6.getDate(); dayMap6[d6key]=(dayMap6[d6key]||0)+1; } }
+  for(d6k in dayMap6){ if(dayMap6[d6k]>=3)day3=true; }
+  var bird6=false;
+  for(csi2=0;csi2<hist.length;csi2++){ if(hist[csi2].rar===6&&hist[csi2].t){ var bh=new Date(hist[csi2].t).getHours(); if(bh>=5&&bh<8)bird6=true; } }
   var totalOpsN=Object.keys(opByName).length;
   var res={ list:[
     {name:'初来乍到',desc:'完成第一次抽卡',icon:'🌱',done:first,prog:''},
@@ -3480,6 +3511,11 @@ function calcAch(){
     {name:'五星常客',desc:'累计抽到50名5★干员',icon:'💠',done:c5all>=50,prog:c5all+' / 50'},
     {name:'深度博士',desc:'累计抽卡≥5000抽',icon:'📖',done:hist.length>=5000,prog:hist.length+' / 5000'},
     {name:'限定收藏家',desc:'集齐所有限定干员（'+limitedTotal+'）',icon:'👑',done:limCol>=limitedTotal&&limitedTotal>0,prog:limCol+' / '+limitedTotal},
+    {name:'限定猎手',desc:'拥有限定干员≥5',icon:'🎗️',done:limCol>=5,prog:limCol+' / 5'},
+    {name:'五星收藏家',desc:'拥有不同5★干员≥30',icon:'💎',done:col5N>=30,prog:col5N+' / 30'},
+    {name:'四星集邮',desc:'拥有全部4★干员（'+ops4.length+'）',icon:'📮',done:col4N>=ops4.length&&ops4.length>0,prog:col4N+' / '+ops4.length},
+    {name:'单日三黄',desc:'单日抽到3只以上6★',icon:'🌞',done:day3,prog:''},
+    {name:'早鸟玄学',desc:'凌晨5-8点出过6★',icon:'🌅',done:bird6,prog:''},
     {name:'全图鉴',desc:'拥有全部干员（'+totalOpsN+'）',icon:'🏅',done:state.collection.length>=totalOpsN,prog:state.collection.length+' / '+totalOpsN}
   ]};
   ACH_KEY=key; ACH_CACHE=res;
@@ -3577,7 +3613,8 @@ function openStats(){
   h.push('</div>');
   var avgN2=gaps.length?sumG/gaps.length:0;
   var verdict=avgN2===0?'暂无':(avgN2<34.6?'偏欧':(avgN2>34.6?'偏非':'标准'));
-  h.push('<div class="notice">最短 '+minG+' 抽 · 最长 '+maxG+' 抽 · 平均 '+avgG+' 抽（期望 34.6 抽 · '+verdict+'）</div>');
+  var gTxt=gaps.length?('最短 '+minG+' 抽 · 最长 '+maxG+' 抽 · 平均 '+avgG+' 抽'):'暂无六星间隔数据';
+  h.push('<div class="notice">'+gTxt+'（期望 34.6 抽 · '+verdict+'）</div>');
   h.push('<h4 class="sect">欧气走势（每100抽一段，从上到下由旧到新）</h4><div class="chart">');
   var segCount=Math.ceil(hist.length/100), segArr=[];
   for(i=0;i<segCount;i++)segArr.push(0);
