@@ -148,6 +148,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .fhall-item:hover{transform:translateY(-3px); border-color:var(--acc2); box-shadow:0 6px 16px rgba(74,179,255,.2)}
 .fhall-item img{width:100%; height:110px; object-fit:contain; object-position:center; display:block; background:#0d1526}
 .fhall-item .fhall-nm{position:absolute; left:0; right:0; bottom:0; padding:16px 4px 4px; text-align:center; font-size:11px; font-weight:700; color:#fff; background:linear-gradient(transparent,rgba(0,0,0,.88))}
+.fhall-item .fhall-cnt{position:absolute; top:4px; right:4px; background:rgba(74,179,255,.85); color:#fff; font-size:10px; font-weight:800; padding:1px 6px; border-radius:10px}
 .fhall-item.r6{border-color:var(--r6)}
 .fhall-item.r5{border-color:var(--r5)}
 .fhall-item.r4{border-color:var(--r4)}
@@ -716,7 +717,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.43（详情特性·基础时装列表·语音统计）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.44（皮肤整页缓存·回廊皮肤数）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -3052,7 +3053,9 @@ function renderFashionHall(){
     o=opByName[names[i]];
     if(fhallF!=='all'&&String(o.rarity)!==fhallF)continue;
     if(fhallQ&&o.name.indexOf(fhallQ)<0)continue;
-    h.push('<div class="fhall-item r'+o.rarity+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/><div class="fhall-nm">'+esc(o.name)+'</div></div>');
+    var lsT=loadSkinCache(o.name);
+    var cntT=lsT?lsT.filter(function(s){return !(s.no==='0'||s.no===0);}).length:0;
+    h.push('<div class="fhall-item r'+o.rarity+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/><div class="fhall-nm">'+esc(o.name)+'</div>'+(cntT?'<div class="fhall-cnt">'+cntT+' 套</div>':'')+'</div>');
   }
   grid.innerHTML=h.join('');
   var items=grid.querySelectorAll('.fhall-item');
@@ -3326,9 +3329,9 @@ function renderSkins(name,skins,failed){
     (function(im){ im.onerror=function(){ if(im.dataset.fb){ var vf=im.dataset.fb; im.dataset.fb=''; im.src=vf; return; } if(im.dataset.fb2){ var v2=im.dataset.fb2; im.dataset.fb2=''; im.src=v2; return; } im.onerror=null; }; })(simgs[si2]);
   }
   if(!ciInfo){
-    prtsFetch(name,1,function(txt){
-      if(!txt)return;
-      try{ wikiCache[name]=wikiCache[name]||{}; wikiCache[name].charInfo=txt; }catch(e){}
+    prtsFetch(name,null,function(wt){
+      if(!wt)return;
+      try{ var pdi=parseWikiPage(wt); wikiCache[name]=wikiCache[name]||{}; wikiCache[name].charInfo=pdi.charInfo||''; }catch(e){}
       try{ if($('mBody')&&$('mBody').querySelector('.skingrid')){ var sc3=skinCache[name]; if(sc3&&sc3.skins)renderSkins(name,sc3.skins); } }catch(e){}
     });
   }

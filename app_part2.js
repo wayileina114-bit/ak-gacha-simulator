@@ -2324,7 +2324,9 @@ function renderFashionHall(){
     o=opByName[names[i]];
     if(fhallF!=='all'&&String(o.rarity)!==fhallF)continue;
     if(fhallQ&&o.name.indexOf(fhallQ)<0)continue;
-    h.push('<div class="fhall-item r'+o.rarity+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/><div class="fhall-nm">'+esc(o.name)+'</div></div>');
+    var lsT=loadSkinCache(o.name);
+    var cntT=lsT?lsT.filter(function(s){return !(s.no==='0'||s.no===0);}).length:0;
+    h.push('<div class="fhall-item r'+o.rarity+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/><div class="fhall-nm">'+esc(o.name)+'</div>'+(cntT?'<div class="fhall-cnt">'+cntT+' 套</div>':'')+'</div>');
   }
   grid.innerHTML=h.join('');
   var items=grid.querySelectorAll('.fhall-item');
@@ -2598,9 +2600,9 @@ function renderSkins(name,skins,failed){
     (function(im){ im.onerror=function(){ if(im.dataset.fb){ var vf=im.dataset.fb; im.dataset.fb=''; im.src=vf; return; } if(im.dataset.fb2){ var v2=im.dataset.fb2; im.dataset.fb2=''; im.src=v2; return; } im.onerror=null; }; })(simgs[si2]);
   }
   if(!ciInfo){
-    prtsFetch(name,1,function(txt){
-      if(!txt)return;
-      try{ wikiCache[name]=wikiCache[name]||{}; wikiCache[name].charInfo=txt; }catch(e){}
+    prtsFetch(name,null,function(wt){
+      if(!wt)return;
+      try{ var pdi=parseWikiPage(wt); wikiCache[name]=wikiCache[name]||{}; wikiCache[name].charInfo=pdi.charInfo||''; }catch(e){}
       try{ if($('mBody')&&$('mBody').querySelector('.skingrid')){ var sc3=skinCache[name]; if(sc3&&sc3.skins)renderSkins(name,sc3.skins); } }catch(e){}
     });
   }
