@@ -62,7 +62,7 @@ var opByName={}, ops4=[], ops3=[], opBanners={}, limitedOps={}, limitedTotal=0;
 })();
 var LS_KEY='akgacha_v2';
 var LS_OLD='akgacha_v1';
-function defaultState(){ return { cur:null, jade:60000, theme:'default', pity:{}, spark:{}, sel:{}, cnt:{}, opCnt:{}, fav:{}, favOps:{}, wish:[], history:[], collection:[], sparkEx:0 }; }
+function defaultState(){ return { cur:null, jade:60000, theme:'default', pity:{}, spark:{}, sel:{}, cnt:{}, opCnt:{}, fav:{}, favOps:{}, wish:[], history:[], collection:[], sparkEx:0, claimed:{} }; }
 function normalizeState(s){
   if(!s||typeof s!=='object')return defaultState();
   if(typeof s.jade!=='number')s.jade=60000;
@@ -80,6 +80,7 @@ function normalizeState(s){
   if(!Array.isArray(s.collection))s.collection=[];
   if(!Array.isArray(s.wish))s.wish=[];
   if(typeof s.sparkEx!=='number')s.sparkEx=0;
+  if(!s.claimed||typeof s.claimed!=='object')s.claimed={};
   if(!s.theme)s.theme='default';
   var sk2;
   for(sk2 in s.sel){ var sv=s.sel[sk2]; if(!sv||typeof sv!=='object'){ delete s.sel[sk2]; continue; } if(!Array.isArray(sv.six))sv.six=[]; if(!Array.isArray(sv.five))sv.five=[]; }
@@ -519,6 +520,7 @@ function selBoxHtml(b,rar,selQ){
   h.push('</div></div>');
   return h.join('');
 }
+function claimAt(b){ return b.collab?120:300; }
 function bannerInfoHtml(b){
   var h=[];
   h.push('<button class="mini-btn" id="mBannerOpen">🎴 切换卡池</button>');
@@ -566,7 +568,7 @@ function bannerInfoHtml(b){
   if(ups6.length===1)h.push(' · 当期6★占6★出率的 <b>50%</b>');
   else if(ups6.length>=2)h.push(' · 当期6★各占6★出率的 <b>'+(b.type==='zjselect'?35:b.rate6)+'%</b>');
   if(b.limitedSix.length)h.push(' · 限定干员：<b>'+b.limitedSix.map(esc).join('、')+'</b>');
-  if(b.spark)h.push(' · 300抽可兑换'+(b.collab?'联动干员':'限定干员'));
+  if(b.spark)h.push(' · '+(b.collab?'120':'300')+'抽可免费领取当期'+(b.collab?'联动':'限定')+' · 300抽可兑换'+(b.collab?'联动干员':'限定干员'));
   h.push('</div>');
   var st0=state.pity[pityKey(b)]||{fails:0};
   if(st0.fails>=90)h.push('<div class="pityurgent">🚨 已接近保底！当前 '+st0.fails+' 抽，最多再 '+Math.max(0,100-st0.fails)+' 抽必出 6★</div>');
@@ -595,6 +597,8 @@ function bannerInfoHtml(b){
     var nonLim=b.six.filter(function(n){return b.limitedSix.indexOf(n)<0;});
     if(nonLim.length)h.push('<button class="mini-btn" id="spark200" '+(tok>=200?'':'disabled')+'>200兑换当期6★</button>');
     h.push('</div>');
+    var pullsC=(state.cnt||{})[b.id]||0, caC=claimAt(b), clmC=state.claimed&&state.claimed[b.id];
+    h.push('<div class="spark claim"><span>'+(b.collab?'🎁 免费领取联动限定（累计 '+pullsC+' / '+caC+' 抽':'🎁 免费领取当期限定（累计 '+pullsC+' / '+caC+' 抽')+(clmC?' · 已领取':'')+'）</span><div class="bar"><i style="width:'+Math.min(100,pullsC/caC*100)+'%"></i></div>'+(pullsC>=caC&&!clmC?'<button class="mini-btn" id="sparkClaim">🎁 免费领取</button>':'<span class="sparkhint">'+(clmC?'已领取过':'还差 <b>'+(caC-pullsC)+'</b> 抽可免费领取')+'</span>')+'</div>');
   }
   return h.join('');
 }
@@ -628,6 +632,7 @@ function renderBannerInfo(){
   }
   var s300=$('spark300'); if(s300)s300.onclick=function(){ sparkExchange(300); };
   var s200=$('spark200'); if(s200)s200.onclick=function(){ sparkExchange(200); };
+  var sClm=$('sparkClaim'); if(sClm)sClm.onclick=function(){ sparkClaim(); };
   var mbo=$('mBannerOpen'); if(mbo)mbo.onclick=openDrawer;
   var nbs=$('bannerInfo').querySelectorAll('.navB');
   for(var ni=0;ni<nbs.length;ni++){ nbs[ni].onclick=function(){ navBanner(parseInt(this.getAttribute('data-dir'),10)||0); }; }
@@ -671,41 +676,58 @@ function sparkTargets(b, cost){
   if(cost===300)return b.collab?b.six.slice():b.limitedSix.slice();
   return b.six.filter(function(n){ return b.limitedSix.indexOf(n)<0; });
 }
-function sparkExchange(cost){
-  var b=bannerById(state.cur), tok=state.spark[b.id]||0;
-  if(tok<cost){ toast('寻访数据契约不足'); return; }
-  var list=sparkTargets(b, cost);
-  if(!list.length){ toast('无可兑换干员'); return; }
-  var h=['<h4 class="sect" style="margin-top:0">选择要兑换的干员（消耗 <b>'+cost+'</b> 契约 · 现有 '+tok+'）</h4><div class="rateup">'];
+function sparkPickModal(b, list, title, onPick){
+  if(!list.length){ toast('无可选干员'); return; }
+  var h=['<h4 class="sect" style="margin-top:0">'+title+'</h4><div class="rateup">'];
   var i,o;
   var showAll=Math.min(list.length,24);
   for(i=0;i<showAll;i++){
     o=opOf(list[i]); if(!o)continue;
     var owned=state.collection.indexOf(list[i])>=0;
-    h.push('<div class="rup-card r'+o.rarity+(owned?' owned':'')+'"'+(owned?' title="已拥有，兑换浪费契约，已禁用"':'')+'><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/>');
-    h.push('<div class="rn">'+esc(o.name)+(owned?'（已有·不可换）':'')+'</div>');
+    h.push('<div class="rup-card r'+o.rarity+(owned?' owned':'')+'" data-op="'+esc(list[i])+'"'+(owned?' title="已拥有：兑换将转化为潜能/资质凭证"':'')+'><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/>');
+    h.push('<div class="rn">'+esc(o.name)+(owned?'（已有 · 兑换转潜能）':'')+'</div>');
     h.push('<div class="rb">'+(b.limitedSix.indexOf(list[i])>=0?'限定':'当期')+'</div>');
     h.push('<div class="rr">'+stars(o.rarity)+'</div></div>');
   }
-  if(list.length>showAll)h.push('<div class="notice">……共 '+list.length+' 名可兑换</div>');
-  h.push('</div><div class="notice">点击干员卡片完成兑换，优先换未拥有的干员</div>');
+  if(list.length>showAll)h.push('<div class="notice">……共 '+list.length+' 名可选</div>');
+  h.push('</div><div class="notice">点击干员卡片完成'+(title.indexOf('兑换')>=0?'兑换':'领取')+'（已拥有的干员也可选择，将转化为潜能/资质凭证）</div>');
   $('mBody').innerHTML=h.join('');
   openModalBox();
   var cards=$('mBody').querySelectorAll('.rup-card');
   for(i=0;i<cards.length;i++){
-    (function(card,opName){
-      if(state.collection.indexOf(opName)>=0)return;
-      card.onclick=function(){
-        state.spark[b.id]=tok-cost;
-        state.sparkEx=(state.sparkEx||0)+1;
-        addCol(opName);
-        save();
-        closeModal();
-        toast('已兑换 <b>'+esc(opOf(opName).name)+'</b>！');
-        renderBannerInfo(); renderStats(); renderCollection();
-      };
-    })(cards[i],list[i]);
+    (function(card){
+      card.onclick=function(){ var opName=card.getAttribute('data-op'); if(!opName)return; onPick(opName, state.collection.indexOf(opName)>=0); };
+    })(cards[i]);
   }
+}
+function sparkExchange(cost){
+  var b=bannerById(state.cur), tok=state.spark[b.id]||0;
+  if(tok<cost){ toast('寻访数据契约不足'); return; }
+  var list=sparkTargets(b, cost);
+  sparkPickModal(b, list, '选择要兑换的干员（消耗 <b>'+cost+'</b> 契约 · 现有 '+tok+'）', function(opName, owned){
+    state.spark[b.id]=tok-cost;
+    state.sparkEx=(state.sparkEx||0)+1;
+    addCol(opName);
+    save();
+    closeModal();
+    toast((owned?'已兑换 <b>'+esc(opOf(opName).name)+'</b>（已拥有 · 转化为潜能凭证）！':'已兑换 <b>'+esc(opOf(opName).name)+'</b>！'));
+    renderBannerInfo(); renderStats(); renderCollection();
+  });
+}
+function sparkClaim(){
+  var b=bannerById(state.cur);
+  if(state.claimed&&state.claimed[b.id]){ toast('本池已免费领取过当期限定'); return; }
+  var pulls=(state.cnt||{})[b.id]||0;
+  if(pulls<claimAt(b)){ toast('累计 '+pulls+' / '+claimAt(b)+' 抽，还差 '+(claimAt(b)-pulls)+' 抽可免费领取'); return; }
+  var list=b.collab?b.six.slice():b.limitedSix.slice();
+  sparkPickModal(b, list, '🎁 免费领取当期'+(b.collab?'联动限定':'限定')+'（累计 '+pulls+' 抽 · 不消耗寻访数据契约）', function(opName, owned){
+    addCol(opName);
+    state.claimed=state.claimed||{}; state.claimed[b.id]=true;
+    save();
+    closeModal();
+    toast('🎁 已免费领取 <b>'+esc(opOf(opName).name)+'</b>！');
+    renderBannerInfo(); renderStats(); renderCollection();
+  });
 }
 function renderCards(results,msg,has6,names6,has5){
   var wrap=$('cards'), html=[], i;
@@ -1670,7 +1692,7 @@ function openModal(opName){
     else { state.favOps[opName]=true; bfo.textContent='⭐ 已收藏'; }
     save();
   };
-  var bsk=$('btnSkins'); if(bsk)bsk.onclick=function(){ openSkins(opName); };
+  var bsk=$('btnSkins'); if(bsk)bsk.onclick=function(){ SKINS_FROM='modal'; openSkins(opName); };
   var bwh=$('btnWish'); if(bwh)bwh.onclick=function(){
     if(!state.wish)state.wish=[];
     var wi=state.wish.indexOf(opName);
@@ -1697,6 +1719,7 @@ function stripWiki(t){
     .replace(/\[\[[^\]]*\|?([^\]|]*)\]\]/g,'$1')
     .replace(/<ref[^>]*>[\s\S]*?<\/ref>/gi,'')
     .replace(/<ref[^>]*\/?>/gi,'')
+    .replace(/<!--[\s\S]*?-->/g,'')
     .replace(/<\/?[a-z][^>]*>/gi,'')
     .replace(/'''/g,'').replace(/<br\/?>/gi,' ')
     .replace(/&nbsp;/g,' ').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&')
@@ -1725,6 +1748,8 @@ function wikiProbe(box){
     if(i===1||i===2){ target=probeUrl+'&origin=*'; }
     else if(i===3){ target='https://api.allorigins.win/get?url='+encodeURIComponent(probeUrl); outer=true; }
     else if(i===4){ target='https://corsproxy.io/?url='+encodeURIComponent(probeUrl); }
+    else if(i===5){ target='https://api.allorigins.com/raw?url='+encodeURIComponent(probeUrl); }
+    else if(i===6){ target='https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(probeUrl); }
     else { var raw='https://prts.wiki/index.php?title='+encodeURIComponent('能天使')+'&action=raw'; target='https://r.jina.ai/'+encodeURIComponent(raw); asText=true; }
     fetch(target,{signal:ctl?ctl.signal:undefined})
       .then(function(res){ return res.text(); })
@@ -1739,13 +1764,19 @@ function wikiProbe(box){
   step(0);
 }
 function renderProbeResult(box, out){
-  var okN=0, h=['<div class="wikisec"><h4>🌐 Wiki 连通性检测</h4><div class="wikirows">'];
+  var okN=0, directOk=false, proxyOk=false, h=['<div class="wikisec"><h4>🌐 Wiki 连通性检测</h4><div class="wikirows">'];
   for(var i=0;i<out.length;i++){
     if(out[i].ok)okN++;
+    if(i<=2&&out[i].ok)directOk=true;
+    if(i>=3&&out[i].ok)proxyOk=true;
     h.push('<div class="wrow"><b>'+(out[i].ok?'✅':'❌')+' '+esc(out[i].name)+'</b><span>'+(out[i].ok?('连通 · '+(out[i].ms<1000?(out[i].ms+'ms'):((out[i].ms/1000).toFixed(1)+'s'))):'失败')+'</span></div>');
   }
   h.push('</div>');
-  h.push('<div class="notice">'+(okN?'✅ PRTS Wiki 可达（'+okN+'/'+out.length+' 种方式可用），Wiki 同步可正常进行。':'⚠️ 全部方式均不可达——PRTS 被网络拦截/限流，或浏览器代理/广告拦截扩展干扰；请检查网络后重试。')+'</div></div>');
+  var concl;
+  if(directOk)concl='✅ PRTS Wiki 直连可用（'+okN+'/'+out.length+' 种方式可用）——代理失败不影响正常同步。';
+  else if(proxyOk)concl='⚠️ PRTS 直连被拦截，但代理可用——Wiki 将通过代理同步（速度较慢）。';
+  else concl='❌ 全部 8 种方式均不可达——PRTS 被网络拦截/限流，或浏览器代理/广告拦截扩展干扰；请检查网络后重试。';
+  h.push('<div class="notice">'+concl+'</div></div>');
   box.innerHTML=h.join('');
 }
 
@@ -1791,7 +1822,7 @@ function pumpWiki(){
     doWikiFetch(it);
   }
 }
-var WIKI_METHODS=['JSONP 直连','CORS 直连','CORS 重试','allorigins 代理','corsproxy 代理','jina 代理(action=raw)'];
+var WIKI_METHODS=['JSONP 直连','CORS 直连','CORS 重试','allorigins 代理','corsproxy 代理','allorigins.com 代理','codetabs 代理','jina 代理(action=raw)'];
 var wikiStatusHook=null, wikiLastErr='';
 function wikiFinish(it, txt){
   wikiBusy--;
@@ -1820,6 +1851,10 @@ function doWikiFetch(it){
     target='https://api.allorigins.win/get?url='+encodeURIComponent(url); outer=true;
   }else if(it.attempts===4){
     target='https://corsproxy.io/?url='+encodeURIComponent(url);
+  }else if(it.attempts===5){
+    target='https://api.allorigins.com/raw?url='+encodeURIComponent(url);
+  }else if(it.attempts===6){
+    target='https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(url);
   }else{
     // 最终回退：action=raw 直取 wikitext 纯文本，经 jina 代理（绕过 parse JSON 层与 CORS）
     var raw='https://prts.wiki/index.php?title='+encodeURIComponent(it.page)+'&action=raw';
@@ -2567,24 +2602,25 @@ function renderCompare(a,b){
   prtsFetch(a,null,function(t){ gA=t||''; fin(); });
   prtsFetch(b,null,function(t){ gB=t||''; fin(); });
 }
-var fhallF='all', fhallQ='';
+var fhallF='all', fhallQ='', SKINS_FROM='modal';
 function renderFashionHall(){
   var grid=$('fhallGrid'); if(!grid)return;
   var names=Object.keys(opByName).sort(function(a,b){ return opByName[b].rarity-opByName[a].rarity||a.localeCompare(b,'zh'); });
-  var h=[], i, o, totalSkins=0;
+  var h=[], i, o, totalSkins=0, totalDyn=0;
   for(i=0;i<names.length;i++){
     o=opByName[names[i]];
     if(fhallF!=='all'&&String(o.rarity)!==fhallF)continue;
     if(fhallQ&&o.name.indexOf(fhallQ)<0)continue;
     var lsT=loadSkinCache(o.name);
-    var cntT=lsT?lsT.filter(function(s){return !(s.no==='0'||s.no===0);}).length:0;
-    totalSkins+=cntT;
-    h.push('<div class="fhall-item r'+o.rarity+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/><div class="fhall-nm">'+esc(o.name)+'</div>'+(cntT?'<div class="fhall-cnt">'+cntT+' 套</div>':'')+'</div>');
+    var cntT=0, dynT=0;
+    if(lsT){ for(var siF=0;siF<lsT.length;siF++){ var sf=lsT[siF]; if(sf.no==='0'||sf.no===0)continue; if(sf.live)dynT++; else cntT++; } }
+    totalSkins+=cntT; totalDyn+=dynT;
+    h.push('<div class="fhall-item r'+o.rarity+'" data-op="'+esc(names[i])+'"><img loading="lazy" src="'+esc(avUrl(o))+'" alt=""/><div class="fhall-nm">'+esc(o.name)+'</div>'+(cntT||dynT?'<div class="fhall-cnt">静态 '+cntT+(dynT?' · 动态 '+dynT:'')+'</div>':'')+'</div>');
   }
   grid.innerHTML=h.join('');
-  var cntEl=$('fhallCount'); if(cntEl)cntEl.textContent='共 '+names.length+' 名干员 · 已加载 '+totalSkins+' 套皮肤（点击干员查看时装详情）';
+  var cntEl=$('fhallCount'); if(cntEl)cntEl.textContent='共 '+names.length+' 名干员 · 静态 '+totalSkins+' 套 · 动态 '+totalDyn+' 套（点击干员查看时装详情）';
   var items=grid.querySelectorAll('.fhall-item');
-  for(i=0;i<items.length;i++){ (function(el){ el.onclick=function(){ openSkins(el.getAttribute('data-op')); }; })(items[i]); }
+  for(i=0;i<items.length;i++){ (function(el){ el.onclick=function(){ SKINS_FROM='fashion'; openSkins(el.getAttribute('data-op')); }; })(items[i]); }
 }
 function openFashionHall(){
   __wikiBack=openFashionHall;
@@ -2602,7 +2638,7 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v11.56</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v11.57</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 真实寻访记录分析（纯前端）· 存档导入导出 · 四主题</div>');
   h.push('</div>');
@@ -2614,7 +2650,7 @@ function openAbout(){
   var pb=$('btnWikiProbe'); if(pb)pb.onclick=function(){ var po=$('wikiProbeOut'); if(po)wikiProbe(po); };
   var al=$('aboutLog');
   if(al){
-    var logTxt=['<b>v11.56</b> 模拟等价消耗 · 详情皮肤数','<b>v11.55</b> 立绘画廊职业筛选 · 计数','<b>v11.54</b> 井兑换规则修正 · 联动文案','<b>v11.53</b> 成就扩充（联动/井中月/六星军团）','<b>v11.52</b> 关于面板更新 · 时装回廊统计','<b>v11.51</b> Wiki连通性检测 · 关于面板优化','<b>v11.50</b> 养成材料逐项推荐 · 皮肤泄漏/范围修复','<b>v11.49</b> 材料刷取查询重做 · 真图标','<b>v11.48</b> Wiki同步六重回退 · 进度提示','<b>v11.47</b> Wiki返回按钮 · 材料PRTS链接','<b>v11.46</b> 材料图标彩色兜底','<b>v11.45</b> 材料入口去重 · 图标重试','<b>v11.44</b> 皮肤懒加载缓存 · 时装角标','<b>v11.43</b> 特性行 · 时装列表','<b>v11.42</b> 联动池300井','<b>v11.41</b> 手机端卡池列表可滑动','<b>v11.40</b> Wiki整页获取 · 五重回退','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
+    var logTxt=['<b>v11.57</b> 代理链扩充至8重 · 皮肤注释清理','<b>v11.56</b> 模拟等价消耗 · 详情皮肤数','<b>v11.55</b> 立绘画廊职业筛选 · 计数','<b>v11.54</b> 井兑换规则修正 · 联动文案','<b>v11.53</b> 成就扩充（联动/井中月/六星军团）','<b>v11.52</b> 关于面板更新 · 时装回廊统计','<b>v11.51</b> Wiki连通性检测 · 关于面板优化','<b>v11.50</b> 养成材料逐项推荐 · 皮肤泄漏/范围修复','<b>v11.49</b> 材料刷取查询重做 · 真图标','<b>v11.48</b> Wiki同步六重回退 · 进度提示','<b>v11.47</b> Wiki返回按钮 · 材料PRTS链接','<b>v11.46</b> 材料图标彩色兜底','<b>v11.45</b> 材料入口去重 · 图标重试','<b>v11.44</b> 皮肤懒加载缓存 · 时装角标','<b>v11.43</b> 特性行 · 时装列表','<b>v11.42</b> 联动池300井','<b>v11.41</b> 手机端卡池列表可滑动','<b>v11.40</b> Wiki整页获取 · 五重回退','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
     al.innerHTML=logTxt;
   }
   openModalBox();
@@ -2802,7 +2838,9 @@ function openSkins(opName){
 }
 function renderSkins(name,skins,failed){
   var o=opOf(name), h=[];
-  h.push('<button class="mini-btn" id="btnSkinsBack" style="margin-bottom:8px">← 返回干员详情</button>');
+  var from=SKINS_FROM==='fashion'?'fashion':(SKINS_FROM==='gallery'?'gallery':'modal');
+  var backTxt=from==='fashion'?'← 返回时装回廊':(from==='gallery'?'← 返回立绘画廊':'← 返回干员详情');
+  h.push('<button class="mini-btn" id="btnSkinsBack" style="margin-bottom:8px">'+backTxt+'</button>'+(from!=='modal'?'<button class="mini-btn" id="btnSkinsDetail" style="margin-bottom:8px;margin-left:8px">👤 干员详情</button>':''));
   var skinList=skins.filter(function(s){return !(s.no==='0'||s.no===0);});
   h.push('<div class="mhead"><div class="minfo"><h2>'+esc(name)+' · 皮肤图鉴</h2><div class="kv"><b>皮肤数量</b>'+skinList.length+' · <b>动态时装</b>'+skins.filter(function(s){return s.live;}).length+'</div></div></div>');
   h.push('<div class="wikihint">✨动态时装：动图请于游戏内查看（本工具显示静态图）。皮肤名称/系列/介绍来自 PRTS，获取方式/价格为社区整理，以游戏内为准。</div>');
@@ -2826,7 +2864,7 @@ function renderSkins(name,skins,failed){
       if(ciInfo){
         var cim=ciInfo.match(new RegExp('\\|时装'+no+'名称=([^\\n]*)'));
         var cim2=ciInfo.match(new RegExp('\\|时装'+no+'系列=([^\\n]*)'));
-        var cim3=ciInfo.match(new RegExp('\\|时装'+no+'介绍=([\\s\\S]*?)(?=\\n\\||\\n}}|$)'));
+        var cim3=ciInfo.match(new RegExp('\\|时装'+no+'介绍=([\\s\\S]*?)(?=\\n\\||\\n<!--|\\n}}|$)'));
         var cim4=ciInfo.match(new RegExp('\\|时装'+no+'价格=([^\\n]*)'))||ciInfo.match(new RegExp('\\|时装'+no+'售价=([^\\n]*)'));
         var cim5=ciInfo.match(new RegExp('\\|时装'+no+'获取方式=([^\\n]*)'))||ciInfo.match(new RegExp('\\|时装'+no+'获取=([^\\n]*)'))||ciInfo.match(new RegExp('\\|时装'+no+'获得方式=([^\\n]*)'));
         if(cim)sName=wikiClean(cim[1]);
@@ -2847,7 +2885,8 @@ function renderSkins(name,skins,failed){
     h.push('</div><div class="notice">点击皮肤查看高清原图</div>');
   }
   $('mBody').innerHTML=h.join('');
-  var bb=$('btnSkinsBack'); if(bb)bb.onclick=function(){ openModal(name); };
+  var bb=$('btnSkinsBack'); if(bb)bb.onclick=function(){ if(from==='fashion')openFashionHall(); else if(from==='gallery')openGallery(); else openModal(name); };
+  var bd=$('btnSkinsDetail'); if(bd)bd.onclick=function(){ openModal(name); };
   var sr=$('skinRetry'); if(sr)sr.onclick=function(){ try{ delete skinCache[name]; localStorage.removeItem('akgacha_skins_v1'); }catch(e){} openSkins(name); };
   var items=$('mBody').querySelectorAll('.skin-item');
   for(var j=0;j<items.length;j++){ (function(el){ el.onclick=function(){ openLightbox(el.getAttribute('data-url')); }; })(items[j]); }
@@ -3062,7 +3101,7 @@ function renderGallery(){
   $('galGrid').innerHTML=h.join('');
   var gcEl=$('galCount'); if(gcEl)gcEl.textContent='显示 '+shown+' / '+totalMatch+' 名干员'+(galProf!=='all'?'（'+galProf+'）':'');
   var items=$('galGrid').querySelectorAll('.gal-item');
-  for(i=0;i<items.length;i++){ (function(it){ it.onclick=function(){ if(galMode==='skin'){ openSkins(it.getAttribute('data-op')); } else { openModal(it.getAttribute('data-op')); } }; })(items[i]); }
+  for(i=0;i<items.length;i++){ (function(it){ it.onclick=function(){ if(galMode==='skin'){ SKINS_FROM='gallery'; openSkins(it.getAttribute('data-op')); } else { openModal(it.getAttribute('data-op')); } }; })(items[i]); }
   var gm=$('galMore'); if(gm)gm.onclick=function(){ GAL_N+=120; renderGallery(); };
   var gimgs=$('galGrid').querySelectorAll('img');
   for(var gi3=0;gi3<gimgs.length;gi3++){ (function(im){ idbSrc(im.getAttribute('src'), im); })(gimgs[gi3]); }
