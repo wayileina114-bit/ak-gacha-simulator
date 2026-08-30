@@ -686,7 +686,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   </main>
 </div>
 <div class="foot">
-  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.32（图鉴排序增强·快捷键扩充）</b>
+  数据来源：PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· 图片为在线加载，需联网 · 概率按官方规则模拟，仅供娱乐 · 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏 · G 画廊 · S 统计 · H 记录 · W 心愿 · P 保底 · <b>v11.33（模拟UP命中统计·自选池模拟提示）</b>
 </div>
 </div>
 <div id="mBackdrop"></div>
@@ -800,7 +800,8 @@ function loadState(){
   return defaultState();
 }
 var state=loadState();
-function save(){ try{ localStorage.setItem(LS_KEY,JSON.stringify(state)); }catch(e){} }
+var STATE_VER=0;
+function save(){ STATE_VER++; try{ localStorage.setItem(LS_KEY,JSON.stringify(state)); }catch(e){} }
 function $(id){ return document.getElementById(id); }
 function wire(id,fn){ var el=$(id); if(el&&fn)el.onclick=fn; }
 function uniq(a){ var m={},r=[],i; for(i=0;i<a.length;i++){ if(!m[a[i]]){m[a[i]]=1;r.push(a[i]);} } return r; }
@@ -918,6 +919,8 @@ function upShare(b,ups){
   if(ups.length>=2)return ups.length*b.rate6;
   return b.rate6;
 }
+function isUp6(b, op){ var ups=isSelect(b)?selUps(b,6):b.six; return ups.indexOf(op)>=0; }
+function isUp5(b, op){ var ups=isSelect(b)?selUps(b,5):b.five; return ups.indexOf(op)>=0; }
 function pick6(b){
   var pool=getPool(b), ups=isSelect(b)?selUps(b,6):b.six, r=Math.random()*100;
   var share=upShare(b,ups);
@@ -1895,7 +1898,8 @@ function openReport(){
 }
 function simulatePull(){
   var b=bannerById(state.cur); if(!b)return;
-  var h=['<h4 class="sect" style="margin-top:0">🧪 模拟抽卡 · '+esc(b.full)+'</h4>'];
+  var selHint=isSelect(b)?(' · 当前选择 '+esc(selShort(selKey(b)))):'';
+  var h=['<h4 class="sect" style="margin-top:0">🧪 模拟抽卡 · '+esc(b.full)+selHint+'</h4>'];
   h.push('<div class="notice">在独立保底进度上模拟 N 抽，展示 6★ 分布与保底触发情况，不影响真实存档与统计</div>');
   h.push('<div class="controls" style="margin-bottom:8px"><span class="notice">模拟抽数：</span><select id="simN"><option value="100">100</option><option value="500">500</option><option value="1000" selected>1000</option><option value="5000">5000</option></select><button class="mini-btn" id="simGo">开始模拟</button><button class="mini-btn" id="simMulti">📊 模拟10次统计</button></div><div id="simOut"></div>');
   $('mBody').innerHTML=h.join('');
@@ -1904,7 +1908,7 @@ function simulatePull(){
   var sm2=$('simMulti'); if(sm2)sm2.onclick=function(){ runSimMulti(b, parseInt($('simN').value,10)||1000, 10); };
 }
 function simRunOnce(b, n){
-  var st={fails:0,batch:[]}, c6=0,c5=0,gaps=[],trig=0,i,j2,rar;
+  var st={fails:0,batch:[]}, c6=0,c5=0,gaps=[],trig=0,up6=0,up5=0,i,j2,rar,op;
   for(i=0;i<n;i++){
     var p6=Math.min(0.02+Math.max(0,st.fails-49)*0.02,1);
     if(st.batch.length===9){
@@ -1912,16 +1916,16 @@ function simRunOnce(b, n){
       for(j2=0;j2<st.batch.length;j2++){ if(st.batch[j2]>=5)has5=true; }
       rar=has5?rollRar(p6):(Math.random()<p6?6:5);
     }else rar=rollRar(p6);
-    if(rar===6){ c6++; if(st.fails>=99)trig++; gaps.push(st.fails+1); st.fails=0; }
-    else if(rar===5)c5++;
+    if(rar===6){ c6++; if(st.fails>=99)trig++; gaps.push(st.fails+1); st.fails=0; op=pick6(b); if(isUp6(b,op))up6++; }
+    else if(rar===5){ c5++; op=pick5(b); if(isUp5(b,op))up5++; }
     else st.fails++;
     st.batch.push(rar);
     if(st.batch.length===10)st.batch=[];
   }
-  return {c6:c6,c5:c5,gaps:gaps,trig:trig};
+  return {c6:c6,c5:c5,gaps:gaps,trig:trig,up6:up6,up5:up5};
 }
 function runSim(b, n){
-  var r=simRunOnce(b,n), c6=r.c6, c5=r.c5, gaps=r.gaps, trig=r.trig;
+  var r=simRunOnce(b,n), c6=r.c6, c5=r.c5, gaps=r.gaps, trig=r.trig, up6=r.up6, up5=r.up5;
   var i;
   var rate6=n?(c6/n*100):0, sumG=0, avgG=0, maxG=0, minG=9999;
   for(i=0;i<gaps.length;i++){ sumG+=gaps[i]; if(gaps[i]>maxG)maxG=gaps[i]; if(gaps[i]<minG)minG=gaps[i]; }
@@ -1930,6 +1934,7 @@ function runSim(b, n){
   var h=['<div class="luckbadge lv'+lv+'"><div class="lb-score">'+rate6.toFixed(2)+'%</div><div class="lb-label">模拟 '+n+' 抽 · 6★出率（期望 2.89%）</div></div>'];
   h.push('<div class="stats-grid">');
   h.push('<div class="stat"><div class="v red">'+c6+'</div><div class="k">6★总数</div></div>');
+  h.push('<div class="stat"><div class="v gold">'+up6+'</div><div class="k">UP 6★命中'+(c6?'（'+(up6/c6*100).toFixed(0)+'%）':'')+'</div></div>');
   h.push('<div class="stat"><div class="v gold">'+c5+'</div><div class="k">5★总数（'+(n?(c5/n*100).toFixed(1):0)+'%）</div></div>');
   h.push('<div class="stat"><div class="v'+(trig>0?' red':'')+'">'+trig+'</div><div class="k">保底触发（≥99抽）</div></div>');
   h.push('<div class="stat"><div class="v">'+(gaps.length?avgG.toFixed(1):'—')+'</div><div class="k">平均间隔（期望34.6）</div></div>');
@@ -1937,18 +1942,21 @@ function runSim(b, n){
   h.push('<div class="stat"><div class="v">'+(gaps.length?Math.round(34.6/avgG*100):'—')+'</div><div class="k">间隔效率（%）</div></div>');
   h.push('</div>');
   var diffTxt=rate6>=2.89?('高于期望 '+(n?(c6-Math.round(n*0.0289)):0)+' 只'):('低于期望 '+(n?Math.round(n*0.0289)-c6:0)+' 只');
-  h.push('<div class="notice">6★率'+diffTxt+' · 本次模拟未写入存档 · 结果随每次模拟浮动</div>');
+  var upShareN=upShare(b,isSelect(b)?selUps(b,6):b.six);
+  var upExpTxt=upShareN>=100?'当期6★必为UP':('UP 6★命中期望约 '+(b.six.length>=2?70:50)+'%');
+  h.push('<div class="notice">6★率'+diffTxt+' · UP 6★命中 <b style="color:var(--acc)">'+up6+'</b> 只（'+upExpTxt+'）· 本次模拟未写入存档 · 结果随每次模拟浮动</div>');
   h.push('<button class="mini-btn" id="simAgain" style="margin:6px auto;display:block">🔁 再来一次</button>');
   $('simOut').innerHTML=h.join('');
   var sa=$('simAgain'); if(sa)sa.onclick=function(){ runSim(b, n); };
 }
 function runSimMulti(b, n, times){
   times=Math.min(50,Math.max(2,times||10));
-  var c6s=[], trigs=0, gapsAll=[], t2, g2;
+  var c6s=[], trigs=0, gapsAll=[], upAll=0, t2, g2;
   for(t2=0;t2<times;t2++){
     var rr=simRunOnce(b,n);
     c6s.push(rr.c6);
     trigs+=rr.trig;
+    upAll+=rr.up6;
     for(g2=0;g2<rr.gaps.length;g2++)gapsAll.push(rr.gaps[g2]);
   }
   var sum=0, mx=0, mn=9999, i2;
@@ -1965,6 +1973,7 @@ function runSimMulti(b, n, times){
   h.push('<div class="stat"><div class="v">'+mn+' ~ '+mx+'</div><div class="k">最少 ~ 最多6★</div></div>');
   h.push('<div class="stat"><div class="v">'+(mx-mn)+'</div><div class="k">波动范围</div></div>');
   h.push('<div class="stat"><div class="v'+(trigs>0?' red':'')+'">'+trigs+'</div><div class="k">保底触发总次（'+times+'次模拟）</div></div>');
+  h.push('<div class="stat"><div class="v gold">'+(upAll/times).toFixed(1)+'</div><div class="k">平均UP 6★命中/次</div></div>');
   h.push('<div class="stat"><div class="v">'+(gapsAll.length?(gmn+' ~ '+gmx):'—')+'</div><div class="k">间隔范围</div></div>');
   h.push('<div class="stat"><div class="v">'+(gavg?gavg.toFixed(1):'—')+'</div><div class="k">平均间隔（期望34.6）</div></div>');
   h.push('</div>');
@@ -2142,7 +2151,7 @@ var NATION_CN={'rhodes':'罗德岛','lungmen':'龙门','ursus':'乌萨斯','vict
 var COL_SORT_CACHE=null, COL_SORT_KEY='';
 function renderCollection(){
   var names;
-  var colCacheKey=colSort+':'+state.collection.length+':'+state.history.length+':'+((state.opCnt&&Object.keys(state.opCnt).length)||0)+':'+((state.favOps&&Object.keys(state.favOps).length)||0);
+  var colCacheKey=colSort+':'+STATE_VER+':'+((state.favOps&&Object.keys(state.favOps).length)||0);
   if(COL_SORT_KEY===colCacheKey&&COL_SORT_CACHE){ names=COL_SORT_CACHE; }
   else{
     names=Object.keys(opByName).sort(function(a,b){
