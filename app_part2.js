@@ -835,6 +835,98 @@ function copyReport(rep){
   catch(e){ window.prompt('复制以下内容：', text); }
   ta.remove();
 }
+var RAR_DB={'玛露希尔':6,'维什戴尔':6,'逻各斯':6,'缪尔赛思':6,'黍':6,'锏':6,'纯烬艾雅法拉':6,'麒麟X夜刀':6,'焰影苇草':6,'圣约送葬人':6,'马鹿':6,'42':6};
+function parseRealRecords(text){
+  var obj=JSON.parse(text);
+  var arr=Array.isArray(obj)?obj:((obj.records||obj.gacha||obj.list||obj.data||[]));
+  var out=[];
+  for(var i=0;i<arr.length;i++){
+    var r=arr[i];
+    if(r===null||r===undefined)continue;
+    if(typeof r==='string'){ out.push({name:String(r),ts:null,pool:''}); continue; }
+    var name=r.char||r.charName||r.name||r.op||r.干员||r.operator;
+    var ts=r.ts||r.time||r.timestamp||r.t;
+    if(ts&&typeof ts==='string'&&ts.indexOf('-')>0){ var d=new Date(ts); if(!isNaN(d.getTime()))ts=d.getTime(); }
+    out.push({name:String(name||''),ts:(ts?Number(ts):null),pool:r.pool||r.banner||r.卡池||''});
+  }
+  return out.filter(function(x){return x.name&&x.name!=='undefined';});
+}
+function realRarity(name){
+  var o=opOf(name);
+  if(o)return o.rarity;
+  return RAR_DB[name]||0;
+}
+function renderRealAnalysis(recs){
+  var h=[];
+  var total=recs.length, c6=0, c5=0, sixList=[], poolMap={}, i, r;
+  for(i=0;i<total;i++){
+    r=recs[i];
+    var rar=realRarity(r.name);
+    if(rar===6){ c6++; sixList.push(r); }
+    else if(rar===5)c5++;
+    var pk=r.pool||'未知卡池';
+    if(!poolMap[pk])poolMap[pk]={n:0,s6:0};
+    poolMap[pk].n++;
+    if(rar===6)poolMap[pk].s6++;
+  }
+  var rate6=total?(c6/total*100):0;
+  var lv=rate6>=3.4?5:(rate6>=3.1?4:(rate6>=2.6?3:(rate6>=2.2?2:1)));
+  h.push('<div class="luckbadge lv'+lv+'"><div class="lb-score">'+rate6.toFixed(2)+'%</div><div class="lb-label">真实记录 '+total+' 抽 · 6★出率（期望 2.89%）</div></div>');
+  h.push('<div class="stats-grid">');
+  h.push('<div class="stat"><div class="v red">'+c6+'</div><div class="k">6★总数</div></div>');
+  h.push('<div class="stat"><div class="v gold">'+c5+'</div><div class="k">5★总数（'+(total?(c5/total*100).toFixed(1):0)+'%）</div></div>');
+  h.push('<div class="stat"><div class="v">'+total+'</div><div class="k">总抽数</div></div>');
+  h.push('<div class="stat"><div class="v'+(c6&&rate6>=2.89?' gold':'')+'">'+Math.round(c6/Math.max(0.001,total*0.0289)*100)+'</div><div class="k">欧气指数</div></div>');
+  h.push('</div>');
+  // 6★ 列表（时间倒序）
+  if(sixList.length){
+    h.push('<div class="wikisec"><h4>✨ 真实6★记录</h4><div class="wikirows">');
+    for(i=0;i<Math.min(20,sixList.length);i++){
+      r=sixList[i];
+      var tsTxt=r.ts?new Date(r.ts).toLocaleString():'';
+      var unk=r.pool?'':'（未知干员）';
+      h.push('<div class="wrow"><b>'+esc(r.name)+'</b><span>'+esc(r.pool||'')+' '+(tsTxt?esc(tsTxt):'')+unk+'</span></div>');
+    }
+    if(sixList.length>20)h.push('<div class="notice">……共 '+sixList.length+' 只6★</div>');
+    h.push('</div></div>');
+  }
+  // 卡池分布
+  var pkeys=Object.keys(poolMap);
+  if(pkeys.length){
+    h.push('<div class="wikisec"><h4>🗂 卡池分布</h4><div class="wikirows">');
+    for(i=0;i<Math.min(12,pkeys.length);i++){
+      var pk2=pkeys[i], pv=poolMap[pk2];
+      h.push('<div class="wrow"><b>'+esc(pk2)+'</b><span>'+pv.n+' 抽 · 6★×'+pv.s6+(pv.n?( ' · 6★率 '+(pv.s6/pv.n*100).toFixed(1)+'%'):'')+'</span></div>');
+    }
+    if(pkeys.length>12)h.push('<div class="notice">……共 '+pkeys.length+' 个卡池</div>');
+    h.push('</div></div>');
+  }
+  return h.join('');
+}
+function openRealGacha(){
+  var h=['<h4 class="sect" style="margin-top:0">🎯 真实寻访记录分析</h4>'];
+  h.push('<div class="wikihint">从游戏本地数据提取真实抽卡记录（可用市面工具导出 JSON）后粘贴/上传，分析真实出货。<br/><b>获取方式：</b>明日方舟 Android 端可借助工具导出寻访记录 JSON；iOS 端需对应导出工具。<br/>支持：records/gacha/list 数组格式（含 char/name、ts/time、pool/banner 字段）。</div>');
+  h.push('<textarea id="realInput" placeholder="粘贴寻访记录 JSON 数据..."></textarea>');
+  h.push('<div class="wikisearch"><button class="mini-btn" id="realParse">🔍 解析分析</button><button class="mini-btn" id="realSample">填入示例</button></div>');
+  h.push('<div id="realOut"></div>');
+  $('mBody').innerHTML=h.join('');
+  openModalBox();
+  var rp=$('realParse');
+  if(rp)rp.onclick=function(){
+    var txt=($('realInput')?$('realInput').value:'').trim();
+    if(!txt){ toast('请先粘贴 JSON 数据'); return; }
+    try{
+      var recs=parseRealRecords(txt);
+      if(!recs.length){ toast('未解析到有效记录'); return; }
+      $('realOut').innerHTML=renderRealAnalysis(recs);
+      toast('解析成功：'+recs.length+' 条记录');
+    }catch(e){ toast('JSON 解析失败：'+e.message); }
+  };
+  var rs=$('realSample');
+  if(rs)rs.onclick=function(){
+    var inp=$('realInput'); if(inp)inp.value=JSON.stringify({records:[{pool:'感谢庆典·寻访',char:'维什戴尔',ts:Date.now()-86400000*30},{pool:'感谢庆典·寻访',char:'能天使',ts:Date.now()-86400000*28},{pool:'常驻标准寻访',char:'德克萨斯',ts:Date.now()-86400000*20},{pool:'常驻标准寻访',char:'能天使',ts:Date.now()-86400000*18},{pool:'常驻标准寻访',char:'白面鸮',ts:Date.now()-86400000*10}]});
+  };
+}
 function openReport(){
   var h=['<h4 class="sect" style="margin-top:0">📊 抽卡报告</h4><div class="controls" style="margin-bottom:8px"><button class="mini-btn" id="rpWeek">📅 周报（7天）</button><button class="mini-btn" id="rpMonth">📅 月报（30天）</button><button class="mini-btn" id="rpCopy">📋 复制报告</button></div><div id="rpOut"></div>'];
   $('mBody').innerHTML=h.join('');
@@ -1121,7 +1213,7 @@ function openModal(opName){
     var img=$('martImg'); if(!img)return;
     if(img._v===undefined)img._v=2;
     if(img._v===0){ img.src=opArtT(o); img._v=2; atg.textContent='🔄 切换立绘（当前：精二）'; }
-    else { var initU=thumbOf(o.art,o.name,'skin 0 0.png',480)||o.art||avUrl(o); img.src=initU; img._v=0; try{ img.dataset.fb=opArtT(o); }catch(e){} atg.textContent='🔄 切换立绘（当前：初始）'; }
+    else { var initU=thumbOf(o.art,o.name,'skin 0 0.png',480)||o.art||avUrl(o); var scInit=skinCache[o.name]; if(scInit&&scInit.skins){ for(var ski=0;ski<scInit.skins.length;ski++){ if(scInit.skins[ski].no==='0'||scInit.skins[ski].no===0){ initU=scInit.skins[ski].url; break; } } } img.src=initU; img._v=0; try{ img.dataset.fb=opArtT(o); }catch(e){} atg.textContent='🔄 切换立绘（当前：初始）'; if(!scInit||!scInit.skins.length){ toast('初始立绘获取中…'); openSkins(o.name); } }
   };
   if(atg)atg.textContent='🔄 切换立绘（当前：精二）';
   var bfo=$('btnFavOp'); if(bfo)bfo.onclick=function(){
@@ -1142,7 +1234,7 @@ function openModal(opName){
   };
   var links=$('mBody').querySelectorAll('.srcLink');
   for(var li=0;li<links.length;li++){ links[li].onclick=function(){ jumpBanner(this.getAttribute('data-bid')); }; }
-  var bwk=$('btnWiki'); if(bwk)bwk.onclick=function(){ openWiki(opName); };
+  var bwk=$('btnWiki'); if(bwk)bwk.onclick=function(){ __wikiBack=function(){ openModal(opName); }; $('mBody').innerHTML='<div id="wikiOut"></div>'; wikiDetail(opName,$('wikiOut')); };
   openModalBox();
 }
 function prtsApiUrl(page, section){
@@ -1189,6 +1281,208 @@ function openWiki(opName){
   openModalBox();
   wikiFetch(name);
 }
+var WD={};
+function wikiDetail(name, container){
+  var box=container||$('wikiOut');
+  var o=opOf(name);
+  var h=[];
+  h.push('<div class="wikid-head">');
+  h.push('<img loading="lazy" src="'+esc(o?opArtT(o):'')+'" onerror="this.onerror=null;this.src=this.dataset.fb" data-fb="'+esc(o?(o.art||''):'')+'" alt=""/>');
+  h.push('<div class="wikid-meta"><div class="wikid-name">'+esc(name)+'</div>');
+  h.push('<div class="wikid-sub">'+(o?(stars(o.rarity)+' · '+esc(o.profZh||o.prof||'')+(o.nation?' · '+esc(o.nation):'')):'')+'</div>');
+  var sd=STRENGTH_DB[name];
+  if(sd){ h.push('<div class="wikid-tierline"><span class="wikid-tier t'+(sd.tier==='T0'?0:(sd.tier==='T1'?1:(sd.tier==='T2'?2:3)))+'">'+sd.tier+'</span><span class="wikid-tag">'+esc(sd.tag)+'</span></div>'); }
+  h.push('</div></div>');
+  h.push('<div class="wikid-tabs">');
+  var tabs=[['base','📋 基础'],['attr','📈 属性'],['skill','⚔️ 技能'],['mat','🧱 材料'],['file','📜 档案'],['rate','⭐ 评价']];
+  for(var i=0;i<tabs.length;i++){ h.push('<button class="wikid-tab'+(i===0?' on':'')+'" data-t="'+tabs[i][0]+'">'+tabs[i][1]+'</button>'); }
+  h.push('</div>');
+  h.push('<div id="wikiBody"><div class="notice">正在从 PRTS Wiki 同步数据…（需联网）</div></div>');
+  box.innerHTML=h.join('');
+  var tabsEl=box.querySelectorAll('.wikid-tab');
+  for(i=0;i<tabsEl.length;i++){ (function(tb){ tb.onclick=function(){ var tt=tb.getAttribute('data-t'); var all=box.querySelectorAll('.wikid-tab'); for(var ti2=0;ti2<all.length;ti2++)all[ti2].classList.remove('on'); tb.classList.add('on'); renderWikiTab(name,tt); }; })(tabsEl[i]); }
+  wikiFetchDetail(name, box);
+}
+function wikiFetchDetail(name, box){
+  var ck=name;
+  if(wikiCache[ck]&&wikiCache[ck].file!==undefined&&Date.now()-wikiCache[ck].t<600000){ WD[name]=wikiCache[ck]; renderWikiTab(name,'base'); return; }
+  var secs=[2,3,5,7,9,10,16], got={};
+  var pending=secs.length;
+  function done(){
+    if(--pending>0)return;
+    if(!got[3]&&!got[7]&&!got[16]){ var b2=$('wikiBody'); if(b2)b2.innerHTML='<div class="notice">同步失败：无法连接 PRTS Wiki（需联网）</div><div style="text-align:center;margin-top:8px"><button class="mini-btn" id="wikiRetry3">🔄 重试</button></div>'; var wr=$('wikiRetry3'); if(wr)wr.onclick=function(){ wikiFetchDetail(name,box); }; return; }
+    var data={t:Date.now(),acquire:got[2]||'',attr:got[3]||'',talents:got[5]||'',skills:got[7]||'',mats:got[9]||'',skillMats:got[10]||'',file:got[16]||''};
+    wikiCache[ck]=data; persistWikiCache();
+    WD[name]=data;
+    renderWikiTab(name,'base');
+  }
+  for(var si=0;si<secs.length;si++){
+    (function(sec){
+      jsonp(prtsApiUrl(name,sec),function(data){
+        try{ if(data&&data.parse&&data.parse.wikitext){ got[sec]=data.parse.wikitext['*']||''; } }catch(e){}
+        done();
+      },10000);
+    })(secs[si]);
+  }
+}
+function renderWikiTab(name, tab){
+  var data=WD[name], body=$('wikiBody');
+  if(!data){ if(body)body.innerHTML='<div class="notice">数据未就绪，请重试</div>'; return; }
+  var h=[];
+  if(tab==='base')h.push(wikiBaseTab(name,data));
+  else if(tab==='attr')h.push(wikiAttrTab(name,data));
+  else if(tab==='skill')h.push(wikiSkillTab(name,data));
+  else if(tab==='mat')h.push(wikiMatTab(name,data));
+  else if(tab==='file')h.push(wikiFileTab(name,data));
+  else h.push(wikiRateTab(name,data));
+  if(body)body.innerHTML=h.join('');
+}
+function wikiBaseTab(name,data){
+  var o=opOf(name), h=[];
+  if(data.acquire){
+    var at=String(data.acquire||'');
+    var am1=at.match(/\|获得方式=([^\n|]*)/);
+    var am2=at.match(/\|上线时间=([^\n|]*)/);
+    h.push('<div class="wikisec"><h4>🎁 获取方式</h4><div class="notice">'+(am1?'获得方式：'+esc(stripWiki(am1[1])):'')+(am2?'<br/>上线时间：'+esc(stripWiki(am2[1])):'')+'</div></div>');
+  }
+  if(data.talents){
+    var talTxt=wikiColor(stripWiki(data.talents));
+    h.push('<div class="wikisec"><h4>✨ 天赋</h4><div class="notice" style="white-space:pre-wrap;line-height:2">'+esc(talTxt)+'</div></div>');
+  }
+  if(data.attr){
+    var at2=String(data.attr||'');
+    function kv(k){ var m=at2.match(new RegExp('\\|'+k+'=(.*?)(\\n|$)')); return m?m[1].trim():''; }
+    var rows=[['再部署',kv('再部署')],['部署费用',kv('部署费用')],['阻挡数',kv('阻挡数')],['攻击速度',kv('攻击速度')]];
+    var filled=rows.filter(function(x){return x[1];});
+    if(filled.length){
+      h.push('<div class="wikisec"><h4>📋 基础数值</h4><div class="wikirows">');
+      for(var i=0;i<filled.length;i++){ h.push('<div class="wrow"><b>'+filled[i][0]+'</b><span>'+esc(filled[i][1])+'</span></div>'); }
+      h.push('</div></div>');
+    }
+    var tr=kv('信赖加成_生命上限'), ta=kv('信赖加成_攻击'), td=kv('信赖加成_防御');
+    if(tr||ta||td)h.push('<div class="notice">❤️ 信赖加成：生命 +'+esc(tr||'0')+' · 攻击 +'+esc(ta||'0')+' · 防御 +'+esc(td||'0')+'</div>');
+  }
+  if(!h.length)h.push('<div class="notice">基础数据缺失（同步失败或该干员页面不完整）</div>');
+  return h.join('');
+}
+function wikiAttrTab(name,data){
+  if(!data||!data.attr){ return '<div class="notice">属性数据缺失</div>'; }
+  var attr=data.attr, h=[];
+  var kvCache={};
+  function kv(k){ if(kvCache[k]!==undefined)return kvCache[k]; var m=attr.match(new RegExp('\\|'+k+'=(.*?)(\\n|$)')); kvCache[k]=m?m[1].trim():''; return kvCache[k]; }
+  var stages=[['精英0·1级','精英0_1级'],['精英0·满级','精英0_满级'],['精英1·满级','精英1_满级'],['精英2·满级','精英2_满级']];
+  h.push('<div class="wikisec"><h4>📈 属性数值（PRTS）</h4><div class="wikitbl"><table><tr><th>阶段</th><th>生命</th><th>攻击</th><th>防御</th><th>法抗</th></tr>');
+  var ri;
+  for(ri=0;ri<stages.length;ri++){ var st=stages[ri]; var hp=kv(st[1]+'_生命上限'), atk=kv(st[1]+'_攻击'), df=kv(st[1]+'_防御'), mr=kv(st[1]+'_法术抗性'); if(hp||atk)h.push('<tr><td>'+st[0]+'</td><td>'+esc(hp)+'</td><td>'+esc(atk)+'</td><td>'+esc(df)+'</td><td>'+esc(mr)+'</td></tr>'); }
+  h.push('</table></div></div>');
+  var e0=kv('精英0_满级_攻击'), e2=kv('精英2_满级_攻击');
+  if(e0&&e2){ var grow=Math.round((parseInt(e2,10)-parseInt(e0,10))/parseInt(e0,10)*100); h.push('<div class="notice">📈 精英化攻击成长：满级 '+esc(e0)+' → '+esc(e2)+'（+'+grow+'%）</div>'); }
+  var tr=kv('信赖加成_生命上限'), ta=kv('信赖加成_攻击'), td=kv('信赖加成_防御');
+  if(tr||ta||td)h.push('<div class="notice">❤️ 信赖加成：生命 +'+esc(tr||'0')+' · 攻击 +'+esc(ta||'0')+' · 防御 +'+esc(td||'0')+'</div>');
+  return h.join('');
+}
+function wikiSkillTab(name,data){
+  if(!data||!data.skills){ return '<div class="notice">技能数据缺失</div>'; }
+  var h=['<div class="wikisec"><h4>⚔️ 技能详情</h4>'];
+  function clean(t){ return stripWiki(wikiColor(String(t||''))); }
+  var blocks=String(data.skills||'').split(/'''技能[0-9]+（/);
+  for(var bi=1;bi<blocks.length;bi++){
+    var blk=blocks[bi];
+    var endNm=blk.indexOf("'''");
+    var nm=endNm>=0?blk.slice(0,endNm):'';
+    h.push('<div class="wskill"><div class="wskillname">'+esc(clean(nm))+'</div>');
+    var sm=blk.match(/技能名=([^\n]*)/); if(sm)h.push('<div class="wskillnm">'+esc(clean(sm[1]))+'</div>');
+    var t1=blk.match(/技能类型1=([^\n]*)/), t2=blk.match(/技能类型2=([^\n]*)/);
+    if(t1||t2)h.push('<div class="wskilltype">'+esc(clean(t1?t1[1]:'')+(t1&&t2?' · ':'')+clean(t2?t2[1]:''))+'</div>');
+    var lv7m=blk.match(/技能7描述=([^\n]*)/);
+    var i7=blk.match(/技能7初始=([^\n|]*)/), c7=blk.match(/技能7消耗=([^\n|]*)/), d7=blk.match(/技能7持续=([^\n|]*)/);
+    if(lv7m)h.push('<div class="wskilldesc">'+esc(clean(lv7m[1]))+'</div>');
+    if(i7||c7||d7)h.push('<div class="wskillnum">初始 '+(i7?esc(clean(i7[1])):'—')+' · 消耗 '+(c7?esc(clean(c7[1])):'—')+' · 持续 '+(d7&&d7[1]?esc(clean(d7[1])):'—')+'（7级）</div>');
+    var m1=blk.match(/技能专精1描述=([^\n]*)/); if(m1)h.push('<div class="wskilldesc m">专精1：'+esc(clean(m1[1]))+'</div>');
+    var m2=blk.match(/技能专精2描述=([^\n]*)/); if(m2)h.push('<div class="wskilldesc m">专精2：'+esc(clean(m2[1]))+'</div>');
+    var m3=blk.match(/技能专精3描述=([^\n]*)/); if(m3)h.push('<div class="wskilldesc m">专精3：'+esc(clean(m3[1]))+'</div>');
+    // 1-7级数值表（可展开）
+    var rows=[];
+    for(var lvi=1;lvi<=7;lvi++){
+      var dm=blk.match(new RegExp('技能'+lvi+'描述=([^\n]*)'));
+      var im=blk.match(new RegExp('技能'+lvi+'初始=([^\n]*)'));
+      var cm=blk.match(new RegExp('技能'+lvi+'消耗=([^\n]*)'));
+      var um=blk.match(new RegExp('技能'+lvi+'持续=([^\n]*)'));
+      if(dm)rows.push('<tr><td>Lv'+lvi+'</td><td>'+esc(clean(dm[1]))+'</td><td>'+(im&&im[1]?esc(clean(im[1])):'—')+'</td><td>'+(cm&&cm[1]?esc(clean(cm[1])):'—')+'</td><td>'+(um&&um[1]?esc(clean(um[1])):'—')+'</td></tr>');
+    }
+    var m1r=blk.match(/技能专精1描述=([^\n]*)/), m1i=blk.match(/技能专精1初始=([^\n]*)/), m1c=blk.match(/技能专精1消耗=([^\n]*)/), m1u=blk.match(/技能专精1持续=([^\n]*)/);
+    if(m1r)rows.push('<tr><td>专精1</td><td>'+esc(clean(m1r[1]))+'</td><td>'+(m1i&&m1i[1]?esc(clean(m1i[1])):'—')+'</td><td>'+(m1c&&m1c[1]?esc(clean(m1c[1])):'—')+'</td><td>'+(m1u&&m1u[1]?esc(clean(m1u[1])):'—')+'</td></tr>');
+    var m2r=blk.match(/技能专精2描述=([^\n]*)/), m2i=blk.match(/技能专精2初始=([^\n]*)/), m2c=blk.match(/技能专精2消耗=([^\n]*)/), m2u=blk.match(/技能专精2持续=([^\n]*)/);
+    if(m2r)rows.push('<tr><td>专精2</td><td>'+esc(clean(m2r[1]))+'</td><td>'+(m2i&&m2i[1]?esc(clean(m2i[1])):'—')+'</td><td>'+(m2c&&m2c[1]?esc(clean(m2c[1])):'—')+'</td><td>'+(m2u&&m2u[1]?esc(clean(m2u[1])):'—')+'</td></tr>');
+    var m3r=blk.match(/技能专精3描述=([^\n]*)/), m3i=blk.match(/技能专精3初始=([^\n]*)/), m3c=blk.match(/技能专精3消耗=([^\n]*)/), m3u=blk.match(/技能专精3持续=([^\n]*)/);
+    if(m3r)rows.push('<tr><td>专精3</td><td>'+esc(clean(m3r[1]))+'</td><td>'+(m3i&&m3i[1]?esc(clean(m3i[1])):'—')+'</td><td>'+(m3c&&m3c[1]?esc(clean(m3c[1])):'—')+'</td><td>'+(m3u&&m3u[1]?esc(clean(m3u[1])):'—')+'</td></tr>');
+    if(rows.length)h.push('<details class="wskilllv"><summary>📊 全部等级数值（1-7 + 专精）</summary><div class="wikitbl" style="max-height:240px;overflow:auto"><table><tr><th>等级</th><th>效果</th><th>初始</th><th>消耗</th><th>持续</th></tr>'+rows.join('')+'</table></div></details>');
+    h.push('</div>');
+  }
+  if(blocks.length<=1)h.push('<div class="notice">暂无技能数据</div>');
+  h.push('</div>');
+  return h.join('');
+}
+function wikiMatTab(name,data){
+  var h=['<div class="wikisec"><h4>🧱 精英化材料</h4>'];
+  var hasAny=false;
+  function parseMatsLine(line){
+    var parts=String(line||'').split('}}').map(function(x){x=x.trim(); if(x.indexOf('材料消耗|')>=0){ return x.split('材料消耗|')[1]; } return '';}).filter(function(x){return x;});
+    return parts.map(function(x){ return x.split('|').join(' '); }).join(' + ');
+  }
+  function farmHtml(matName){
+    var mn=String(matName||'').split(' ')[0].trim();
+    var f=MAT_FARM_DB[mn]||MAT_FARM_DB[String(matName||'').trim()];
+    if(f)return ' <em class="farm" title="参考刷取">📌 '+esc(f.stage)+(f.ap<1?' · 理智效率极高':' · ~'+f.ap+'理智/个')+(f.note?'（'+esc(f.note)+'）':'')+'</em>';
+    return '';
+  }
+  if(data&&data.mats){
+    var matsLines=[];
+    var matsTxt=String(data.mats||'');
+    var ml=matsTxt.split('\n');
+    for(var mi2=0;mi2<ml.length;mi2++){ var l2=ml[mi2].trim(); if(l2.indexOf('|精')>=0&&l2.indexOf('=')>=0){ var kv2=l2.split('='); var matsInfo=parseMatsLine(kv2[1]||''); if(matsInfo){ hasAny=true; matsLines.push('<div class="wrow"><b>'+(kv2[0].indexOf('精1')>=0?'精1':'精2')+'</b><span>'+esc(matsInfo)+farmHtml(matsInfo)+'</span></div>'); } } }
+    if(matsLines.length)h.push('<div class="wikirows">'+matsLines.join('')+'</div>');
+  }
+  if(!hasAny)h.push('<div class="notice">暂无精英化材料数据</div>');
+  h.push('</div>');
+  if(data&&data.skillMats){
+    h.push('<div class="wikisec"><h4>📚 技能升级材料</h4><div class="wikirows">');
+    var smTxt=String(data.skillMats||'');
+    var sml=smTxt.split('\n');
+    var smAny=false;
+    for(var smi=0;smi<sml.length;smi++){ var sl2=sml[smi].trim(); if(sl2.indexOf('|')===0&&sl2.indexOf('=')>=0){ var kv3=sl2.slice(1).split('='); var lvName=kv3[0]; var info=parseMatsLine(kv3[1]||''); if(info){ smAny=true; h.push('<div class="wrow"><b>'+esc(lvName.replace(/^一/,'专精'))+'</b><span>'+esc(info)+farmHtml(info)+'</span></div>'); } } }
+    if(!smAny)h.push('<div class="notice">暂无技能升级材料数据</div>');
+    h.push('</div></div>');
+  }
+  h.push('<div class="wikihint">📌 刷取关卡与理智为社区参考值（数据可能存在版本变动），绿色高亮为推荐。</div>');
+  return h.join('');
+}
+function wikiFileTab(name,data){
+  var wt=String((data&&data.file)||'');
+  var h=['<div class="wikisec"><h4>📜 干员档案（PRTS）</h4>'];
+  var re=/档案(\d+)=([^\n|]*)\|档案\1条件=([^\n|]*)\|档案\1文本=([\s\S]*?)(?=\n\|档案\d+=|\n}}|}})/g;
+  var m, n=0;
+  while((m=re.exec(wt))&&n<8){ n++;
+    var title=stripWiki(m[2]), cond=stripWiki(m[3]), txt=stripWiki(m[4]);
+    if(title)h.push('<div class="wikisec" style="border-left:2px solid var(--acc);padding-left:8px"><h5>'+esc(title)+'</h5>'+(cond&&cond!==title?'<div class="wikihint" style="margin:2px 0">🔒 '+esc(cond)+'</div>':'')+'<div class="notice" style="white-space:pre-wrap;line-height:2">'+esc(txt)+'</div></div>');
+  }
+  if(!n)h.push('<div class="notice">该干员暂无档案数据（部分联动干员未收录）</div>');
+  h.push('</div>');
+  return h.join('');
+}
+function wikiRateTab(name,data){
+  var sd=STRENGTH_DB[name];
+  var h=['<div class="wikisec"><h4>⭐ 强度评价</h4>'];
+  if(sd){
+    h.push('<div class="wikid-tierline" style="margin-bottom:8px"><span class="wikid-tier t'+(sd.tier==='T0'?0:(sd.tier==='T1'?1:(sd.tier==='T2'?2:3)))+'">'+sd.tier+'</span><span class="wikid-tag">'+esc(sd.tag)+'</span></div>');
+    h.push('<div class="notice" style="line-height:2">'+esc(sd.note)+'</div>');
+  } else {
+    h.push('<div class="notice">该干员暂未收录强度评价（数据持续补充中）</div>');
+  }
+  h.push('<div class="wikihint">强度评级为社区共识参考（T0=顶级泛用 · T1=强力 · T2=可用 · T3=对策），随版本环境变化，仅供娱乐参考。</div>');
+  h.push('</div>');
+  return h.join('');
+}
 function openWikiSearch(){
   __wikiBack=openWikiSearch;
   var h=['<h4 class="sect" style="margin-top:0">🔍 干员Wiki查询</h4>'];
@@ -1198,7 +1492,7 @@ function openWikiSearch(){
   $('mBody').innerHTML=h.join('');
   openModalBox();
   var wsi=$('wikiSearchInput'), wsgo=$('wikiSearchGo');
-  function go(){ var v=wsi?wsi.value.trim():''; if(!v){ toast('请输入干员名'); return; } wikiFetch(v,$('wikiOut')); }
+  function go(){ var v=wsi?wsi.value.trim():''; if(!v){ toast('请输入干员名'); return; } wikiDetail(v,$('wikiOut')); }
   if(wsgo)wsgo.onclick=go;
   if(wsi){ wsi.onkeydown=function(e){ if(e.key==='Enter')go(); }; setTimeout(function(){ try{ wsi.focus(); }catch(e){} },120); }
 }
@@ -1268,7 +1562,7 @@ function renderWikiData(name,data,target){
     h.push('<div class="wikisec"><h4>⚔️ 技能详情</h4>');
     var skills=data.skills;
     var blocks=skills.split(/'''技能[0-9]+（/);
-    for(var bi=1;bi<blocks.length;bi++){ var blk=blocks[bi]; var endNm=blk.indexOf("'''"); var nm=endNm>=0?blk.slice(0,endNm):''; h.push('<div class="wskill"><div class="wskillname">'+esc(stripWiki(nm))+'</div>'); var sm=blk.match(/技能名=(.*?)(\n|$)/); if(sm)h.push('<div class="wskillnm">'+esc(stripWiki(sm[1]))+'</div>'); var lv7m=blk.match(/技能7描述=(.*?)(\n|$)/); if(lv7m)h.push('<div class="wskilldesc">'+esc(wikiColor(stripWiki(lv7m[1])))+'</div>'); var m1=blk.match(/技能专精1描述=(.*?)(\n|$)/); if(m1)h.push('<div class="wskilldesc m">专精1：'+esc(wikiColor(stripWiki(m1[1])))+'</div>'); var m2=blk.match(/技能专精2描述=(.*?)(\n|$)/); if(m2)h.push('<div class="wskilldesc m">专精2：'+esc(wikiColor(stripWiki(m2[1])))+'</div>'); var m3=blk.match(/技能专精3描述=(.*?)(\n|$)/); if(m3)h.push('<div class="wskilldesc m">专精3：'+esc(wikiColor(stripWiki(m3[1])))+'</div>'); h.push('</div>'); }
+    for(var bi=1;bi<blocks.length;bi++){ var blk=blocks[bi]; var endNm=blk.indexOf("'''"); var nm=endNm>=0?blk.slice(0,endNm):''; h.push('<div class="wskill"><div class="wskillname">'+esc(stripWiki(wikiColor(nm)))+'</div>'); var sm=blk.match(/技能名=([^\n]*)/); if(sm)h.push('<div class="wskillnm">'+esc(stripWiki(wikiColor(sm[1])))+'</div>'); var t1=blk.match(/技能类型1=([^\n]*)/), t2=blk.match(/技能类型2=([^\n]*)/); if(t1||t2)h.push('<div class="wskilltype">'+esc(stripWiki(wikiColor(t1?t1[1]:''))+(t1&&t2?' · ':'')+stripWiki(wikiColor(t2?t2[1]:'')))+'</div>'); var lv7m=blk.match(/技能7描述=([^\n]*)/); if(lv7m)h.push('<div class="wskilldesc">'+esc(stripWiki(wikiColor(lv7m[1])))+'</div>'); var i7=blk.match(/技能7初始=([^\n|]*)/), c7=blk.match(/技能7消耗=([^\n|]*)/), d7=blk.match(/技能7持续=([^\n|]*)/); if(i7||c7||d7)h.push('<div class="wskillnum">初始 '+(i7?esc(stripWiki(wikiColor(i7[1]))):'—')+' · 消耗 '+(c7?esc(stripWiki(wikiColor(c7[1]))):'—')+' · 持续 '+(d7&&d7[1]?esc(stripWiki(wikiColor(d7[1]))):'—')+'（7级）</div>'); var m1=blk.match(/技能专精1描述=([^\n]*)/); if(m1)h.push('<div class="wskilldesc m">专精1：'+esc(stripWiki(wikiColor(m1[1])))+'</div>'); var m2=blk.match(/技能专精2描述=([^\n]*)/); if(m2)h.push('<div class="wskilldesc m">专精2：'+esc(stripWiki(wikiColor(m2[1])))+'</div>'); var m3=blk.match(/技能专精3描述=([^\n]*)/); if(m3)h.push('<div class="wskilldesc m">专精3：'+esc(stripWiki(wikiColor(m3[1])))+'</div>'); h.push('</div>'); }
     h.push('</div>');
   }
   if(data&&data.mats){
@@ -1309,8 +1603,9 @@ function openSkins(opName){
     if(data&&data.query&&data.query.allimages){
       for(var i=0;i<data.query.allimages.length;i++){
         var it=data.query.allimages[i];
-        var m=it.name.match(/skin_(\d+)\.png$/);
-        if(m&&parseInt(m[1],10)>=1){ skins.push({name:it.name,url:it.url,no:m[1]}); }
+        var m=it.name.match(/skin_(\d+)(?:_live)?\.(png|gif)$/i);
+        var isLive=it.name.toLowerCase().indexOf('_live')>=0||it.name.toLowerCase().indexOf('.gif')>=0;
+        if(m&&parseInt(m[1],10)>=0){ skins.push({name:it.name,url:it.url,no:m[1],live:isLive}); }
       }
     }
     skinCache[name]={t:Date.now(),skins:skins};
@@ -1327,7 +1622,9 @@ function renderSkins(name,skins){
     var avf=esc(avUrl(o)||'');
     for(var i=0;i<skins.length;i++){
       var s=skins[i];
-      h.push('<div class="skin-item" data-url="'+esc(s.url)+'"><img loading="lazy" src="'+esc(skinThumb(s,480))+'" onerror="this.onerror=null;this.src=this.dataset.fb" data-fb="'+avf+'"/><div class="skin-nm">皮肤 '+s.no+'</div></div>');
+      var src=s.live&&s.url? s.url : (skinThumb(s,480)||s.url);
+      var dynTag=s.live?'<span class="skin-dyn">✨动态</span>':'';
+      h.push('<div class="skin-item'+(s.live?' live':'')+'" data-url="'+esc(s.url)+'"><img loading="lazy" src="'+esc(src)+'" onerror="this.onerror=null;this.src=this.dataset.fb" data-fb="'+avf+'"/><div class="skin-nm">'+(s.no==='0'||s.no===0?'初始立绘':'皮肤 '+s.no)+dynTag+'</div></div>');
     }
     h.push('</div><div class="notice">点击皮肤查看高清原图</div>');
   }
@@ -1380,8 +1677,8 @@ function openLightbox(src){
   lb.classList.add('show');
 }
 function closeLightbox(){ var lb=$('lightbox'); if(lb)lb.classList.remove('show'); }
-function openModalBox(){ var md=$('modal'); if(md)md.classList.add('show'); if(isMobile()){ try{ document.body.style.overflow='hidden'; }catch(e){} } }
-function closeModalBox(){ var md=$('modal'); if(md)md.classList.remove('show'); if(isMobile()){ try{ document.body.style.overflow=''; }catch(e){} } }
+function openModalBox(){ var md=$('modal'); if(md)md.classList.add('show'); try{ document.body.style.overflow='hidden'; }catch(e){} }
+function closeModalBox(){ var md=$('modal'); if(md)md.classList.remove('show'); var sb=$('sidebar'); if(isMobile()&&sb&&sb.classList&&sb.classList.contains('open')){ try{ document.body.style.overflow='hidden'; }catch(e){} } else { try{ document.body.style.overflow=''; }catch(e){} } }
 function closeModal(){ closeModalBox(); }
 function isMobile(){ return (typeof window!=='undefined')&&!!window.innerWidth&&window.innerWidth<=720; }
 function navBanner(dir){
@@ -1524,6 +1821,105 @@ function renderGallery(){
   for(i=0;i<items.length;i++){ (function(it){ it.onclick=function(){ if(galMode==='skin'){ openSkins(it.getAttribute('data-op')); } else { openModal(it.getAttribute('data-op')); } }; })(items[i]); }
   var gm=$('galMore'); if(gm)gm.onclick=function(){ GAL_N+=120; renderGallery(); };
 }
+var STRENGTH_DB={
+ '玛恩纳':{tier:'T0',tag:'输出·泛用',note:'叔叔站场输出天花板，真金斩清杂/攻坚全能，专三满信赖后强度极高，适用于绝大多数关卡。'},
+ '维什戴尔':{tier:'T0',tag:'输出·召唤',note:'ew 泛用输出天花板，群体真伤+召唤物，几乎无脑强的对群输出核心。'},
+ '逻各斯':{tier:'T0',tag:'输出·法系',note:'法术对群天花板，白值高技能循环优秀，配巫恋等拐更强。'},
+ '缪尔赛思':{tier:'T0',tag:'先锋·召唤',note:'费用回复+分身（可复制干员），前期展开与后期输出兼备的顶级先锋。'},
+ '黍':{tier:'T0',tag:'重装·生存',note:'顶级重装，坦度+群体恢复+传送，泛用生存核心。'},
+ '锏':{tier:'T0',tag:'输出·爆发',note:'高爆发物理输出，技能循环优秀，对单对群皆可。'},
+ '纯烬艾雅法拉':{tier:'T0',tag:'医疗·增益',note:'奶羊，顶级治疗+增益，泛用奶位首选。'},
+ '伊内丝':{tier:'T0',tag:'特种·先锋',note:'影哨回费+反隐+束缚，功能性极强的先锋/特种。'},
+ '麒麟X夜刀':{tier:'T0',tag:'输出·爆发',note:'复合技能爆发输出，可对空，泛用输出。'},
+ '浊心斯卡蒂':{tier:'T0',tag:'辅助·拐',note:'海嗣增益核心，全队增益与生存，顶级辅助。'},
+ '风笛':{tier:'T0',tag:'先锋·爆发',note:'回费效率核心+开局爆发输出，先锋体系基石。'},
+ '焰影苇草':{tier:'T0',tag:'医疗·输出',note:'治疗+法术输出兼顾，生存与输出双修。'},
+ '苇草':{tier:'T1',tag:'医疗·输出',note:'高输出医疗，配合焰苇体系更强。'},
+ '塞雷娅':{tier:'T1',tag:'重装·辅助',note:'钙质化拐+坦度，老牌强重装。'},
+ '艾雅法拉':{tier:'T1',tag:'输出·法系',note:'火山爆发输出，经典法核。'},
+ '银灰':{tier:'T1',tag:'输出·反隐',note:'真银斩泛用输出+反隐+再部署，老牌六星。'},
+ '能天使':{tier:'T1',tag:'输出·对空',note:'高攻速物理对空，前中期强输出。'},
+ '煌':{tier:'T1',tag:'输出·清杂',note:'链锯横扫清杂，泛用近卫。'},
+ '棘刺':{tier:'T1',tag:'输出·站场',note:'持续站场输出，挂机流核心。'},
+ '山':{tier:'T1',tag:'输出·开局',note:'低费高输出近卫，开局单守一路。'},
+ '泥岩':{tier:'T1',tag:'重装·输出',note:'高防+反击，自回复，站场稳健。'},
+ '澄闪':{tier:'T1',tag:'输出·法系',note:'浮游炮持续法术输出，泛用。'},
+ '铃兰':{tier:'T1',tag:'辅助·拐',note:'减速+易伤，顶级辅助。'},
+ '白面鸮':{tier:'T1',tag:'医疗·技力',note:'技力光环+群奶，高性价比五星奶。'},
+ '德克萨斯':{tier:'T1',tag:'先锋·控制',note:'剑雨回费+眩晕控制，经典先锋。'},
+ '极境':{tier:'T1',tag:'先锋·辅助',note:'回费+破隐+削弱，功能性先锋。'},
+ '琴柳':{tier:'T1',tag:'先锋·控制',note:'回费+眩晕+减攻，功能全面。'},
+ '桃金娘':{tier:'T1',tag:'先锋·回费',note:'爆费核心，低费快速回费。'},
+ '华法琳':{tier:'T1',tag:'医疗·拐',note:'不稳定血浆增伤，经典拐奶。'},
+ '拉普兰德':{tier:'T1',tag:'输出·沉默',note:'远程法伤+沉默，特殊机制。'},
+ '星熊':{tier:'T1',tag:'重装·输出',note:'高防重装，可输出。'},
+ '闪灵':{tier:'T1',tag:'医疗·防御',note:'教条立场减伤，泛用单奶。'},
+ '夜莺':{tier:'T1',tag:'医疗·法抗',note:'法抗光环+鸟笼，对策法伤。'},
+ '阿米娅':{tier:'T1',tag:'输出·法系',note:'主线主角，近卫/术师双形态。'},
+ '史尔特尔':{tier:'T0',tag:'输出·爆发',note:'42 落地即巅峰，黄昏超高爆发，秒杀核心。'},
+ '耀骑士临光':{tier:'T0',tag:'输出·眩晕',note:'真伤+眩晕，站场与空降皆可。'},
+ '凯尔希':{tier:'T1',tag:'医疗·召唤',note:'M3 召唤物输出，医疗+输出双职。'},
+ '流明':{tier:'T1',tag:'医疗·净化',note:'群体净化异常，水月肉鸽对策。'},
+ '灵知':{tier:'T1',tag:'辅助·控制',note:'冰冻控制+易伤，控制流核心。'},
+ '归溟幽灵鲨':{tier:'T1',tag:'输出·生存',note:'替身免死+群体输出。'},
+ '斥罪':{tier:'T1',tag:'重装·反弹',note:'荆棘反伤，站场输出。'},
+ '马鹿':{tier:'T1',tag:'输出·法系',note:'召唤物持续法伤，泛用。'},
+ '林':{tier:'T1',tag:'重装·控制',note:'冰冻+高闪避，控制重装。'},
+ '多萝西':{tier:'T1',tag:'特种·地雷',note:'地雷陷阱，对策型。'},
+ '艾丽妮':{tier:'T1',tag:'输出·对空',note:'双形态输出，对空。'},
+ '早露':{tier:'T2',tag:'输出·控制',note:'远程控制，泛用性一般。'},
+ '陈':{tier:'T2',tag:'输出·爆发',note:'拔刀/绝影，需要配合体系。'},
+ '推进之王':{tier:'T2',tag:'先锋·输出',note:'输出型先锋，回费效率一般。'},
+ '斯卡蒂':{tier:'T2',tag:'输出·空降',note:'单切空降，如今环境上场率下降。'},
+ '森蚺':{tier:'T2',tag:'重装·输出',note:'单挑重装，费用高。'},
+ '赫拉格':{tier:'T2',tag:'输出·生存',note:'绝食近卫，高压单挑。'},
+};
+var MAT_FARM_DB={
+ '源岩':{stage:'1-7',ap:4.4,note:'前期稳定低费刷取'},
+ '固源岩':{stage:'1-7',ap:5.0,note:'主线 1-7 公认最佳'},
+ '固源岩组':{stage:'4-6',ap:12.0,note:'也可 2-4 刷取'},
+ '提纯源岩':{stage:'7-10',ap:32.0,note:'高费材料'},
+ '聚酸酯':{stage:'S2-5',ap:5.0,note:'也可 1-8'},
+ '聚酸酯组':{stage:'4-4',ap:12.5,note:'活动本更优'},
+ '聚酸酯块':{stage:'7-12',ap:32.0,note:''},
+ '装置':{stage:'S2-6',ap:7.5,note:'也可 2-2'},
+ '全新装置':{stage:'4-10',ap:16.0,note:'也可 5-10'},
+ '改量装置':{stage:'7-11',ap:35.0,note:''},
+ '异铁':{stage:'S2-4',ap:6.5,note:'也可 2-5'},
+ '异铁组':{stage:'4-5',ap:15.0,note:''},
+ '异铁块':{stage:'7-11',ap:35.0,note:''},
+ '酮凝集':{stage:'2-6',ap:6.5,note:''},
+ '酮凝集组':{stage:'4-7',ap:15.0,note:''},
+ '酮阵列':{stage:'7-13',ap:32.0,note:''},
+ '糖':{stage:'S2-9',ap:6.5,note:'也可 1-10'},
+ '糖组':{stage:'4-2',ap:14.0,note:''},
+ '糖聚块':{stage:'7-14',ap:32.0,note:''},
+ '酯原料':{stage:'1-9',ap:5.0,note:''},
+ '研磨石':{stage:'S3-5',ap:9.0,note:'也可 3-3'},
+ '五水研磨石':{stage:'4-8',ap:25.0,note:'也可 7-12'},
+ '扭转醇':{stage:'4-4',ap:9.5,note:'也可 7-15'},
+ '轻锰矿':{stage:'5-3',ap:9.5,note:'也可 3-2'},
+ '三水锰矿':{stage:'7-16',ap:25.0,note:''},
+ '凝胶':{stage:'4-9',ap:9.0,note:'也可 6-7'},
+ '聚合凝胶':{stage:'7-13',ap:40.0,note:''},
+ '炽合金':{stage:'6-8',ap:9.5,note:'也可 4-4'},
+ '炽合金块':{stage:'7-15',ap:40.0,note:''},
+ 'RMA70-12':{stage:'6-11',ap:9.5,note:'也可 4-10'},
+ 'RMA70-24':{stage:'7-11',ap:40.0,note:''},
+ '晶体元件':{stage:'7-9',ap:9.5,note:''},
+ '晶体电路':{stage:'7-15',ap:32.0,note:''},
+ '晶体电子单元':{stage:'9-11',ap:45.0,note:'也可 12-5'},
+ '龙门币':{stage:'CE-5',ap:0.04,note:'CE-5 一次约 7500 龙门币，理智效率极高'},
+ '技巧概要·卷1':{stage:'CA-1',ap:1.0,note:'CA-1 一次 5 个'},
+ '技巧概要·卷2':{stage:'CA-3',ap:1.0,note:'CA-3 一次 5 个'},
+ '技巧概要·卷3':{stage:'CA-5',ap:1.0,note:'CA-5 一次 5 个'},
+ '双极纳米片':{stage:'9-19',ap:45.0,note:''},
+ '聚合剂':{stage:'9-9',ap:45.0,note:'也可 12-9'},
+ 'D32钢':{stage:'9-6',ap:45.0,note:''},
+ '白马醇':{stage:'7-15',ap:30.0,note:''},
+ '褐素纤维':{stage:'7-12',ap:30.0,note:''},
+ '紫薯':{stage:'6-16',ap:30.0,note:''},
+};
 function calcLuck(){
   var hist=state.history, i, c6=0,c5=0,bestTen=0,maxG=0,last6=-1;
   for(i=0;i<hist.length;i++){ var r=hist[i]; if(r.rar===6)c6++; else if(r.rar===5)c5++; }
@@ -2058,6 +2454,7 @@ function init(){
   wire('btnPityMap',openPityMap);
   wire('btnSim',simulatePull);
   wire('btnReport',openReport);
+  wire('btnReal',openRealGacha);
   wire('btnOpStats',openOpStats);
   wire('btnCopyStats',copyStats);
   wire('btnRules',openRules);
