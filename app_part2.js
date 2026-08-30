@@ -1297,7 +1297,11 @@ function runSim(b, n, startFails){
   var diffTxt=rate6>=2.89?('高于期望 '+(n?(c6-Math.round(n*0.0289)):0)+' 只'):('低于期望 '+(n?Math.round(n*0.0289)-c6:0)+' 只');
   var upShareN=upShare(b,isSelect(b)?selUps(b,6):b.six);
   var upExpTxt=upShareN>=100?'当期6★必为UP':('UP 6★命中期望约 '+(b.six.length>=2?70:50)+'%');
+  var real6n=0, ri6;
+  for(ri6=0;ri6<state.history.length;ri6++){ if(state.history[ri6].rar===6)real6n++; }
+  var realRate=state.history.length?(real6n/state.history.length*100):0;
   h.push('<div class="notice">6★率'+diffTxt+' · UP 6★命中 <b style="color:var(--acc)">'+up6+'</b> 只（'+upExpTxt+'）· 本次模拟未写入存档 · 结果随每次模拟浮动</div>');
+  if(state.history.length>=20)h.push('<div class="notice">对比真实记录：你的真实6★率 <b style="color:var(--gold)">'+realRate.toFixed(2)+'%</b>（'+state.history.length+' 抽）'+(rate6>realRate?' · 本次模拟比真实更欧':' · 本次模拟比真实更非')+'</div>');
   h.push('<button class="mini-btn" id="simAgain" style="margin:6px auto;display:block">🔁 再来一次</button>');
   $('simOut').innerHTML=h.join('');
   var sa=$('simAgain'); if(sa)sa.onclick=function(){ runSim(b, n, startFails); };
@@ -2640,7 +2644,7 @@ function doUntil6(){
   BUSY=true;
   setBusyUI(true);
   var total=results.length;
-  var names6=results.filter(function(x){return x.rar===6;}).map(function(x){return opOf(x.op).name;});
+  var names6=results.filter(function(x){return x.rar===6;}).map(function(x){var no6=opOf(x.op);return no6?no6.name:x.op;});
   var msg=names6.length?('连抽 <b>'+total+'</b> 抽出货：'+names6.join('、')):('连抽 '+total+' 抽未出货（已达120抽上限）');
   msg=enhancePullMsg(results,hadSet,msg);
   var shown=results.slice(-12);
@@ -3080,6 +3084,20 @@ function openStats(){
   for(i=0;i<hist.length;i++){ if(hist[i].rar===6&&hist[i].t){ var hx=new Date(hist[i].t).getHours(); hourMap[hx]=(hourMap[hx]||0)+1; } }
   for(hk=0;hk<24;hk++){ hv=hourMap[hk]||0; if(hv>hmax)hmax=hv; }
   for(hk=0;hk<24;hk++){ hv=hourMap[hk]||0; h.push('<div class="crow"><span class="cl">'+hk+'时</span><div class="cbar"><i style="width:'+Math.max(1,Math.round(hv/hmax*100))+'%"></i></div><span class="cv'+(hv===hmax&&hv>0?' luck-hi':'')+'">'+hv+'</span></div>'); }
+  h.push('</div>');
+  h.push('<h4 class="sect">各卡池6★率排行（抽≥10次）</h4><div class="chart">');
+  var poolAgg={}, pkX;
+  for(i=0;i<hist.length;i++){ var hr9=hist[i]; var pkKey9=hr9.bid||hr9.bn||'未知'; if(!poolAgg[pkKey9])poolAgg[pkKey9]={n:0,s6:0,full:hr9.bn||''}; poolAgg[pkKey9].n++; if(hr9.rar===6)poolAgg[pkKey9].s6++; }
+  var poolArr9=[];
+  for(pkX in poolAgg){ if(poolAgg[pkX].n>=10)poolArr9.push(poolAgg[pkX]); }
+  poolArr9.sort(function(a,b){ return (b.s6/b.n)-(a.s6/a.n); });
+  var prMax=1;
+  for(i=0;i<poolArr9.length;i++){ var pr9=poolArr9[i].s6/poolArr9[i].n*100; if(pr9>prMax)prMax=pr9; }
+  for(i=0;i<Math.min(10,poolArr9.length);i++){
+    var pv9=poolArr9[i], pr9b=pv9.s6/pv9.n*100;
+    h.push('<div class="crow"><span class="cl" title="'+esc(pv9.full)+'">'+esc(pv9.full.slice(0,14))+(pv9.full.length>14?'…':'')+'</span><div class="cbar"><i style="width:'+Math.max(2,Math.round(pr9b/prMax*100))+'%"></i></div><span class="cv'+(pr9b>=2.89?' luck-hi':'')+'">'+pr9b.toFixed(1)+'%（'+pv9.s6+'/'+pv9.n+'）</span></div>');
+  }
+  if(!poolArr9.length)h.push('<div class="notice">暂无卡池达到 10 抽统计门槛</div>');
   h.push('</div>');
   h.push('<h4 class="sect">保底总览</h4><div class="chart">');
   var pkArr=[];
