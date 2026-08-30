@@ -2301,6 +2301,24 @@ function renderCompare(a,b){
   prtsFetch(b,1,function(t){ gB.c1=t||''; fin(); });
   prtsFetch(b,3,function(t){ gB.c3=t||''; fin(); });
 }
+function openAbout(){
+  __wikiBack=openAbout;
+  var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v11.38</b></h4>');
+  h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
+  h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（PRTS实时掉落）· 真实寻访记录分析 · 森空岛账号数据 · 存档导入导出 · 四主题</div>');
+  h.push('</div>');
+  h.push('<div class="wikisec"><h4>⌨️ 快捷键</h4><div class="notice">1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏卡池 · G 画廊 · S 统计 · H 寻访记录 · W 心愿单 · P 保底一览</div></div>');
+  h.push('<div class="wikisec"><h4>🗂 数据来源</h4><div class="notice">PRTS Wiki（卡池/干员数据，更新至 2026-08-29）· bilibili Wiki（精二立绘）· torappu.prts.wiki（语音音频）· 图片/音频在线加载，需联网</div></div>');
+  h.push('<div class="wikisec"><h4>📜 最近更新</h4><div id="aboutLog"><div class="notice">加载中…</div></div></div>');
+  $('mBody').innerHTML=h.join('');
+  var al=$('aboutLog');
+  if(al){
+    var logTxt=['<b>v11.38</b> 关于面板 · README 全面更新','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
+    al.innerHTML=logTxt;
+  }
+  openModalBox();
+}
 function openWikiSearch(){
   __wikiBack=openWikiSearch;
   var h=['<h4 class="sect" style="margin-top:0">🔍 干员Wiki查询</h4>'];
@@ -3556,6 +3574,7 @@ function init(){
   wire('btnGallery',openGallery);
   wire('btnWishList',openWishList);
   wire('btnWikiSearch',openWikiSearch);
+  wire('btnAbout',openAbout);
   wire('btnRandOp',function(){ var keys=Object.keys(opByName); if(!keys.length)return; openModal(keys[Math.floor(Math.random()*keys.length)]); });
   wire('btnAch',openAch);
   wire('btnExportHist',exportHistory);
