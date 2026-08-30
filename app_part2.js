@@ -1139,8 +1139,11 @@ function matStagesHtml(mn){
     }
     h.push('</span></div>');
   }
-  if(b.build)h.push('<div class="mat-live-cat"><b>🏭 基建生产</b><span>'+esc(b.build)+'</span></div>');
-  if(any)h.push('</div>');
+  if(b.build){
+    if(!h.length)h.push('<div class="wikisec"><h4>🏭 基建生产</h4>');
+    h.push('<div class="mat-live-cat"><b>🏭 基建生产</b><span>'+esc(b.build)+'</span></div>');
+  }
+  if(any||h.length)h.push('</div>');
   if(!any){
     var d=MAT_FARM_DB[mn];
     if(d&&d.stages&&d.stages.length){
@@ -1157,13 +1160,17 @@ function matStagesHtml(mn){
   }
   if(!any)h.push('<div class="notice">该材料暂未收录刷取数据</div>');
   h.push(matRecipeHtml(mn));
-  h.push('<div class="notice" id="matLive">📡 正在同步 PRTS 官方掉落数据…（需联网）</div>');
-  prtsFetch(mn, null, function(txt){
-    var out=$('matLive');
-    if(!out)return;
-    var drops=txt?parseMatDrops(txt):null;
-    out.outerHTML=renderLiveDrops(drops, mn);
-  }, 'text');
+  if(Date.now()-WIKI_DOWN_T<300000){
+    h.push(renderLiveDrops(null, mn));
+  }else{
+    h.push('<div class="notice" id="matLive">📡 正在同步 PRTS 官方掉落数据…（需联网）</div>');
+    prtsFetch(mn, null, function(txt){
+      var out=$('matLive');
+      if(!out)return;
+      var drops=txt?parseMatDrops(txt):null;
+      out.outerHTML=renderLiveDrops(drops, mn);
+    }, 'text', 2);
+  }
   return h.join('');
 }
 function matFarmList(){
@@ -1813,11 +1820,11 @@ function extractWikiText(d){
     return null;
   }catch(e){ return null; }
 }
-function prtsFetch(page, sec, cb, prop){
+function prtsFetch(page, sec, cb, prop, maxA){
   var key='pw:'+page+':'+(sec===null||sec===undefined?'all':sec);
   var c=wikiSecCache[key];
   if(c){ cb(c.v); return; }
-  wikiQueue.push({page:page,sec:sec,cb:cb,prop:prop||'wikitext',attempts:0});
+  wikiQueue.push({page:page,sec:sec,cb:cb,prop:prop||'wikitext',attempts:0,maxA:maxA});
   pumpWiki();
 }
 function pumpWiki(){
@@ -1828,17 +1835,20 @@ function pumpWiki(){
   }
 }
 var WIKI_METHODS=['JSONP 直连','CORS 直连','CORS 重试','allorigins 代理','corsproxy 代理','allorigins.com 代理','codetabs 代理','jina 代理(action=raw)'];
-var wikiStatusHook=null, wikiLastErr='';
+var wikiStatusHook=null, wikiLastErr='', WIKI_DOWN_T=0;
 function wikiFinish(it, txt){
   wikiBusy--;
-  if(txt===null&&it.attempts<WIKI_METHODS.length-1){
+  var cooling=(Date.now()-WIKI_DOWN_T<300000);
+  var cap=(it.maxA!==undefined&&it.maxA>=0)?it.maxA:(cooling?1:(WIKI_METHODS.length-1));
+  if(txt===null&&it.attempts<cap){
     var fIdx=it.attempts; it.attempts++;
     wikiLastErr='方式 '+(fIdx+1)+'/'+WIKI_METHODS.length+'（'+WIKI_METHODS[fIdx]+'）失败';
     if(wikiStatusHook)wikiStatusHook(it.attempts,false);
     wikiQueue.push(it); setTimeout(pumpWiki,350); return;
   }
   var key='pw:'+it.page+':'+(it.sec===null||it.sec===undefined?'all':it.sec);
-  if(typeof txt==='string'){ wikiSecCache[key]={t:Date.now(),v:txt}; persistSecCache(); wikiLastErr=''; }
+  if(typeof txt==='string'){ wikiSecCache[key]={t:Date.now(),v:txt}; persistSecCache(); wikiLastErr=''; WIKI_DOWN_T=0; }
+  else if(txt===null){ WIKI_DOWN_T=Date.now(); }
   if(wikiStatusHook)wikiStatusHook(it.attempts,typeof txt==='string');
   it.cb(typeof txt==='string'?txt:'');
   pumpWiki();
@@ -1848,7 +1858,7 @@ function doWikiFetch(it){
   if(it.attempts===0){ wikiJsonp(url, function(d){ wikiFinish(it, extractWikiText(d)); }); return; }
   if(typeof fetch!=='function'||typeof window==='undefined'){ wikiFinish(it, null); return; }
   var ctl=null; try{ ctl=new AbortController(); }catch(e){}
-  var to=ctl?setTimeout(function(){ try{ctl.abort();}catch(e){} },12000):null;
+  var to=ctl?setTimeout(function(){ try{ctl.abort();}catch(e){} },(it.maxA!==undefined&&it.maxA>=0?8000:12000)):null;
   var target=null, asText=false, outer=false;
   if(it.attempts===1||it.attempts===2){
     target=url+(url.indexOf('?')>=0?'&':'?')+'origin=*';
@@ -1924,7 +1934,7 @@ function wikiFetch(name,target){
   }
   wikiLastErr='';
   wikiStatusHook=function(a,ok){
-    var el=$('wikiSync')||$('matLive'); if(!el)return;
+    var el=$('wikiSync'); if(!el)return;
     if(ok)el.innerHTML='✅ 已获取 PRTS 数据（方式 '+(a+1)+'/'+WIKI_METHODS.length+'：'+WIKI_METHODS[a]+'）';
     else el.innerHTML='⏳ 正在同步…（方式 '+(a+1)+'/'+WIKI_METHODS.length+'：'+WIKI_METHODS[a]+'）';
   };
@@ -2643,7 +2653,7 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v11.59</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v11.60</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 真实寻访记录分析（纯前端）· 存档导入导出 · 四主题</div>');
   h.push('</div>');
@@ -2655,7 +2665,7 @@ function openAbout(){
   var pb=$('btnWikiProbe'); if(pb)pb.onclick=function(){ var po=$('wikiProbeOut'); if(po)wikiProbe(po); };
   var al=$('aboutLog');
   if(al){
-    var logTxt=['<b>v11.59</b> 时装回廊动态角标 · 功能体检','<b>v11.58</b> 限定归类修正 · 兑换计入统计','<b>v11.57</b> 代理链扩充至8重 · 皮肤注释清理','<b>v11.56</b> 模拟等价消耗 · 详情皮肤数','<b>v11.55</b> 立绘画廊职业筛选 · 计数','<b>v11.54</b> 井兑换规则修正 · 联动文案','<b>v11.53</b> 成就扩充（联动/井中月/六星军团）','<b>v11.52</b> 关于面板更新 · 时装回廊统计','<b>v11.51</b> Wiki连通性检测 · 关于面板优化','<b>v11.50</b> 养成材料逐项推荐 · 皮肤泄漏/范围修复','<b>v11.49</b> 材料刷取查询重做 · 真图标','<b>v11.48</b> Wiki同步六重回退 · 进度提示','<b>v11.47</b> Wiki返回按钮 · 材料PRTS链接','<b>v11.46</b> 材料图标彩色兜底','<b>v11.45</b> 材料入口去重 · 图标重试','<b>v11.44</b> 皮肤懒加载缓存 · 时装角标','<b>v11.43</b> 特性行 · 时装列表','<b>v11.42</b> 联动池300井','<b>v11.41</b> 手机端卡池列表可滑动','<b>v11.40</b> Wiki整页获取 · 五重回退','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
+    var logTxt=['<b>v11.60</b> 材料实时快速失败 · PRTS冷却','<b>v11.59</b> 时装回廊动态角标 · 功能体检','<b>v11.58</b> 限定归类修正 · 兑换计入统计','<b>v11.57</b> 代理链扩充至8重 · 皮肤注释清理','<b>v11.56</b> 模拟等价消耗 · 详情皮肤数','<b>v11.55</b> 立绘画廊职业筛选 · 计数','<b>v11.54</b> 井兑换规则修正 · 联动文案','<b>v11.53</b> 成就扩充（联动/井中月/六星军团）','<b>v11.52</b> 关于面板更新 · 时装回廊统计','<b>v11.51</b> Wiki连通性检测 · 关于面板优化','<b>v11.50</b> 养成材料逐项推荐 · 皮肤泄漏/范围修复','<b>v11.49</b> 材料刷取查询重做 · 真图标','<b>v11.48</b> Wiki同步六重回退 · 进度提示','<b>v11.47</b> Wiki返回按钮 · 材料PRTS链接','<b>v11.46</b> 材料图标彩色兜底','<b>v11.45</b> 材料入口去重 · 图标重试','<b>v11.44</b> 皮肤懒加载缓存 · 时装角标','<b>v11.43</b> 特性行 · 时装列表','<b>v11.42</b> 联动池300井','<b>v11.41</b> 手机端卡池列表可滑动','<b>v11.40</b> Wiki整页获取 · 五重回退','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
     al.innerHTML=logTxt;
   }
   openModalBox();
