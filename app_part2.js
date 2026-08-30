@@ -559,6 +559,7 @@ function bannerInfoHtml(b){
     bkCnt=cntT2; bk6=cnt62;
   }
   if(bkCnt>0)h.push('<div class="notice" style="color:var(--gold)">本池战绩：已抽 <b>'+bkCnt+'</b> 抽 · 出 6★ <b>'+bk6+'</b> 只'+(bkCnt>0?' · 6★率 <b>'+(bk6/bkCnt*100).toFixed(1)+'%</b>':'')+'</div>');
+  if(b.collab)h.push('<div class="notice" style="color:#ff9a2e">🔗 联动限定寻访：联动干员仅当期获取，活动结束后不再复刻</div>');
   h.push('<div class="notice">6★出率 <b>2%</b>（51抽起每抽+2%，100抽必出）· 5★出率 <b>8%</b>（十连保底5★以上）· 4★ 50% · 3★ 40%');
   var ups6=isSelect(b)?selUps(b,6):b.six;
   if(ups6.length===1)h.push(' · 当期6★占6★出率的 <b>50%</b>');
@@ -1514,7 +1515,7 @@ function openModal(opName){
   h.push('<div class="kv"><b>职业</b>'+esc(o.prof||'—')+'</div>');
   h.push('<div class="kv"><b>阵营</b>'+esc(o.nation||'—')+'</div>');
   h.push('<div class="kv"><b>标签</b>'+esc(o.tag||'—')+'</div>');
-  h.push('<div class="kv"><b>获取</b>'+(state.collection.indexOf(opName)>=0?'已拥有':'未获得')+'</div>');
+  h.push('<div class="kv"><b>获取</b>'+(state.collection.indexOf(opName)>=0?'已拥有':'未获得')+(o.gift?' · <span style="color:#ff9a2e">🎁 活动赠送干员</span>':'')+(o.collabOp?' · <span style="color:#c96ab6">🔗 联动限定</span>':'')+'</div>');
   var opC=(state.opCnt&&state.opCnt[opName])||0;
   h.push('<div class="kv"><b>已抽到</b>'+opC+' 次'+(opC&&state.history.length?'（占全部 '+(opC/state.history.length*100).toFixed(1)+'%）':'')+'</div>');
   var gotIdx=state.collection.indexOf(opName);
@@ -1657,12 +1658,12 @@ function imgChain(im, fb, fb2){
   im.dataset.fb=fb||''; im.dataset.fb2=fb2||'';
 }
 var wikiCache={};
-(function(){ try{ var wRaw=localStorage.getItem('akgacha_wiki_v1'); if(wRaw){ var wObj=JSON.parse(wRaw); var wK; for(wK in wObj){ if(wObj[wK]&&Date.now()-wObj[wK].t<7*86400000)wikiCache[wK]=wObj[wK]; } } }catch(e){} })();
+(function(){ try{ var wRaw=localStorage.getItem('akgacha_wiki_v2'); if(wRaw){ var wObj=JSON.parse(wRaw); var wK; for(wK in wObj){ if(wObj[wK]&&Date.now()-wObj[wK].t<7*86400000)wikiCache[wK]=wObj[wK]; } } }catch(e){} })();
 function persistWikiCache(){
   try{
     var wObj={}, wK2, wN=0;
     for(wK2 in wikiCache){ if(wN++>=60)break; wObj[wK2]=wikiCache[wK2]; }
-    localStorage.setItem('akgacha_wiki_v1', JSON.stringify(wObj));
+    localStorage.setItem('akgacha_wiki_v2', JSON.stringify(wObj));
   }catch(e){}
 }
 function wikiFetch(name,target){
@@ -1671,24 +1672,17 @@ function wikiFetch(name,target){
   if(wikiCache[ck]&&Date.now()-wikiCache[ck].t<600000){ renderWikiData(name,wikiCache[ck],box); return; }
   box.innerHTML='<h4 class="sect" style="margin-top:0">📊 '+esc(name)+' · Wiki数据</h4><div class="notice" id="wikiSync">正在从 PRTS Wiki 同步数据…（需联网）</div>';
   openModalBox();
-  var secs=[2,3,5,7,9,10], got={}, doneN=0, total=secs.length;
-  function progress(){
-    var sy=$('wikiSync');
-    if(sy)sy.innerHTML='正在从 PRTS Wiki 同步数据…（'+doneN+'/'+total+'）<div class="wikiprog"><div class="wikiprog-bar" style="width:'+Math.round(doneN/total*100)+'%"></div></div>';
-  }
-  function done(){
-    doneN++;
-    if(doneN<total){ progress(); return; }
-    if(!got[3]&&!got[7]){ box.innerHTML='<h4 class="sect" style="margin-top:0">📊 '+esc(name)+' · Wiki数据</h4><div class="notice">同步失败：无法连接 PRTS Wiki（需联网），请确认网络后重试</div><div style="text-align:center;margin-top:8px"><button class="mini-btn" id="wikiRetry">🔄 重试同步</button></div>'; var wr=$('wikiRetry'); if(wr)wr.onclick=function(){ box.innerHTML='<div class="notice">正在从 PRTS Wiki 同步 <b>'+esc(name)+'</b> 的数据…（需联网）</div>'; wikiFetch(name,box); }; return; }
-    wikiCache[ck]={t:Date.now(),acquire:got[2]||'',attr:got[3]||'',talents:got[5]||'',skills:got[7]||'',mats:got[9]||'',skillMats:got[10]||''};
+  prtsFetch(name, null, function(wt){
+    if(!wt){
+      box.innerHTML='<h4 class="sect" style="margin-top:0">📊 '+esc(name)+' · Wiki数据</h4><div class="notice">同步失败：无法连接 PRTS Wiki（需联网），请确认网络后重试</div><div style="text-align:center;margin-top:8px"><button class="mini-btn" id="wikiRetry">🔄 重试同步</button></div>';
+      var wr=$('wikiRetry'); if(wr)wr.onclick=function(){ box.innerHTML='<div class="notice">正在从 PRTS Wiki 同步 <b>'+esc(name)+'</b> 的数据…（需联网）</div>'; wikiFetch(name,box); };
+      return;
+    }
+    var pd=parseWikiPage(wt);
+    wikiCache[ck]={t:Date.now(),acquire:pd.acquire||'',attr:pd.attr||'',talents:pd.talents||'',skills:pd.skills||'',mats:pd.mats||'',skillMats:pd.skillMats||''};
     persistWikiCache();
     renderWikiData(name,wikiCache[ck],box);
-  }
-  for(var si=0;si<secs.length;si++){
-    (function(sec){
-      prtsFetch(name,sec,function(txt){ got[sec]=txt||''; done(); });
-    })(secs[si]);
-  }
+  });
 }
 function openWiki(opName){
   var o=opOf(opName); if(!o)return;
@@ -1720,29 +1714,76 @@ function wikiDetail(name, container){
   for(i=0;i<tabsEl.length;i++){ (function(tb){ tb.onclick=function(){ var tt=tb.getAttribute('data-t'); var all=box.querySelectorAll('.wikid-tab'); for(var ti2=0;ti2<all.length;ti2++)all[ti2].classList.remove('on'); tb.classList.add('on'); renderWikiTab(name,tt); }; })(tabsEl[i]); }
   wikiFetchDetail(name, box);
 }
+function grabWikiTemplate(wt, tplName){
+  var s=String(wt||'');
+  var idx=s.indexOf('{{'+tplName);
+  if(idx<0)return '';
+  var depth=0, i=idx, n=s.length;
+  for(;i<n;i++){
+    if(s[i]==='{'&&s[i+1]==='{'){ depth++; i++; }
+    else if(s[i]==='}'&&s[i+1]==='}'){ depth--; i++; if(depth===0)return s.slice(idx,i+1); }
+  }
+  return s.slice(idx);
+}
+function splitWikiSections(wt){
+  var lines=String(wt||'').split('\n');
+  var secs={}, cur='__lead__';
+  secs[cur]=[];
+  for(var i=0;i<lines.length;i++){
+    var l=lines[i];
+    var m=l.match(/^==+\s*(.+?)\s*==+\s*$/);
+    if(m){ cur=m[1].trim(); if(!secs[cur])secs[cur]=[]; }
+    else secs[cur].push(l);
+  }
+  return secs;
+}
+function wikiSecGet(secs, title, marker){
+  if(secs[title]&&secs[title].join('\n').trim())return secs[title].join('\n');
+  if(marker){
+    for(var k in secs){ if(k!=='__lead__'&&secs[k].join('\n').indexOf(marker)>=0)return secs[k].join('\n'); }
+    if(secs['__lead__'].join('\n').indexOf(marker)>=0)return secs['__lead__'].join('\n');
+  }
+  return '';
+}
+function parseWikiPage(wt){
+  var secs=splitWikiSections(wt);
+  var lead=secs['__lead__'].join('\n');
+  var charInfo=grabWikiTemplate(lead,'干员信息')||wikiSecGet(secs,'干员信息','');
+  return {
+    charInfo: charInfo,
+    acquire: wikiSecGet(secs,'获得方式','|获得方式='),
+    attr: wikiSecGet(secs,'属性','精英0_1级_生命上限'),
+    range: wikiSecGet(secs,'攻击范围','|精英0范围='),
+    talents: wikiSecGet(secs,'天赋','|天赋1='),
+    potential: wikiSecGet(secs,'潜能提升','|潜能2='),
+    skills: wikiSecGet(secs,'技能','技能7描述='),
+    support: wikiSecGet(secs,'后勤技能','|后勤技能1-1='),
+    mats: wikiSecGet(secs,'精英化材料','材料消耗'),
+    skillMats: wikiSecGet(secs,'技能升级材料','|技能1='),
+    module: wikiSecGet(secs,'模组','基础证章'),
+    file: wikiSecGet(secs,'干员档案','|档案1='),
+    story: wikiSecGet(secs,'干员密录','storySetName'),
+    paradox: wikiSecGet(secs,'悖论模拟','悖论')
+  };
+}
 function wikiFetchDetail(name, box){
   var ck=name;
   if(wikiCache[ck]&&wikiCache[ck].file!==undefined&&Date.now()-wikiCache[ck].t<600000){ WD[name]=wikiCache[ck]; renderWikiTab(name,'base'); return; }
-  var secs=[1,2,3,4,5,6,7,8,9,10,11,16,18,19], got={};
-  var doneN=0, total=secs.length;
-  function progress(){
-    var sy=$('wikiSync');
-    if(sy)sy.innerHTML='正在从 PRTS Wiki 同步数据…（'+doneN+'/'+total+'）<div class="wikiprog"><div class="wikiprog-bar" style="width:'+Math.round(doneN/total*100)+'%"></div></div>';
-  }
-  function done(){
-    doneN++;
-    if(doneN<total){ progress(); return; }
-    if(!got[3]&&!got[7]&&!got[16]){ var b2=$('wikiBody'); if(b2)b2.innerHTML='<div class="notice">同步失败：无法连接 PRTS Wiki（需联网）</div><div style="text-align:center;margin-top:8px"><button class="mini-btn" id="wikiRetry3">🔄 重试</button></div>'; var wr=$('wikiRetry3'); if(wr)wr.onclick=function(){ wikiFetchDetail(name,box); }; return; }
-    var data={t:Date.now(),charInfo:got[1]||'',acquire:got[2]||'',attr:got[3]||'',range:got[4]||'',talents:got[5]||'',potential:got[6]||'',skills:got[7]||'',support:got[8]||'',mats:got[9]||'',skillMats:got[10]||'',module:got[11]||'',file:got[16]||'',story:got[18]||'',paradox:got[19]||''};
+  var body=$('wikiBody');
+  if(body)body.innerHTML='<div class="notice" id="wikiSync">正在从 PRTS Wiki 同步数据…（需联网）</div>';
+  prtsFetch(name, null, function(wt){
+    var b2=$('wikiBody');
+    if(!wt){
+      if(b2)b2.innerHTML='<div class="notice">同步失败：无法连接 PRTS Wiki（需联网）或该干员页面不存在</div><div style="text-align:center;margin-top:8px"><button class="mini-btn" id="wikiRetry3">🔄 重试</button></div>';
+      var wr=$('wikiRetry3'); if(wr)wr.onclick=function(){ wikiFetchDetail(name,box); };
+      return;
+    }
+    var data=parseWikiPage(wt);
+    data.t=Date.now();
     wikiCache[ck]=data; persistWikiCache();
     WD[name]=data;
     renderWikiTab(name,'base');
-  }
-  for(var si=0;si<secs.length;si++){
-    (function(sec){
-      prtsFetch(name,sec,function(txt){ got[sec]=txt||''; done(); });
-    })(secs[si]);
-  }
+  });
 }
 function renderWikiTab(name, tab){
   var data=WD[name], body=$('wikiBody');
@@ -1846,7 +1887,7 @@ function wikiSkillTab(name,data){
   for(var bi=1;bi<blocks.length;bi++){
     var blk=blocks[bi];
     var endNm=blk.indexOf("'''");
-    var nm=endNm>=0?blk.slice(0,endNm):'';
+    var nm=endNm>0?blk.slice(0,endNm):('技能'+bi);
     h.push('<div class="wskill"><div class="wskillname">'+esc(clean(nm))+'</div>');
     var sm=blk.match(/技能名=([^\n]*)/); if(sm)h.push('<div class="wskillnm">'+esc(clean(sm[1]))+'</div>');
     var t1=blk.match(/技能类型1=([^\n]*)/), t2=blk.match(/技能类型2=([^\n]*)/);
@@ -2379,7 +2420,7 @@ function renderWikiData(name,data,target){
     h.push('<div class="wikisec"><h4>⚔️ 技能详情</h4>');
     var skills=data.skills;
     var blocks=skills.split(/'''技能[0-9]+（/);
-    for(var bi=1;bi<blocks.length;bi++){ var blk=blocks[bi]; var endNm=blk.indexOf("'''"); var nm=endNm>=0?blk.slice(0,endNm):''; h.push('<div class="wskill"><div class="wskillname">'+esc(stripWiki(wikiColor(nm)))+'</div>'); var sm=blk.match(/技能名=([^\n]*)/); if(sm)h.push('<div class="wskillnm">'+esc(stripWiki(wikiColor(sm[1])))+'</div>'); var t1=blk.match(/技能类型1=([^\n]*)/), t2=blk.match(/技能类型2=([^\n]*)/); if(t1||t2)h.push('<div class="wskilltype">'+esc(stripWiki(wikiColor(t1?t1[1]:''))+(t1&&t2?' · ':'')+stripWiki(wikiColor(t2?t2[1]:'')))+'</div>'); var lv7m=blk.match(/技能7描述=([^\n]*)/); if(lv7m)h.push('<div class="wskilldesc">'+esc(stripWiki(wikiColor(lv7m[1])))+'</div>'); var i7=blk.match(/技能7初始=([^\n|]*)/), c7=blk.match(/技能7消耗=([^\n|]*)/), d7=blk.match(/技能7持续=([^\n|]*)/); if(i7||c7||d7)h.push('<div class="wskillnum">初始 '+(i7?esc(stripWiki(wikiColor(i7[1]))):'—')+' · 消耗 '+(c7?esc(stripWiki(wikiColor(c7[1]))):'—')+' · 持续 '+(d7&&d7[1]?esc(stripWiki(wikiColor(d7[1]))):'—')+'（7级）</div>'); var m1=blk.match(/技能专精1描述=([^\n]*)/); if(m1)h.push('<div class="wskilldesc m">专精1：'+esc(stripWiki(wikiColor(m1[1])))+'</div>'); var m2=blk.match(/技能专精2描述=([^\n]*)/); if(m2)h.push('<div class="wskilldesc m">专精2：'+esc(stripWiki(wikiColor(m2[1])))+'</div>'); var m3=blk.match(/技能专精3描述=([^\n]*)/); if(m3)h.push('<div class="wskilldesc m">专精3：'+esc(stripWiki(wikiColor(m3[1])))+'</div>'); h.push('</div>'); }
+    for(var bi=1;bi<blocks.length;bi++){ var blk=blocks[bi]; var endNm=blk.indexOf("'''"); var nm=endNm>0?blk.slice(0,endNm):('技能'+bi); var endNmDummy=endNm>=0?blk.slice(0,endNm):''; h.push('<div class="wskill"><div class="wskillname">'+esc(stripWiki(wikiColor(nm)))+'</div>'); var sm=blk.match(/技能名=([^\n]*)/); if(sm)h.push('<div class="wskillnm">'+esc(stripWiki(wikiColor(sm[1])))+'</div>'); var t1=blk.match(/技能类型1=([^\n]*)/), t2=blk.match(/技能类型2=([^\n]*)/); if(t1||t2)h.push('<div class="wskilltype">'+esc(stripWiki(wikiColor(t1?t1[1]:''))+(t1&&t2?' · ':'')+stripWiki(wikiColor(t2?t2[1]:'')))+'</div>'); var lv7m=blk.match(/技能7描述=([^\n]*)/); if(lv7m)h.push('<div class="wskilldesc">'+esc(stripWiki(wikiColor(lv7m[1])))+'</div>'); var i7=blk.match(/技能7初始=([^\n|]*)/), c7=blk.match(/技能7消耗=([^\n|]*)/), d7=blk.match(/技能7持续=([^\n|]*)/); if(i7||c7||d7)h.push('<div class="wskillnum">初始 '+(i7?esc(stripWiki(wikiColor(i7[1]))):'—')+' · 消耗 '+(c7?esc(stripWiki(wikiColor(c7[1]))):'—')+' · 持续 '+(d7&&d7[1]?esc(stripWiki(wikiColor(d7[1]))):'—')+'（7级）</div>'); var m1=blk.match(/技能专精1描述=([^\n]*)/); if(m1)h.push('<div class="wskilldesc m">专精1：'+esc(stripWiki(wikiColor(m1[1])))+'</div>'); var m2=blk.match(/技能专精2描述=([^\n]*)/); if(m2)h.push('<div class="wskilldesc m">专精2：'+esc(stripWiki(wikiColor(m2[1])))+'</div>'); var m3=blk.match(/技能专精3描述=([^\n]*)/); if(m3)h.push('<div class="wskilldesc m">专精3：'+esc(stripWiki(wikiColor(m3[1])))+'</div>'); h.push('</div>'); }
     h.push('</div>');
   }
   if(data&&data.mats){

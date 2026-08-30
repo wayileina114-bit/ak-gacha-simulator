@@ -16,9 +16,16 @@ for (const o of ops) {
     av: (o.avatar.match(/media\.prts\.wiki\/([0-9a-f]\/[0-9a-f]{2})\//) || [])[1] || '',
     art: o.art || '', artV: o.artV || 2,
     gift: COLLAB_GIFT_OPS.indexOf(o.name) >= 0,
+    collabOp: collabOps.has(o.name),
   };
 }
 
+const collabOps = new Set();
+for (const b of banners) {
+  if (COLLAB_POOL_NAMES.indexOf(b.name) >= 0) {
+    for (const s of [...b.six, ...b.five]) collabOps.add((ALIAS[s.name]) || s.name);
+  }
+}
 const limitedSet = new Set();
 for (const b of banners) for (const s of b.six) if (s.limited) limitedSet.add(s.name);
 for (const b of banners) for (const s of b.five) if (s.limited) limitedSet.add(s.name);
