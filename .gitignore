@@ -2,6 +2,7 @@
 data/character_table.json
 data/_*.js
 data/_*.json
+data/_*.mjs
 # 临时文件
 *.tmp
 Thumbs.db
