@@ -185,7 +185,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .notice{font-size:12px; color:var(--dim); margin-top:8px; line-height:1.7}
 .notice b{color:var(--acc)}
 .selbox{margin-top:12px; padding:10px; background:var(--bg2); border:1px solid var(--line); border-radius:10px}
-.seltitle{font-size:12px; color:var(--acc2); margin-bottom:8px}
+.seltitle{font-size:12px; color:var(--acc2); margin-bottom:8px; font-weight:700; border-left:3px solid var(--acc2); padding-left:8px; letter-spacing:.5px}
 .selgrid{display:flex; gap:8px; flex-wrap:wrap}
 .selop{
   width:64px; border-radius:8px; overflow:hidden; cursor:pointer; text-align:center;
@@ -2189,6 +2189,13 @@ function renderStats(){
   $('statsGrid').innerHTML=h.join('');
 }
 function totalOps(){ return Object.keys(opByName).length; }
+var RARITY_GROUPS=null;
+function rarityGroups(){
+  if(RARITY_GROUPS)return RARITY_GROUPS;
+  RARITY_GROUPS={6:[],5:[],4:[],3:[]};
+  for(var k5 in opByName){ var r5=opByName[k5].rarity; if(RARITY_GROUPS[r5])RARITY_GROUPS[r5].push(k5); }
+  return RARITY_GROUPS;
+}
 var histF='all', histT='all', histTime='all', histN=60, histOp='', histSearch='', histGap='all', histRar='all', histBid='';
 var HIST_FILTER_CACHE=null, HIST_FILTER_KEY='';
 function histFilteredList(){
@@ -2333,8 +2340,8 @@ function renderCollection(){
   }
   $('collection').innerHTML=h.join('');
   var cc=$('colCount'); if(cc)cc.textContent='已拥有 '+state.collection.length+' / '+totalOps()+' · 未拥有 '+(totalOps()-state.collection.length);
-  var cc2=$('colRarity'); if(cc2){ var rk=[6,5,4,3], rh=['<div class="colrar">'], rn, rt, rgot;
-    for(rn=0;rn<rk.length;rn++){ rt=rk[rn]; rgot=0; var rcnt=0; for(var rk2 in opByName){ if(opByName[rk2].rarity===rt){ rcnt++; if(colSet[rk2])rgot++; } } rh.push('<span class="cr">'+rt+'★<b>'+rgot+'/'+rcnt+'</b></span>'); }
+  var cc2=$('colRarity'); if(cc2){ var rk=[6,5,4,3], rh=['<div class="colrar">'], rn, rt, rgot, rgG;
+    for(rn=0;rn<rk.length;rn++){ rt=rk[rn]; rgot=0; rgG=rarityGroups()[rt]||[]; for(var rgi2=0;rgi2<rgG.length;rgi2++){ if(colSet[rgG[rgi2]])rgot++; } rh.push('<span class="cr">'+rt+'★<b>'+rgot+'/'+rgG.length+'</b></span>'); }
     rh.push('</div>'); cc2.innerHTML=rh.join(''); }
   var cb=$('colBar'); if(cb)cb.innerHTML='<i style="width:'+(totalOps()?Math.round(state.collection.length/totalOps()*100):0)+'%"></i>';
   var colWrap=$('collection');
@@ -3294,14 +3301,20 @@ function openCompare(){
   for(var ci2=0;ci2<chips.length;ci2++){
     (function(ch2){
       ch2.onclick=function(){
-        var nn=ch2.getAttribute('data-n');
-        var a2=ca?ca.value.trim():'';
-        if(!a2||a2===nn){ if(ca)ca.value=nn; if(cb&&cb.value===nn)cb.value=''; }
-        else if(cb)cb.value=nn;
+        pickCompareChip(ch2.getAttribute('data-n'), ca, cb);
         go();
       };
     })(chips[ci2]);
   }
+}
+function pickCompareChip(nn, ca, cb){
+  if(!nn)return;
+  var a2=ca?(ca.value||'').trim():'', b2=cb?(cb.value||'').trim():'';
+  if(!a2){ if(ca)ca.value=nn; return; }
+  if(b2===nn){ if(cb)cb.value=''; return; }
+  if(a2===nn){ if(ca)ca.value=''; if(cb)cb.value=nn; return; }
+  if(!b2){ if(cb)cb.value=nn; return; }
+  if(cb)cb.value=nn;
 }
 function renderCompare(a,b){
   var out=$('cmpOut'); if(!out)return;
@@ -3358,7 +3371,7 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v11.79</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v11.80</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 存档导入导出 · 四主题</div>');
   h.push('</div>');
@@ -3370,7 +3383,7 @@ function openAbout(){
   var pb=$('btnWikiProbe'); if(pb)pb.onclick=function(){ var po=$('wikiProbeOut'); if(po)wikiProbe(po); };
   var al=$('aboutLog');
   if(al){
-    var logTxt=['<b>v11.79</b> 对比同名拦截 · 建议索引缓存 · 职业标签','<b>v11.78</b> 预加载单次请求 · 井选择分页 · 统计数字渐变','<b>v11.77</b> 统计页单遍聚合 · 井兑换快照校验 · 图表行悬停','<b>v11.76</b> 抽到6★顺序修正 · 图鉴排序提速 · 成就悬停','<b>v11.75</b> 历史筛选零污染 · 筛选结果缓存 · 日期胶囊','<b>v11.74</b> 皮肤图片失败占位 · 滑动窗口统计 · 热力图悬停','<b>v11.73</b> 跨期新干员修正 · 卡池状态缓存 · 语音美化','<b>v11.72</b> 历史标签 · 列表缓存 · 行悬停','<b>v11.71</b> 开启倒计时小时 · 关卡缓存 · Wiki美化','<b>v11.70</b> 模拟自选池拦截 · 空池防护 · 当前池高亮','<b>v11.69</b> 概率提示可见 · jsonp超时 · 输入聚焦','<b>v11.68</b> 运势每日固定 · 章节缓存 · 标题渐变','<b>v11.67</b> 清空重置领取 · 批量性能 · 卡片美化','<b>v11.66</b> 倒计时小时 · 皮肤缓存 · 美化','<b>v11.65</b> 删除动态皮肤数量显示','<b>v11.64</b> 真实掉率比值 · 删除真实记录','<b>v11.63</b> 删除不存在材料','<b>v11.62</b> 材料列表清理 · 兜底两字','<b>v11.61</b> 材料图标本地嵌入 · 离线可用','<b>v11.60</b> 材料实时快速失败 · PRTS冷却','<b>v11.59</b> 时装回廊动态角标 · 功能体检','<b>v11.58</b> 限定归类修正 · 兑换计入统计','<b>v11.57</b> 代理链扩充至8重 · 皮肤注释清理','<b>v11.56</b> 模拟等价消耗 · 详情皮肤数','<b>v11.55</b> 立绘画廊职业筛选 · 计数','<b>v11.54</b> 井兑换规则修正 · 联动文案','<b>v11.53</b> 成就扩充（联动/井中月/六星军团）','<b>v11.52</b> 关于面板更新 · 时装回廊统计','<b>v11.51</b> Wiki连通性检测 · 关于面板优化','<b>v11.50</b> 养成材料逐项推荐 · 皮肤泄漏/范围修复','<b>v11.49</b> 材料刷取查询重做 · 真图标','<b>v11.48</b> Wiki同步六重回退 · 进度提示','<b>v11.47</b> Wiki返回按钮 · 材料PRTS链接','<b>v11.46</b> 材料图标彩色兜底','<b>v11.45</b> 材料入口去重 · 图标重试','<b>v11.44</b> 皮肤懒加载缓存 · 时装角标','<b>v11.43</b> 特性行 · 时装列表','<b>v11.42</b> 联动池300井','<b>v11.41</b> 手机端卡池列表可滑动','<b>v11.40</b> Wiki整页获取 · 五重回退','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
+    var logTxt=['<b>v11.80</b> 对比chip语义 · 稀有度分组 · 自选标题强调','<b>v11.79</b> 对比同名拦截 · 建议索引缓存 · 职业标签','<b>v11.78</b> 预加载单次请求 · 井选择分页 · 统计数字渐变','<b>v11.77</b> 统计页单遍聚合 · 井兑换快照校验 · 图表行悬停','<b>v11.76</b> 抽到6★顺序修正 · 图鉴排序提速 · 成就悬停','<b>v11.75</b> 历史筛选零污染 · 筛选结果缓存 · 日期胶囊','<b>v11.74</b> 皮肤图片失败占位 · 滑动窗口统计 · 热力图悬停','<b>v11.73</b> 跨期新干员修正 · 卡池状态缓存 · 语音美化','<b>v11.72</b> 历史标签 · 列表缓存 · 行悬停','<b>v11.71</b> 开启倒计时小时 · 关卡缓存 · Wiki美化','<b>v11.70</b> 模拟自选池拦截 · 空池防护 · 当前池高亮','<b>v11.69</b> 概率提示可见 · jsonp超时 · 输入聚焦','<b>v11.68</b> 运势每日固定 · 章节缓存 · 标题渐变','<b>v11.67</b> 清空重置领取 · 批量性能 · 卡片美化','<b>v11.66</b> 倒计时小时 · 皮肤缓存 · 美化','<b>v11.65</b> 删除动态皮肤数量显示','<b>v11.64</b> 真实掉率比值 · 删除真实记录','<b>v11.63</b> 删除不存在材料','<b>v11.62</b> 材料列表清理 · 兜底两字','<b>v11.61</b> 材料图标本地嵌入 · 离线可用','<b>v11.60</b> 材料实时快速失败 · PRTS冷却','<b>v11.59</b> 时装回廊动态角标 · 功能体检','<b>v11.58</b> 限定归类修正 · 兑换计入统计','<b>v11.57</b> 代理链扩充至8重 · 皮肤注释清理','<b>v11.56</b> 模拟等价消耗 · 详情皮肤数','<b>v11.55</b> 立绘画廊职业筛选 · 计数','<b>v11.54</b> 井兑换规则修正 · 联动文案','<b>v11.53</b> 成就扩充（联动/井中月/六星军团）','<b>v11.52</b> 关于面板更新 · 时装回廊统计','<b>v11.51</b> Wiki连通性检测 · 关于面板优化','<b>v11.50</b> 养成材料逐项推荐 · 皮肤泄漏/范围修复','<b>v11.49</b> 材料刷取查询重做 · 真图标','<b>v11.48</b> Wiki同步六重回退 · 进度提示','<b>v11.47</b> Wiki返回按钮 · 材料PRTS链接','<b>v11.46</b> 材料图标彩色兜底','<b>v11.45</b> 材料入口去重 · 图标重试','<b>v11.44</b> 皮肤懒加载缓存 · 时装角标','<b>v11.43</b> 特性行 · 时装列表','<b>v11.42</b> 联动池300井','<b>v11.41</b> 手机端卡池列表可滑动','<b>v11.40</b> Wiki整页获取 · 五重回退','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
     al.innerHTML=logTxt;
   }
   openModalBox();
