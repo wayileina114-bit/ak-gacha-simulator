@@ -1,6 +1,6 @@
 # 明日方舟抽卡模拟器（Arknights Gacha Simulator）
 
-![version](https://img.shields.io/badge/version-v11.63-blue) ![banners](https://img.shields.io/badge/卡池-442-orange) ![ops](https://img.shields.io/badge/干员-409-brightgreen) ![license](https://img.shields.io/badge/license-MIT-lightgrey)
+![version](https://img.shields.io/badge/version-v11.64-blue) ![banners](https://img.shields.io/badge/卡池-442-orange) ![ops](https://img.shields.io/badge/干员-409-brightgreen) ![license](https://img.shields.io/badge/license-MIT-lightgrey)
 
 > 单文件 HTML 的明日方舟抽卡模拟器 · 自选历史卡池 · 干员立绘 · 抽卡统计 · 皮肤图鉴
 
@@ -29,15 +29,6 @@
 ## 📦 发布资源
 
 每个版本提供 `akgacha_vX.Y.zip`：包含成品 HTML、源码、数据与文档，见 [Releases](https://github.com/wayileina114-bit/ak-gacha-simulator/releases)。
-
-## 🔗 真实寻访记录（纯前端分析）
-
-在 HTML 的「真实寻访记录」中可导入游戏抽卡记录做纯前端分析，数据不出浏览器：
-
-- 使用市面现成的**寻访记录导出工具**（Android/iOS 均可）导出 JSON
-- 在本工具中**粘贴文本**或**选择/拖拽 .json 文件**导入
-- 自动统计：总抽数 · 六星出货率 · 六星间隔 · 各星占比 · 月度分布 · 保底情况
-- ⚠️ 说明：受限于第三方接口的不稳定性，本项目不做后端自动获取，也不收集任何账号数据；所有解析均在本地浏览器完成。
 
 ## 🛠️ 本地构建
 

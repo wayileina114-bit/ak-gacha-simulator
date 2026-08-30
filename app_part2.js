@@ -999,75 +999,6 @@ var LOGISTICS_DB={
  '批发·α':'进驻贸易站时，订单获取效率+15%',
  '批发·β':'进驻贸易站时，订单获取效率+25%',
 };
-function parseRealRecords(text){
-  var obj=JSON.parse(text);
-  var arr=Array.isArray(obj)?obj:((obj.records||obj.gacha||obj.list||obj.data||[]));
-  var out=[];
-  for(var i=0;i<arr.length;i++){
-    var r=arr[i];
-    if(r===null||r===undefined)continue;
-    if(typeof r==='string'){ out.push({name:String(r),ts:null,pool:''}); continue; }
-    var name=r.char||r.charName||r.name||r.op||r.干员||r.operator;
-    var ts=r.ts||r.time||r.timestamp||r.t;
-    if(ts&&typeof ts==='string'&&ts.indexOf('-')>0){ var d=new Date(ts); if(!isNaN(d.getTime()))ts=d.getTime(); }
-    if(ts&&Number(ts)>0&&Number(ts)<1e12)ts=Number(ts)*1000;
-    out.push({name:String(name||''),ts:(ts?Number(ts):null),pool:r.pool||r.banner||r.卡池||''});
-  }
-  return out.filter(function(x){return x.name&&x.name!=='undefined';});
-}
-function realRarity(name){
-  var o=opOf(name);
-  if(o)return o.rarity;
-  return RAR_DB[name]||0;
-}
-
-function renderRealAnalysis(recs){
-  var h=[];
-  var total=recs.length, c6=0, c5=0, sixList=[], poolMap={}, i, r;
-  for(i=0;i<total;i++){
-    r=recs[i];
-    var rar=realRarity(r.name);
-    if(rar===6){ c6++; sixList.push(r); }
-    else if(rar===5)c5++;
-    var pk=r.pool||'未知卡池';
-    if(!poolMap[pk])poolMap[pk]={n:0,s6:0};
-    poolMap[pk].n++;
-    if(rar===6)poolMap[pk].s6++;
-  }
-  var rate6=total?(c6/total*100):0;
-  var lv=rate6>=3.4?5:(rate6>=3.1?4:(rate6>=2.6?3:(rate6>=2.2?2:1)));
-  h.push('<div class="luckbadge lv'+lv+'"><div class="lb-score">'+rate6.toFixed(2)+'%</div><div class="lb-label">真实记录 '+total+' 抽 · 6★出率（期望 2.89%）</div></div>');
-  h.push('<div class="stats-grid">');
-  h.push('<div class="stat"><div class="v red">'+c6+'</div><div class="k">6★总数</div></div>');
-  h.push('<div class="stat"><div class="v gold">'+c5+'</div><div class="k">5★总数（'+(total?(c5/total*100).toFixed(1):0)+'%）</div></div>');
-  h.push('<div class="stat"><div class="v">'+total+'</div><div class="k">总抽数</div></div>');
-  h.push('<div class="stat"><div class="v'+(c6&&rate6>=2.89?' gold':'')+'">'+Math.round(c6/Math.max(0.001,total*0.0289)*100)+'</div><div class="k">欧气指数</div></div>');
-  h.push('</div>');
-  // 6★ 列表（时间倒序）
-  if(sixList.length){
-    h.push('<div class="wikisec"><h4>✨ 真实6★记录</h4><div class="wikirows">');
-    for(i=0;i<Math.min(20,sixList.length);i++){
-      r=sixList[i];
-      var tsTxt=r.ts?new Date(r.ts).toLocaleString():'';
-      var unk=r.pool?'':'（未知干员）';
-      h.push('<div class="wrow"><b>'+esc(r.name)+'</b><span>'+esc(r.pool||'')+' '+(tsTxt?esc(tsTxt):'')+unk+'</span></div>');
-    }
-    if(sixList.length>20)h.push('<div class="notice">……共 '+sixList.length+' 只6★</div>');
-    h.push('</div></div>');
-  }
-  // 卡池分布
-  var pkeys=Object.keys(poolMap);
-  if(pkeys.length){
-    h.push('<div class="wikisec"><h4>🗂 卡池分布</h4><div class="wikirows">');
-    for(i=0;i<Math.min(12,pkeys.length);i++){
-      var pk2=pkeys[i], pv=poolMap[pk2];
-      h.push('<div class="wrow"><b>'+esc(pk2)+'</b><span>'+pv.n+' 抽 · 6★×'+pv.s6+(pv.n?( ' · 6★率 '+(pv.s6/pv.n*100).toFixed(1)+'%'):'')+'</span></div>');
-    }
-    if(pkeys.length>12)h.push('<div class="notice">……共 '+pkeys.length+' 个卡池</div>');
-    h.push('</div></div>');
-  }
-  return h.join('');
-}
 function parseMatDrops(html){
   var res={fixed:[],prob:[],rare:[]};
   var labels=[['固定掉落','fixed'],['概率掉落','prob'],['小概率掉落','rare']];
@@ -1097,7 +1028,7 @@ function renderLiveDrops(drops, mn){
     h.push('<div class="mat-live-cat"><b>'+cats[ci][1]+'</b><span>');
     for(var si=0;si<list.length;si++){
       var ch=chapterOf(list[si]);
-      h.push('<span class="mat-live-stage">'+esc(list[si])+(ch?' · '+esc(ch):'')+'</span>');
+      h.push('<span class="mat-live-stage">'+esc(list[si])+(ch?' · '+esc(ch):'')+apTxt(matApInfo(list[si], mn))+'</span>');
     }
     h.push('</span></div>');
   }
@@ -1105,17 +1036,22 @@ function renderLiveDrops(drops, mn){
   h.push('</div>');
   return h.join('');
 }
-function matApMap(){
-  var m={}, k, i;
-  for(k in MAT_FARM_DB){
-    var d=MAT_FARM_DB[k];
-    if(!d||!d.stages)continue;
-    for(i=0;i<d.stages.length;i++){
-      var s=d.stages[i];
-      if(s.ap!==undefined&&!m[s.stage])m[s.stage]=s.ap;
-    }
-  }
-  return m;
+var AP_DATA=(typeof DATA!=='undefined'&&DATA.apd)?DATA.apd:{};
+function matApInfo(stage, mn){
+  try{
+    var e=AP_DATA[stage];
+    if(!e||!e.per)return undefined;
+    var v=e.per[mn];
+    return v!==undefined?v:undefined;
+  }catch(e2){ return undefined; }
+}
+function matStagesOf(mn){
+  var arr=[], k, i;
+  var d=MAT_FARM_DB[mn];
+  if(d&&d.stages){ for(i=0;i<d.stages.length;i++){ var s=d.stages[i]; if(s.stage&&arr.indexOf(s.stage)<0)arr.push(s.stage); } }
+  var b=MAT_BILL[mn];
+  if(b){ var cats=['fixed','high','prob','rare','super','extra']; for(k=0;k<cats.length;k++){ var l=b[cats[k]]; if(l)for(i=0;i<l.length;i++){ if(arr.indexOf(l[i])<0)arr.push(l[i]); } } }
+  return arr;
 }
 function apTxt(ap){
   if(ap===undefined)return '';
@@ -1124,18 +1060,17 @@ function apTxt(ap){
 function matStagesHtml(mn){
   var b=MAT_BILL[mn]||{};
   var h=[];
-  var apMap=matApMap();
   var cats=[['fixed','固定掉落'],['high','大概率'],['prob','概率掉落'],['rare','小概率'],['super','罕见'],['extra','额外物资']];
   var any=false, ci, si;
   for(ci=0;ci<cats.length;ci++){
     var list=b[cats[ci][0]];
     if(!list||!list.length)continue;
     any=true;
-    if(!h.length)h.push('<div class="wikisec"><h4>📦 掉落来源（bilibili Wiki 本地数据）</h4>');
+    if(!h.length)h.push('<div class="wikisec"><h4>📦 掉落来源（bilibili Wiki 本地数据 · 理智/个为企鹅物流实测）</h4>');
     h.push('<div class="mat-live-cat"><b>'+cats[ci][1]+'</b><span>');
     for(si=0;si<list.length;si++){
       var st=list[si], ch=chapterOf(st);
-      h.push('<span class="mat-live-stage">'+esc(st)+(ch?' · '+esc(ch):'')+apTxt(apMap[st])+'</span>');
+      h.push('<span class="mat-live-stage">'+esc(st)+(ch?' · '+esc(ch):'')+apTxt(matApInfo(st, mn))+'</span>');
     }
     h.push('</span></div>');
   }
@@ -1152,7 +1087,8 @@ function matStagesHtml(mn){
         var st2=d.stages[i];
         var ch2=chapterOf(st2.stage);
         var dropsHtml=(st2.drops&&st2.drops.length)?('<br/>其他产物：'+st2.drops.map(function(x){return matIconHtml(x)+'<span class="mat-drop">'+esc(x)+'</span>';}).join(' ')):'';
-        h.push('<div class="wrow"><b>'+esc(st2.stage)+'</b><span>'+(ch2?esc(ch2)+' · ':'')+'估计 '+(st2.ap<1?'理智效率极高':(st2.ap.toFixed(1)+' 理智/个'))+'（参考值）'+dropsHtml+(st2.note?'<br/>'+esc(st2.note):'')+'</span></div>');
+        var realAp2=matApInfo(st2.stage, mn);
+        h.push('<div class="wrow"><b>'+esc(st2.stage)+'</b><span>'+(ch2?esc(ch2)+' · ':'')+(realAp2!==undefined?apTxt(realAp2):'（无实测掉率）')+dropsHtml+(st2.note?'<br/>'+esc(st2.note):'')+'</span></div>');
       }
       h.push('</div>');
       any=true;
@@ -1272,60 +1208,6 @@ function openMatDetail(mn){
   $('mBody').innerHTML=h.join('');
   var mb=$('matBack'); if(mb)mb.onclick=function(){ openMatQuery(); };
   openModalBox();
-}
-function openRealGacha(){
-  var h=['<h4 class="sect" style="margin-top:0">🎯 真实寻访记录分析</h4>'];
-  h.push('<div class="wikihint">使用市面现成的<b>寻访记录导出工具</b>（Android/iOS 均有）导出 JSON 后，<b>粘贴</b>或<b>选择文件</b>导入，本工具纯前端解析分析，数据不出浏览器。<br/>支持 records/gacha/list 数组格式（含 char/name、ts/time、pool/banner 字段）。</div>');
-  h.push('<div class="imp-drop" id="realFileDrop">📂 点击选择 或 拖拽 .json 寻访记录文件</div>');
-  h.push('<input type="file" id="realFile" accept=".json,application/json" style="display:none"/>');
-  h.push('<textarea id="realInput" placeholder="或直接粘贴寻访记录 JSON 文本…"></textarea>');
-  h.push('<div class="wikisearch"><button class="mini-btn" id="realParse">🔍 解析分析</button><button class="mini-btn" id="realSample">填入示例</button></div>');
-  h.push('<div id="realOut"></div>');
-  $('mBody').innerHTML=h.join('');
-  openModalBox();
-  function doParse(){
-    var txt=($('realInput')?$('realInput').value:'').trim();
-    if(!txt){ toast('请先粘贴 JSON 或选择文件'); return; }
-    try{
-      var recs=parseRealRecords(txt);
-      if(!recs.length){ toast('未解析到有效记录'); return; }
-      $('realOut').innerHTML=renderRealAnalysis(recs);
-      toast('解析成功：'+recs.length+' 条记录');
-    }catch(e){ toast('JSON 解析失败：'+e.message); }
-  }
-  var rp=$('realParse');
-  if(rp)rp.onclick=doParse;
-  var drop=$('realFileDrop'), fileIn=$('realFile');
-  if(drop)drop.onclick=function(){ try{ fileIn.click(); }catch(e){} };
-  if(fileIn)fileIn.onchange=function(){
-    var f=fileIn.files&&fileIn.files[0];
-    if(!f||typeof FileReader==='undefined')return;
-    if(f.size>20*1024*1024){ toast('文件过大'); return; }
-    var rd=new FileReader();
-    rd.onload=function(){ try{ var txtEl=$('realInput'); if(txtEl)txtEl.value=String(rd.result||''); toast('已读取 '+f.name+'，点击「解析分析」'); }catch(e){} };
-    rd.onerror=function(){ toast('文件读取失败'); };
-    rd.readAsText(f);
-  };
-  try{
-    var dz=$('mBody');
-    if(dz&&dz.addEventListener){
-      dz.addEventListener('dragover',function(e){ try{e.preventDefault();}catch(x){} if(drop)drop.classList.add('over'); });
-      dz.addEventListener('dragleave',function(){ if(drop)drop.classList.remove('over'); });
-      dz.addEventListener('drop',function(e){
-        try{e.preventDefault();}catch(x){}
-        if(drop)drop.classList.remove('over');
-        var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
-        if(!f||typeof FileReader==='undefined')return;
-        var rd=new FileReader();
-        rd.onload=function(){ try{ var txtEl=$('realInput'); if(txtEl)txtEl.value=String(rd.result||''); toast('已读取 '+f.name+'，点击「解析分析」'); }catch(e){} };
-        rd.readAsText(f);
-      });
-    }
-  }catch(e){}
-  var rs=$('realSample');
-  if(rs)rs.onclick=function(){
-    var inp=$('realInput'); if(inp)inp.value=JSON.stringify({records:[{pool:'感谢庆典·寻访',char:'维什戴尔',ts:Date.now()-86400000*30},{pool:'感谢庆典·寻访',char:'能天使',ts:Date.now()-86400000*28},{pool:'常驻标准寻访',char:'德克萨斯',ts:Date.now()-86400000*20},{pool:'常驻标准寻访',char:'能天使',ts:Date.now()-86400000*18},{pool:'常驻标准寻访',char:'白面鸮',ts:Date.now()-86400000*10}]});
-  };
 }
 function openReport(){
   var h=['<h4 class="sect" style="margin-top:0">📊 抽卡报告</h4><div class="controls" style="margin-bottom:8px"><button class="mini-btn" id="rpWeek">📅 周报（7天）</button><button class="mini-btn" id="rpMonth">📅 月报（30天）</button><button class="mini-btn" id="rpCopy">📋 复制报告</button></div><div id="rpOut"></div>'];
@@ -2237,15 +2119,14 @@ function parseMatsItems(line){
   return out;
 }
 function matFarmRec(mn){
-  var f=MAT_FARM_DB[mn];
-  if(!f||!f.stages||!f.stages.length)return '';
+  var stagesArr=matStagesOf(mn);
   var best=null, fi;
-  for(fi=0;fi<f.stages.length;fi++){
-    var st=f.stages[fi];
-    if(!best||(st.ap!==undefined&&(best.ap===undefined||st.ap<best.ap)))best=st;
+  for(fi=0;fi<stagesArr.length;fi++){
+    var v=matApInfo(stagesArr[fi], mn);
+    if(v!==undefined&&(!best||v<best.v))best={stage:stagesArr[fi], v:v};
   }
   if(!best)return '';
-  var ap=best.ap!==undefined?(best.ap<1?'（效率极高）':'（约'+best.ap.toFixed(1)+'理智/个）'):'';
+  var ap=best.v<1?'（效率极高）':('（约'+best.v.toFixed(1)+'理智/个）');
   return ' <em class="farm mat-rec">📌 推荐 <b>'+esc(best.stage)+'</b>'+ap+'</em>';
 }
 function matConsSpans(items){
@@ -2654,9 +2535,9 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v11.63</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v11.64</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
-  h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 真实寻访记录分析（纯前端）· 存档导入导出 · 四主题</div>');
+  h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 存档导入导出 · 四主题</div>');
   h.push('</div>');
   h.push('<div class="wikisec"><h4>⌨️ 快捷键</h4><div class="notice">1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏卡池 · G 画廊 · S 统计 · H 寻访记录 · W 心愿单 · P 保底一览</div></div>');
   h.push('<div class="wikisec"><h4>🗂 数据来源</h4><div class="notice">PRTS Wiki（卡池/干员/Wiki数据，更新至 2026-08-29）· bilibili Wiki（精二立绘· 皮肤 · 材料图标与掉落数据）· 图片在线加载，需联网；语音提供台词文本与 PRTS 试听链接</div></div>');
@@ -2666,7 +2547,7 @@ function openAbout(){
   var pb=$('btnWikiProbe'); if(pb)pb.onclick=function(){ var po=$('wikiProbeOut'); if(po)wikiProbe(po); };
   var al=$('aboutLog');
   if(al){
-    var logTxt=['<b>v11.63</b> 删除不存在材料','<b>v11.62</b> 材料列表清理 · 兜底两字','<b>v11.61</b> 材料图标本地嵌入 · 离线可用','<b>v11.60</b> 材料实时快速失败 · PRTS冷却','<b>v11.59</b> 时装回廊动态角标 · 功能体检','<b>v11.58</b> 限定归类修正 · 兑换计入统计','<b>v11.57</b> 代理链扩充至8重 · 皮肤注释清理','<b>v11.56</b> 模拟等价消耗 · 详情皮肤数','<b>v11.55</b> 立绘画廊职业筛选 · 计数','<b>v11.54</b> 井兑换规则修正 · 联动文案','<b>v11.53</b> 成就扩充（联动/井中月/六星军团）','<b>v11.52</b> 关于面板更新 · 时装回廊统计','<b>v11.51</b> Wiki连通性检测 · 关于面板优化','<b>v11.50</b> 养成材料逐项推荐 · 皮肤泄漏/范围修复','<b>v11.49</b> 材料刷取查询重做 · 真图标','<b>v11.48</b> Wiki同步六重回退 · 进度提示','<b>v11.47</b> Wiki返回按钮 · 材料PRTS链接','<b>v11.46</b> 材料图标彩色兜底','<b>v11.45</b> 材料入口去重 · 图标重试','<b>v11.44</b> 皮肤懒加载缓存 · 时装角标','<b>v11.43</b> 特性行 · 时装列表','<b>v11.42</b> 联动池300井','<b>v11.41</b> 手机端卡池列表可滑动','<b>v11.40</b> Wiki整页获取 · 五重回退','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
+    var logTxt=['<b>v11.64</b> 真实掉率比值 · 删除真实记录','<b>v11.63</b> 删除不存在材料','<b>v11.62</b> 材料列表清理 · 兜底两字','<b>v11.61</b> 材料图标本地嵌入 · 离线可用','<b>v11.60</b> 材料实时快速失败 · PRTS冷却','<b>v11.59</b> 时装回廊动态角标 · 功能体检','<b>v11.58</b> 限定归类修正 · 兑换计入统计','<b>v11.57</b> 代理链扩充至8重 · 皮肤注释清理','<b>v11.56</b> 模拟等价消耗 · 详情皮肤数','<b>v11.55</b> 立绘画廊职业筛选 · 计数','<b>v11.54</b> 井兑换规则修正 · 联动文案','<b>v11.53</b> 成就扩充（联动/井中月/六星军团）','<b>v11.52</b> 关于面板更新 · 时装回廊统计','<b>v11.51</b> Wiki连通性检测 · 关于面板优化','<b>v11.50</b> 养成材料逐项推荐 · 皮肤泄漏/范围修复','<b>v11.49</b> 材料刷取查询重做 · 真图标','<b>v11.48</b> Wiki同步六重回退 · 进度提示','<b>v11.47</b> Wiki返回按钮 · 材料PRTS链接','<b>v11.46</b> 材料图标彩色兜底','<b>v11.45</b> 材料入口去重 · 图标重试','<b>v11.44</b> 皮肤懒加载缓存 · 时装角标','<b>v11.43</b> 特性行 · 时装列表','<b>v11.42</b> 联动池300井','<b>v11.41</b> 手机端卡池列表可滑动','<b>v11.40</b> Wiki整页获取 · 五重回退','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
     al.innerHTML=logTxt;
   }
   openModalBox();
@@ -4000,7 +3881,6 @@ function init(){
   wire('btnPityMap',openPityMap);
   wire('btnSim',simulatePull);
   wire('btnReport',openReport);
-  wire('btnReal',openRealGacha);
   wire('btnOpStats',openOpStats);
   wire('btnCopyStats',copyStats);
   wire('btnRules',openRules);

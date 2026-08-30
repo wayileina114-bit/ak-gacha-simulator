@@ -79,7 +79,9 @@ const zj6 = [...zjSet6].filter(n => opMap[n]);
 const zj5 = [...zjSet5].filter(n => opMap[n]);
 let mats = {};
 try { mats = JSON.parse(fs.readFileSync('data/mat_bili.json', 'utf8')); } catch (e) {}
-const bundle = { ops: opMap, std6: std6, std5: std5, zj6: zj6, zj5: zj5, banners: outBanners, mats: mats };
+let apd = {};
+try { apd = JSON.parse(fs.readFileSync('data/ap_data.json', 'utf8')); } catch (e) {}
+const bundle = { ops: opMap, std6: std6, std5: std5, zj6: zj6, zj5: zj5, banners: outBanners, mats: mats, apd: apd };
 
 const part1 = fs.readFileSync('app_part1.html', 'utf8');
 const part2 = fs.readFileSync('app_part2.js', 'utf8');
