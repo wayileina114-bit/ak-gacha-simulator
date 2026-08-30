@@ -23,7 +23,7 @@ function api(path, method, body){ return new Promise(function(resolve){
 async function main(){
   const msg = run(GIT + ' -C "' + DIR + '" log -1 --format=%s').trim();
   console.log('commit: ' + msg);
-  const rel = await api('/repos/wayileina114-bit/ak-gacha-simulator/releases', 'POST', { tag_name: VER, name: VER + ' — ' + msg, body: '自动发布 ' + VER + '\n' + msg, draft:false, prerelease:false });
+  const rel = await api('/repos/wayileina114-bit/ak-gacha-simulator/releases', 'POST', { tag_name: VER, name: VER, body: msg + '\n\n详情见 CHANGELOG.md，压缩包见附件。', draft:false, prerelease:false });
   console.log('RELEASE:' + rel.status);
   let rid = null;
   try{ rid = JSON.parse(rel.body).id; }catch(e){}
