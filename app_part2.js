@@ -2355,10 +2355,21 @@ function matFarmRec(mn){
   MAT_REC_CACHE[mn]=rec;
   return rec;
 }
+function matEstimate(mn, n){
+  n=n||1;
+  var best=null, stagesArr=matStagesOf(mn), fi2m;
+  for(fi2m=0;fi2m<stagesArr.length;fi2m++){
+    var v2m=matApInfo(stagesArr[fi2m], mn);
+    if(v2m!==undefined&&(!best||v2m<best.v))best={stage:stagesArr[fi2m], v:v2m};
+  }
+  if(!best)return '';
+  var tot=Math.ceil(n*best.v);
+  return '<em class="mat-est">≈ '+tot+' 理智</em>';
+}
 function matConsSpans(items){
   var sp=[];
   for(var ii=0;ii<items.length;ii++){
-    sp.push('<span class="mat-cons">'+esc(items[ii].name)+(items[ii].n>1?'×'+items[ii].n:'')+matFarmRec(items[ii].name)+'</span>');
+    sp.push('<span class="mat-cons">'+esc(items[ii].name)+(items[ii].n>1?'×'+items[ii].n:'')+matFarmRec(items[ii].name)+matEstimate(items[ii].name, items[ii].n)+'</span>');
   }
   return sp.join(' + ');
 }
@@ -2782,7 +2793,7 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.18</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.19</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 存档导入导出 · 四主题</div>');
   h.push('</div>');
@@ -4233,12 +4244,12 @@ function historyCsvText(useFilter){
   var arr=useFilter?histFilteredList():state.history;
   var NL=String.fromCharCode(10);
   var lines=['干员,稀有度,时间,卡池,卡池类型,UP组合,距上次6★(抽)'];
-  var gapArr=[], gi6=-1, gi2;
-  for(gi2=arr.length-1;gi2>=0;gi2--){
-    if(arr[gi2].rar===6){ gi6=gi2; gapArr[gi2]=0; }
+  var gapArr=[], gi6=-1, gi2, srcH=state.history;
+  for(gi2=srcH.length-1;gi2>=0;gi2--){
+    if(srcH[gi2].rar===6){ gi6=gi2; gapArr[gi2]=0; }
     else gapArr[gi2]=(gi6>=0)?(gi6-gi2):-1;
   }
-  for(var i=0;i<arr.length;i++){ var r=arr[i], o=opOf(r.op), dt=new Date(r.t||Date.now()); var gapTxt=gapArr[i]>=0?String(gapArr[i]):'—';
+  for(var i=0;i<arr.length;i++){ var r=arr[i], o=opOf(r.op), dt=new Date(r.t||Date.now()); var srcIdx=srcH.indexOf(r); var gapTxt=(srcIdx>=0&&gapArr[srcIdx]>=0)?String(gapArr[srcIdx]):'—';
     lines.push(csvEsc(o?o.name:r.op)+','+r.rar+'星,'+dt.getFullYear()+'-'+(dt.getMonth()+1)+'-'+dt.getDate()+' '+dt.getHours()+':'+(dt.getMinutes()<10?'0':'')+dt.getMinutes()+','+csvEsc(r.bn||'')+','+(r.type||'event')+','+csvEsc(r.sel?selShort(r.sel):'')+','+gapTxt); }
   return String.fromCharCode(0xFEFF)+lines.join(NL);
 }
