@@ -75,6 +75,8 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 }
 .mini-btn:hover{border-color:var(--acc2); color:#fff}
 .mini-btn.on{background:var(--acc2); border-color:var(--acc2); color:#fff; font-weight:700}
+#btnSkip.on{animation:skipPulse 1s ease-in-out infinite}
+@keyframes skipPulse{0%,100%{box-shadow:0 0 0 rgba(255,215,106,0)}50%{box-shadow:0 0 10px rgba(255,215,106,.55)}}
 .mini-btn.warn{color:var(--red)}
 .mini-btn.warn:hover{border-color:var(--red)}
 .mini-btn:focus-visible{outline:2px solid var(--acc); outline-offset:2px}
@@ -922,6 +924,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
         <button class="pull-btn single" id="btn1">单抽<span class="cost">快捷键 1</span></button>
         <button class="pull-btn ten" id="btn10">十连寻访<span class="cost">快捷键 2</span></button>
         <button class="pull-btn single" id="btnUntil6">抽到6★<span class="cost">连抽至出货 · 快捷键 3</span></button>
+        <button class="mini-btn" id="btnSkip" title="立即显示抽卡结果并跳过翻转动画">⏭ 跳过动画</button>
         <span class="notice" id="rateNote"></span>
       </div>
       <div id="cards"></div>

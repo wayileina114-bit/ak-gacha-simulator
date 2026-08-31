@@ -785,6 +785,18 @@ function sparkClaim(){
     renderBannerInfo(); renderStats(); renderCollection();
   });
 }
+var ANIM_TIMERS=[], PULL_FINISH=null;
+function animDelay(fn, ms){ var id=setTimeout(fn, ms); ANIM_TIMERS.push(id); if(ANIM_TIMERS.length>40)ANIM_TIMERS.splice(0,ANIM_TIMERS.length-40); return id; }
+function skipAnim(){
+  for(var i=0;i<ANIM_TIMERS.length;i++){ try{ clearTimeout(ANIM_TIMERS[i]); }catch(e){} }
+  ANIM_TIMERS=[];
+  try{
+    var cw=$('cards'), cs=cw&&cw.querySelectorAll?cw.querySelectorAll('.card'):[];
+    for(var j=0;j<cs.length;j++)cs[j].classList.add('flip');
+  }catch(e){}
+  if(PULL_FINISH){ var fn=PULL_FINISH; PULL_FINISH=null; try{ fn(); }catch(e){} }
+  BUSY=false; setBusyUI(false);
+}
 function renderCards(results,msg,has6,names6,has5){
   var wrap=$('cards'), html=[], i;
   for(i=0;i<results.length;i++){
@@ -807,10 +819,10 @@ function renderCards(results,msg,has6,names6,has5){
   for(i=0;i<order.length;i++){
     (function(card,res,fi){
       card.onclick=function(){ openModal(res.op); };
-      setTimeout(function(){ card.classList.add('flip'); }, 100+fi*SPEED);
+      animDelay(function(){ card.classList.add('flip'); }, 100+fi*SPEED);
     })(cards[order[i]],results[order[i]],i);
   }
-  setTimeout(function(){
+  PULL_FINISH=function(){
     if(lastBatch.length>10)msg+='<br/><button class="mini-btn" id="btnAllRes">查看全部 '+lastBatch.length+' 抽结果</button>';
     if(has6&&names6&&names6.length){
       var big6=[], bi2;
@@ -834,11 +846,13 @@ function renderCards(results,msg,has6,names6,has5){
     var hasLim=false;
     for(si6=0;si6<results.length;si6++){ if(results[si6].rar===6&&limitedOps[results[si6].op]){hasLim=true;break;} }
     if(hasLim){ playLimResult(); } else { playResult(has6||false,has5||false); }
-  }, 100+results.length*SPEED);
+  };
+  animDelay(PULL_FINISH, 100+results.length*SPEED);
 }
 function setBusyUI(on){
   var ids=['btn1','btn10','btnUntil6','btnCustom'], i2, el2;
   for(i2=0;i2<ids.length;i2++){ el2=$(ids[i2]); if(el2)el2.disabled=on; }
+  var bsk=$('btnSkip'); if(bsk)bsk.classList.toggle('on',on);
   if(on){ var ft=$('fortune'); if(ft){ ft.textContent='✨ 抽卡中…'; ft.classList.add('busy'); } } else { var ft2=$('fortune'); if(ft2){ ft2.classList.remove('busy'); setFortune(); } }
 }
 function doPull(n){
@@ -887,7 +901,7 @@ function doPull(n){
   if(n>10&&!names6.length)msg+='（本次未出高星，展示最后10张）';
   lastBatch=results;
   renderCards(shown,msg,c6>0,names6,c5>0);
-  setTimeout(function(){ BUSY=false; setBusyUI(false); }, 100+shown.length*SPEED+600);
+  animDelay(function(){ BUSY=false; setBusyUI(false); }, 100+shown.length*SPEED+600);
   renderStats();
   renderHistory();
   renderCollection();
@@ -2801,7 +2815,7 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.21</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.22</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 存档导入导出 · 四主题</div>');
   h.push('</div>');
@@ -3239,7 +3253,7 @@ function doUntil6(){
   lastBatch=results;
   lastPullN=results.length;
   renderCards(shown,msg,names6.length>0,names6,false);
-  setTimeout(function(){ BUSY=false; setBusyUI(false); }, 100+shown.length*SPEED+600);
+  animDelay(function(){ BUSY=false; setBusyUI(false); }, 100+shown.length*SPEED+600);
   renderStats(); renderHistory(); renderCollection(); renderBannerInfo();
   checkNewAch(achBefore);
   setFortune();
@@ -4427,6 +4441,7 @@ function init(){
   wire('drawerClose',closeDrawer);
   wire('utilToggle',function(){ var ub=$('utilBar'); if(ub)ub.classList.toggle('show'); });
   wire('btnSpeed',toggleSpeed);
+  wire('btnSkip',skipAnim);
   wire('btnSound',toggleSound);
   wire('btnTheme',nextTheme);
   applyTheme();
