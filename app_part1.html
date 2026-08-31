@@ -679,6 +679,21 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   #utilToggle{display:inline-block}
   .utilbar{display:none}
   .utilbar.show{display:flex; width:100%}
+  /* ===== 手机端专项（v11.82+，仅作用于 ≤720px）===== */
+  /* ① 修复 iOS 聚焦自动缩放：输入控件字号 ≥16px */
+  #modal input, #modal select, #modal textarea, #modal .wikisearch input,
+  .sidebar input, .customrow input, .opstats input, .opstats select,
+  .histquery select{font-size:16px}
+  /* ② 触控响应：消除点击延迟/双击缩放 */
+  .bcard, .cop, .rup-card, .hitem, .gal-item, .fhall-item, .skin-item,
+  .mat-item, .wish-item, .ach, .selop, .pitymap-card, .cmp-chip,
+  .wikisuggest-item, .hcell, .wskill, .crow, .optable-row{touch-action:manipulation}
+  /* ③ 模态安全区 + 滚动体验 */
+  #modal .mbox{padding:14px; padding-bottom:calc(16px + env(safe-area-inset-bottom)); overscroll-behavior:contain; -webkit-overflow-scrolling:touch}
+  /* ④ 底部抽卡栏阴影 */
+  #gacha .row{box-shadow:0 -8px 24px rgba(0,0,0,.35)}
+  /* ⑤ 抽屉安全区 */
+  .sidebar{padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom)}
 }
 </style>
 </head>
