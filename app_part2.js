@@ -125,6 +125,7 @@ function wire(id,fn){ var el=$(id); if(el&&fn)el.onclick=fn; }
 function uniq(a){ var m={},r=[],i; for(i=0;i<a.length;i++){ if(!m[a[i]]){m[a[i]]=1;r.push(a[i]);} } return r; }
 function rnd(a){ return a[Math.floor(Math.random()*a.length)]; }
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function localDateStr(){ var d=new Date(); return d.getFullYear()+'-'+(d.getMonth()<9?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate(); }
 function stars(n){ var s=''; for(var i=0;i<n;i++)s+='★'; return s; }
 var BID_INDEX={}, BFULL_INDEX={}, INDEXED=false;
 function buildBannerIndex(){ if(INDEXED)return; var bs=DATA.banners,i; for(i=0;i<bs.length;i++){ BID_INDEX[bs[i].id]=bs[i]; BFULL_INDEX[bs[i].full]=bs[i]; } INDEXED=true; }
@@ -461,7 +462,7 @@ function renderBannerList(){
     var cnt=(state.cnt||{})[b.id]||0;
     var bs2=B_STAT&&B_STAT[b.id];
     var bst3=bannerStatus(b);
-    html.push('<div class="sub">'+esc(b.start)+' ~ '+esc(b.end)+(bst3.txt?' · <span class="bst '+bst3.s+'">'+esc(bst3.txt)+'</span>':'')+(cnt>0?' · 已抽 <b style="color:var(--gold)">'+cnt+'</b> 抽':'')+(bs2&&bs2.n>0&&bs2.s6>0?' · 6★率 <b style="color:#ff6e6e">'+(bs2.s6/bs2.n*100).toFixed(1)+'%</b>':'')+'</div></div>');
+    html.push('<div class="sub">'+esc(b.start)+' ~ '+esc(b.end)+(bst3.txt?' · <span class="bst '+bst3.s+'">'+esc(bst3.txt)+'</span>':'')+(cnt>0?' · 已抽 <b style="color:var(--gold)">'+cnt+'</b> 抽':'<span class="np-badge">未抽</span>')+(bs2&&bs2.n>0&&bs2.s6>0?' · 6★率 <b style="color:#ff6e6e">'+(bs2.s6/bs2.n*100).toFixed(1)+'%</b>':'')+'</div></div>');
     html.push('</div>');
   }
   if(!matched.length)html.push('<div class="notice" style="padding:16px;text-align:center">没有符合条件的卡池，试试其他筛选或搜索</div>');
@@ -1746,15 +1747,11 @@ function openModal(opName){
   }catch(e){}
   h.push('<div class="kv"><b>获取</b>'+(state.collection.indexOf(opName)>=0?'已拥有':'未获得')+(limitedOps[opName]?' · <span style="color:#ff6ec7">👑 限定干员</span>':'')+(o.gift?' · <span style="color:#ff9a2e">🎁 活动赠送干员</span>':'')+(o.collabOp?' · <span style="color:#c96ab6">🔗 联动限定</span>':'')+'</div>');
   var opC=(state.opCnt&&state.opCnt[opName])||0;
-  var pullsOfOp=0, pi9;
-  for(pi9=0;pi9<state.history.length;pi9++){ if(state.history[pi9].op===opName)pullsOfOp++; }
+  var pullsOfOp=0, firstT=null, lastT=null, pi9;
+  for(pi9=0;pi9<state.history.length;pi9++){ if(state.history[pi9].op===opName){ pullsOfOp++; if(lastT===null)lastT=state.history[pi9].t; firstT=state.history[pi9].t; } }
   h.push('<div class="kv"><b>已获得</b>'+opC+' 次（含抽卡/兑换/免费领取）'+(pullsOfOp>0?(' · 其中抽卡 '+pullsOfOp+' 次'):'')+'</div>');
   var gotIdx=state.collection.indexOf(opName);
   if(gotIdx>=0)h.push('<div class="kv"><b>获得顺序</b>第 '+(gotIdx+1)+' 个</div>');
-  var firstT=null;
-  for(var fi=state.history.length-1;fi>=0;fi--){ if(state.history[fi].op===opName){ firstT=state.history[fi].t; break; } }
-  var lastT=null;
-  for(var fl=0;fl<state.history.length;fl++){ if(state.history[fl].op===opName){ lastT=state.history[fl].t; break; } }
   if(firstT){ var fdt=new Date(firstT); h.push('<div class="kv"><b>首次获得</b>'+fdt.getFullYear()+'年'+(fdt.getMonth()+1)+'月'+fdt.getDate()+'日</div>'); }
   if(lastT&&lastT!==firstT){ var ldt=new Date(lastT); h.push('<div class="kv"><b>最近获得</b>'+ldt.getFullYear()+'年'+(ldt.getMonth()+1)+'月'+ldt.getDate()+'日</div>'); }
   var srcs=opBanners[opName];
@@ -2778,7 +2775,7 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.14</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.15</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 存档导入导出 · 四主题</div>');
   h.push('</div>');
@@ -3951,7 +3948,7 @@ function exportSave(){
     var blob=new Blob([s],{type:'application/json;charset=utf-8'});
     var a=document.createElement('a');
     a.href=URL.createObjectURL(blob);
-    a.download='抽卡模拟器存档_'+new Date().toISOString().slice(0,10)+'.json';
+    a.download='抽卡模拟器存档_'+localDateStr()+'.json';
     document.body.appendChild(a); a.click();
     setTimeout(function(){ try{ URL.revokeObjectURL(a.href); }catch(e){} a.remove(); },1000);
     toast('存档已下载（JSON 文件）');
@@ -4190,7 +4187,7 @@ function exportHistory(useFilter){
     var blob=new Blob([text],{type:'text/plain;charset=utf-8'});
     var a=document.createElement('a');
     a.href=URL.createObjectURL(blob);
-    a.download='抽卡记录'+(useFilter?'_筛选':'')+'_'+new Date().toISOString().slice(0,10)+'.csv';
+    a.download='抽卡记录'+(useFilter?'_筛选':'')+'_'+localDateStr()+'.csv';
     document.body.appendChild(a); a.click();
     setTimeout(function(){ try{ URL.revokeObjectURL(a.href); }catch(e){} a.remove(); },1000);
     toast((useFilter?'筛选记录已导出':'抽卡记录已导出')+'（共 '+arr.length+' 条）');
