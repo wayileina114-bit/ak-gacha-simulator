@@ -499,6 +499,9 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .statbar i{display:block; height:100%; background:linear-gradient(90deg,#ff6ec7,#c96ab6); border-radius:3px}
 .stat{background:var(--bg2); border:1px solid var(--line); border-radius:10px; padding:10px; text-align:center; transition:transform .15s, border-color .15s, box-shadow .15s}
 .stat:hover{transform:translateY(-2px); border-color:var(--acc2); box-shadow:0 4px 12px rgba(74,179,255,.12)}
+.stat[title="点击查看成就"]:hover .k{color:var(--gold)}
+.stat[title="点击查看成就"] .v{transition:transform .15s}
+.stat[title="点击查看成就"]:hover .v{transform:scale(1.06)}
 .hitem.r6{border-left:2px solid var(--gold); background:rgba(255,215,0,.04)}
 .hitem.r6:hover{background:rgba(255,215,0,.09)}
 .hitem.r5{border-left:2px solid var(--r5)}

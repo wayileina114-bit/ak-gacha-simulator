@@ -1532,9 +1532,11 @@ function renderStats(){
   var asM=calcAch(); g.push(['成就达成',ACH_SUMMARY.count+' / '+ACH_SUMMARY.total,'gold']);
   var h=[];
   for(i=0;i<g.length;i++){
-    h.push('<div class="stat"><div class="v '+(g[i][2]||'')+'">'+g[i][1]+'</div><div class="k">'+g[i][0]+'</div></div>');
+    var statAch=g[i][0]==='成就达成'?' id="statAch" style="cursor:pointer" title="点击查看成就"':'';
+    h.push('<div class="stat"'+statAch+'><div class="v '+(g[i][2]||'')+'">'+g[i][1]+'</div><div class="k">'+g[i][0]+'</div></div>');
   }
   $('statsGrid').innerHTML=h.join('');
+  var saAch=$('statAch'); if(saAch)saAch.onclick=function(){ openAch(); };
   var r6=$('recent6');
   if(r6){
     var r6h=[], r6n=0, r6i;
@@ -2868,7 +2870,7 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.29</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.30</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 存档导入导出 · 四主题</div>');
   h.push('</div>');
@@ -4106,7 +4108,7 @@ function exportSave(){
   }
 }
 function stateHealth(){
-  var issues=[], badHist=[], badCol=[], badWish=[], badCnt=[], i2h;
+  var issues=[], badHist=[], badCol=[], badWish=[], badCnt=[], badPity=[], i2h;
   for(i2h=0;i2h<state.history.length;i2h++){
     var h2h=state.history[i2h];
     if(!h2h||typeof h2h!=='object'){ badHist.push(i2h); continue; }
@@ -4118,11 +4120,18 @@ function stateHealth(){
   for(i2h=0;i2h<state.collection.length;i2h++){ if(!opByName[state.collection[i2h]])badCol.push(state.collection[i2h]); }
   if(state.wish)for(i2h=0;i2h<state.wish.length;i2h++){ if(!opByName[state.wish[i2h]])badWish.push(state.wish[i2h]); }
   for(var k2h in (state.opCnt||{})){ if(!opByName[k2h])badCnt.push(k2h); }
+  buildBannerIndex();
+  for(var pkH in (state.pity||{})){
+    if(pkH==='std'||pkH==='zj')continue;
+    var bidH=pkH.indexOf(':')>=0?pkH.slice(0,pkH.indexOf(':')):pkH;
+    if(!BID_INDEX[bidH])badPity.push(pkH);
+  }
   if(badHist.length)issues.push({level:'err',msg:'历史记录 '+badHist.length+' 条无效（干员/稀有度/时间缺失）'});
   if(badCol.length)issues.push({level:'err',msg:'图鉴含 '+badCol.length+' 个未知干员'});
   if(badWish.length)issues.push({level:'warn',msg:'心愿单含 '+badWish.length+' 个未知干员'});
   if(badCnt.length)issues.push({level:'warn',msg:'抽卡计数含 '+badCnt.length+' 个未知干员'});
-  return {ok:issues.length===0, issues:issues, badHist:badHist, badCol:badCol, badWish:badWish, badCnt:badCnt};
+  if(badPity.length)issues.push({level:'warn',msg:'保底记录 '+badPity.length+' 条指向已移除的卡池'});
+  return {ok:issues.length===0, issues:issues, badHist:badHist, badCol:badCol, badWish:badWish, badCnt:badCnt, badPity:badPity};
 }
 function fixStateHealth(){
   var h2f=stateHealth(), i2f;
@@ -4145,6 +4154,7 @@ function fixStateHealth(){
     state.wish=nw2f;
   }
   if(h2f.badCnt.length){ for(i2f=0;i2f<h2f.badCnt.length;i2f++)delete state.opCnt[h2f.badCnt[i2f]]; }
+  if(h2f.badPity.length){ for(i2f=0;i2f<h2f.badPity.length;i2f++)delete state.pity[h2f.badPity[i2f]]; }
   save();
   return stateHealth();
 }
