@@ -489,6 +489,11 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 #btnRandOp{transition:transform .2s}
 #btnRandOp:active{transform:rotate(20deg) scale(.95)}
 .stats-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:10px}
+.recent6wrap{display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:10px; padding:8px 10px; background:var(--bg2); border:1px solid var(--line); border-radius:10px}
+.recent6wrap .r6label{font-size:12px; color:var(--dim); margin-right:2px; white-space:nowrap}
+.r6chip{display:inline-flex; align-items:center; gap:4px; font-size:12px; background:rgba(255,215,106,.08); border:1px solid rgba(255,215,106,.3); border-radius:6px; padding:2px 8px}
+.r6chip b{color:var(--gold)}
+.r6chip i{font-style:normal; font-size:11px; color:var(--dim)}
 .statbar{height:5px; background:var(--bg); border-radius:3px; overflow:hidden; margin-top:6px}
 .statbar i{display:block; height:100%; background:linear-gradient(90deg,#ff6ec7,#c96ab6); border-radius:3px}
 .stat{background:var(--bg2); border:1px solid var(--line); border-radius:10px; padding:10px; text-align:center; transition:transform .15s, border-color .15s, box-shadow .15s}
@@ -944,6 +949,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
     <section class="panel">
       <div class="sectbar"><h4>抽卡统计</h4><button class="mini-btn" id="btnAch">🏆 成就</button><button class="mini-btn" id="btnStats">详细统计</button><button class="mini-btn" id="btnPityMap">🛡 保底一览</button><button class="mini-btn" id="btnSim">🧪 模拟抽卡</button><button class="mini-btn" id="btnReport">📊 抽卡报告</button><button class="mini-btn" id="btnOpStats">干员统计</button><button class="mini-btn" id="btnCopyStats">复制总结</button><button class="mini-btn" id="btnRules">规则说明</button><button class="mini-btn" id="btnReset2">清空记录</button></div>
       <div class="stats-grid" id="statsGrid"></div>
+      <div id="recent6"></div>
       <div class="sectbar"><h4>寻访记录</h4><button class="mini-btn" id="btnExportHist">导出记录</button></div>
       <div class="histsearch"><input id="histSearch" placeholder="搜索干员/卡池..."/><button class="mini-btn" id="histClearSearch">✕</button></div>
       <div class="histquery">

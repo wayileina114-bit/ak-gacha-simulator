@@ -908,6 +908,7 @@ function doPull(n){
   animDelay(function(){ BUSY=false; setBusyUI(false); }, 100+shown.length*SPEED+600);
   renderStats();
   renderHistory();
+  renderBannerInfo();
   renderCollection();
   renderBannerInfo();
   checkNewAch(achBefore);
@@ -1527,12 +1528,26 @@ function renderStats(){
   var totTok=0, tk2;
   for(tk2 in state.spark){ totTok+=state.spark[tk2]; }
   g.push(['限定契约',totTok+' 张','gold']);
-  g.push(['成就达成',achCount()+' / '+calcAch().list.length,'gold']);
+  var asM=calcAch(); g.push(['成就达成',ACH_SUMMARY.count+' / '+ACH_SUMMARY.total,'gold']);
   var h=[];
   for(i=0;i<g.length;i++){
     h.push('<div class="stat"><div class="v '+(g[i][2]||'')+'">'+g[i][1]+'</div><div class="k">'+g[i][0]+'</div></div>');
   }
   $('statsGrid').innerHTML=h.join('');
+  var r6=$('recent6');
+  if(r6){
+    var r6h=[], r6n=0, r6i;
+    for(r6i=0;r6i<hist.length&&r6n<5;r6i++){
+      if(hist[r6i].rar===6){
+        var o6=opOf(hist[r6i].op), nm6=o6?o6.name:hist[r6i].op;
+        var dt6=hist[r6i].t?new Date(hist[r6i].t):null;
+        var dTxt6=dt6?(dt6.getMonth()+1)+'/'+dt6.getDate():'';
+        r6h.push('<span class="r6chip" title="'+esc(hist[r6i].bn||'')+'"><b>'+esc(nm6)+'</b><i>'+dTxt6+'</i></span>');
+        r6n++;
+      }
+    }
+    r6.innerHTML=r6h.length?('<div class="recent6wrap"><span class="r6label">最近出货</span>'+r6h.join('')+'</div>'):'';
+  }
 }
 function totalOps(){ return Object.keys(opByName).length; }
 var RARITY_GROUPS=null;
@@ -2836,7 +2851,7 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.26</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.27</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 存档导入导出 · 四主题</div>');
   h.push('</div>');
@@ -3697,8 +3712,12 @@ function calcAch(){
     {name:'全图鉴',desc:'拥有全部干员（'+totalOpsN+'）',icon:'🏅',done:state.collection.length>=totalOpsN,prog:state.collection.length+' / '+totalOpsN}
   ]};
   ACH_KEY=key; ACH_CACHE=res;
+  var doneN=0, diA;
+  for(diA=0;diA<res.list.length;diA++){ if(res.list[diA].done)doneN++; }
+  ACH_SUMMARY={count:doneN,total:res.list.length};
   return res;
 }
+var ACH_SUMMARY={count:0,total:0};
 function achCount(){ var r=calcAch(), n=0, i; for(i=0;i<r.list.length;i++){ if(r.list[i].done)n++; } return n; }
 function achDoneSet(){ var r=calcAch(), s={}, i; for(i=0;i<r.list.length;i++){ if(r.list[i].done)s[r.list[i].name]=1; } return s; }
 function checkNewAch(before){
