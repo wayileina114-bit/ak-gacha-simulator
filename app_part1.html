@@ -694,6 +694,17 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   #gacha .row{box-shadow:0 -8px 24px rgba(0,0,0,.35)}
   /* ⑤ 抽屉安全区 */
   .sidebar{padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom)}
+  /* ⑥ 保底浮标避让底部栏（v11.83） */
+  .pityCount{bottom:calc(86px + env(safe-area-inset-bottom))}
+  /* ⑦ 抽卡动画合成层优化（v11.83） */
+  #cards .card{will-change:transform}
+  #cards{contain:layout paint}
+  #gacha .row{-webkit-backdrop-filter:blur(10px) saturate(1.2); backdrop-filter:blur(10px) saturate(1.2)}
+  /* ⑧ 触控尺寸提升（v11.83） */
+  .chip{padding:6px 10px; font-size:12px}
+  .bcard{padding:10px 12px}
+  .bcard .name{font-size:14px}
+  .pull-btn{border-radius:14px}
 }
 </style>
 </head>

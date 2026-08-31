@@ -1,6 +1,13 @@
 # 更新日志（CHANGELOG）
 
-## v11.82（当前 · 手机端专项）
+## v11.83（当前 · 手机端专项）
+- 🐛 **保底浮标避让底部栏**：pityCount 固定定位 bottom:76px 与底部抽卡栏（约 76px+safe-area）存在重叠风险——移动端改为 bottom:calc(86px + env(safe-area-inset-bottom))
+- ⚡ **抽卡动画合成层优化**：抽卡翻转卡片加 will-change:transform + 结果区 contain:layout paint（减少低端机动画卡顿与重排）；底部抽卡栏加 backdrop-filter 毛玻璃（内容透过更清晰）
+- 🎨 **触控尺寸提升**：筛选 chips、卡池卡内边距与字号加大（更大热区）；抽卡按钮圆角 14px
+- ✅ **PC 端零改动**：全部位于 ≤720px media query 内，回归 270 项全通过（含 10 项移动端断言 + PC 能力不受影响断言）
+- 🧪 综合回归 270 项全通过
+
+## v11.82
 - 🐛 **修复 iOS 输入聚焦自动缩放**：移动端输入框（卡池搜索/Wiki搜索/自选搜索/对比/模拟/保底预测等）字号强制 ≥16px——聚焦不再被 Safari 放大，输入体验与 PC 一致
 - ⚡ **触控响应优化**：卡池卡/干员卡/材料/成就/热力图等全部可点元素加 touch-action:manipulation——消除 300ms 点击延迟与双击缩放误触
 - 🎨 **界面美化/适配**：模态全屏页底部安全区留白（env(safe-area-inset-bottom)）+ overscroll 控制；底部抽卡栏阴影；抽屉安全区
