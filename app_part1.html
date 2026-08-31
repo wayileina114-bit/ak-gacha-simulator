@@ -737,6 +737,17 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   #modal .mbox .gallery .gal-item{content-visibility:auto; contain-intrinsic-size:auto 160px}
   #modal .mbox .skingrid .skin-item{content-visibility:auto; contain-intrinsic-size:auto 210px}
   #modal .mbox .hitem{content-visibility:auto; contain-intrinsic-size:auto 26px}
+  /* ⑲ 页面级滚动回弹控制 + 防旋转字号缩放（v11.89） */
+  html, body{overscroll-behavior-y:none; -webkit-text-size-adjust:100%}
+  /* ⑳ 低端机翻牌加速（v11.89） */
+  #cards .card{transition:transform .35s}
+  .card.flip{transition:transform .3s cubic-bezier(.2,.8,.25,1.1)}
+}
+@media(max-width:720px) and (prefers-contrast:more){
+  :root{--txt:#ffffff; --dim:#c3cee2; --line:#3a4a6a}
+  .hitem:nth-child(odd){background:rgba(255,255,255,.05)}
+  .bcard, .rup-card, .cop, .ach, .mat-item, .skin-item{background:var(--bg2)}
+  .notice{color:#d7e1f2}
 }
 @media(max-width:900px) and (orientation:landscape){
   .pull-btn{padding:9px 8px; font-size:13px; min-height:40px}
