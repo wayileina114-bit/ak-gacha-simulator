@@ -384,7 +384,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .voice-err{font-size:11px; color:var(--red); margin-top:2px}
 .lg-link{font-size:11px; color:var(--acc2); margin-left:6px}
 .wikirows .wrow .farm{color:#7bd88f; font-style:normal; font-size:11px; margin-left:6px}
-.wskilltype{font-size:11px; color:var(--acc2); margin-bottom:4px}
+.wskilltype{font-size:11px; color:var(--acc2); margin-bottom:4px; display:inline-block; background:rgba(74,179,255,.1); border:1px solid rgba(74,179,255,.25); border-radius:6px; padding:0 7px; line-height:1.8}
 .wskillnum{font-size:11px; color:var(--gold); margin:4px 0}
 .wskilllv{margin:6px 0}
 .wskilllv summary{cursor:pointer; font-size:12px; color:var(--acc2); user-select:none}
@@ -1014,7 +1014,8 @@ function thumbOf(art,name,variant,w){
   var fn='Pack '+name+' '+variant;
   return 'https://patchwiki.biligame.com/images/arknights/thumb/'+m[1]+'/'+m[2]+'/'+m[3]+'/'+w+'px-'+encodeURIComponent(fn.split(' ').join('_'));
 }
-function avUrl(o){ return o.av?('https://media.prts.wiki/'+o.av+'/'+encodeURIComponent('头像_'+o.name+'.png')):(o.art||''); }
+var AV_CACHE={};
+function avUrl(o){ if(!o)return ''; if(AV_CACHE[o.name]!==undefined)return AV_CACHE[o.name]; return AV_CACHE[o.name]=o.av?('https://media.prts.wiki/'+o.av+'/'+encodeURIComponent('头像_'+o.name+'.png')):(o.art||''); }
 var ART_CACHE={};
 function opArtT(o){ if(!o)return ''; var k=o.name+':'+(o.artV||2); if(ART_CACHE[k])return ART_CACHE[k]; return ART_CACHE[k]=thumbOf(o.art,o.name,'skin 0 '+(o.artV||2)+'.png',480)||o.art||avUrl(o); }
 function pityKey(b){ if(isSelect(b))return b.id+':'+selKey(b); return b.type==='standard'?'std':(b.type==='zhongjian'?'zj':b.id); }
@@ -2837,6 +2838,15 @@ function wikiSecGet(secs, title, marker){
   }
   return '';
 }
+function wikiModuleSec(secs){
+  // 优先整节「模组」；否则合并所有以「模组」开头的子节（PRTS 常用 ===模组1===/===模组2===）
+  if(secs['模组']&&secs['模组'].join('\n').trim())return secs['模组'].join('\n');
+  var parts=[];
+  for(var k in secs){ if(k!=='__lead__'&&k.indexOf('模组')===0){ var c=secs[k].join('\n').trim(); if(c)parts.push(c); } }
+  if(parts.length)return parts.join('\n\n');
+  if(secs['__lead__']&&secs['__lead__'].join('\n').indexOf('基础证章')>=0)return secs['__lead__'].join('\n');
+  return '';
+}
 function parseWikiPage(wt){
   var secs=splitWikiSections(wt);
   var lead=secs['__lead__'].join('\n');
@@ -2852,7 +2862,7 @@ function parseWikiPage(wt){
     support: wikiSecGet(secs,'后勤技能','|后勤技能1-1='),
     mats: wikiSecGet(secs,'精英化材料','材料消耗'),
     skillMats: wikiSecGet(secs,'技能升级材料','|技能1='),
-    module: wikiSecGet(secs,'模组','基础证章'),
+    module: wikiModuleSec(secs),
     file: wikiSecGet(secs,'干员档案','|档案1='),
     story: wikiSecGet(secs,'干员密录','storySetName'),
     paradox: wikiSecGet(secs,'悖论模拟','悖论')
@@ -3160,9 +3170,9 @@ function wikiModTab(name,data){
     function kv(k){ var m=body.match(new RegExp('\\|'+k+'=([^\\n]*)')); return m?m[1].trim():''; }
     var title=kv('模组名');
     var type=kv('类型'), branch=kv('分支'), base=kv('基础证章');
-    var hp=kv('生命'), atk=kv('攻击'), hp2=kv('生命2'), atk2=kv('攻击2'), hp3=kv('生命3'), atk3=kv('攻击3');
+    var hp=kv('生命'), atk=kv('攻击'), df=kv('防御'), rs=kv('法抗'), hp2=kv('生命2'), atk2=kv('攻击2'), hp3=kv('生命3'), atk3=kv('攻击3');
     var feat=kv('特性'), talent=kv('天赋2')||kv('天赋3');
-    if(!title&&!type&&!branch&&!hp&&!atk&&!feat&&!talent)continue;
+    if(!title&&!type&&!branch&&!hp&&!atk&&!df&&!rs&&!feat&&!talent)continue;
     found=true;
     h.push('<div class="wskill"><div class="wskillname">'+esc(title||('模组'+(found?si:'')))+'</div>');
     if(type||branch)h.push('<div class="wskilltype">'+esc(wikiClean(type))+(type&&branch?' · ':'')+esc(wikiClean(branch))+'</div>');
@@ -3170,10 +3180,13 @@ function wikiModTab(name,data){
       var baseTxt=wikiClean(base);
       h.push('<div class="wskillnum">基础证章'+(baseTxt&&baseTxt!=='基础证章'?('：'+esc(baseTxt)):'')+'</div>');
     }
-    else if(hp||atk){
-      h.push('<div class="wskillnum">'+(hp?esc('生命 +'+wikiClean(hp)):'')+(hp&&atk?' · ':'')+(atk?esc('攻击 +'+wikiClean(atk)):'')+'（1级）</div>');
-      if(hp2||atk2)h.push('<div class="wskillnum">'+(hp2?esc('生命 +'+wikiClean(hp2)):'')+(hp2&&atk2?' · ':'')+(atk2?esc('攻击 +'+wikiClean(atk2)):'')+'（2级）</div>');
-      if(hp3||atk3)h.push('<div class="wskillnum">'+(hp3?esc('生命 +'+wikiClean(hp3)):'')+(hp3&&atk3?' · ':'')+(atk3?esc('攻击 +'+wikiClean(atk3)):'')+'（3级）</div>');
+    else if(hp||atk||df||rs){
+      var st1=(hp?('生命 +'+wikiClean(hp)):'')+(hp&&atk?' · ':'')+(atk?('攻击 +'+wikiClean(atk)):'')+(atk&&df?' · ':'')+(df?('防御 +'+wikiClean(df)):'')+(df&&rs?' · ':'')+(rs?('法抗 +'+wikiClean(rs)):'');
+      h.push('<div class="wskillnum">'+esc(st1)+'（1级）</div>');
+      var st2=(hp2?('生命 +'+wikiClean(hp2)):'')+(hp2&&atk2?' · ':'')+(atk2?('攻击 +'+wikiClean(atk2)):'');
+      if(st2)h.push('<div class="wskillnum">'+esc(st2)+'（2级）</div>');
+      var st3=(hp3?('生命 +'+wikiClean(hp3)):'')+(hp3&&atk3?' · ':'')+(atk3?('攻击 +'+wikiClean(atk3)):'');
+      if(st3)h.push('<div class="wskillnum">'+esc(st3)+'（3级）</div>');
     }
     if(feat)h.push('<div class="wskilldesc">特性：'+esc(wikiClean(feat))+'</div>');
     if(talent)h.push('<div class="wskilldesc m">天赋：'+esc(wikiClean(talent))+'</div>');
@@ -3492,7 +3505,7 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v11.94</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v11.95</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 存档导入导出 · 四主题</div>');
   h.push('</div>');
@@ -3504,7 +3517,7 @@ function openAbout(){
   var pb=$('btnWikiProbe'); if(pb)pb.onclick=function(){ var po=$('wikiProbeOut'); if(po)wikiProbe(po); };
   var al=$('aboutLog');
   if(al){
-    var logTxt=['<b>v11.94</b> 无障碍标签 · 动画暂停 · 抽卡按钮焕新','<b>v11.93</b> 上限提示 · 低数据模式 · 成就描边','<b>v11.92</b> 刘海安全区 · 键盘省绘制 · 按压反馈','<b>v11.91</b> 长按防误触 · 预加载限量 · 底栏渐变','<b>v11.90</b> 大图双击缩放 · 合成层收敛 · OLED深色','<b>v11.89</b> 回弹控制 · 翻牌加速 · 高对比模式','<b>v11.88</b> 防电话误识别 · 列表离屏渲染 · 横屏适配','<b>v11.87</b> 抽屉滚动记忆 · 模态绘制隔离 · 章节吸附','<b>v11.86</b> 视口声明完善 · 抽屉合成层 · 超窄屏两列','<b>v11.85</b> 减少动画降级 · 44px热区 · 网格离屏','<b>v11.84</b> 键盘弹起避让 · 离屏渲染 · 六星横幅横滚','<b>v11.83</b> 保底浮标避让 · 动画合成层 · 触控尺寸','<b>v11.82</b> 手机端防缩放 · 触摸优化 · 安全区适配','<b>v11.81</b> 战绩即时刷新 · 自选缓存 · 抽卡按钮光晕','<b>v11.80</b> 对比chip语义 · 稀有度分组 · 自选标题强调','<b>v11.79</b> 对比同名拦截 · 建议索引缓存 · 职业标签','<b>v11.78</b> 预加载单次请求 · 井选择分页 · 统计数字渐变','<b>v11.77</b> 统计页单遍聚合 · 井兑换快照校验 · 图表行悬停','<b>v11.76</b> 抽到6★顺序修正 · 图鉴排序提速 · 成就悬停','<b>v11.75</b> 历史筛选零污染 · 筛选结果缓存 · 日期胶囊','<b>v11.74</b> 皮肤图片失败占位 · 滑动窗口统计 · 热力图悬停','<b>v11.73</b> 跨期新干员修正 · 卡池状态缓存 · 语音美化','<b>v11.72</b> 历史标签 · 列表缓存 · 行悬停','<b>v11.71</b> 开启倒计时小时 · 关卡缓存 · Wiki美化','<b>v11.70</b> 模拟自选池拦截 · 空池防护 · 当前池高亮','<b>v11.69</b> 概率提示可见 · jsonp超时 · 输入聚焦','<b>v11.68</b> 运势每日固定 · 章节缓存 · 标题渐变','<b>v11.67</b> 清空重置领取 · 批量性能 · 卡片美化','<b>v11.66</b> 倒计时小时 · 皮肤缓存 · 美化','<b>v11.65</b> 删除动态皮肤数量显示','<b>v11.64</b> 真实掉率比值 · 删除真实记录','<b>v11.63</b> 删除不存在材料','<b>v11.62</b> 材料列表清理 · 兜底两字','<b>v11.61</b> 材料图标本地嵌入 · 离线可用','<b>v11.60</b> 材料实时快速失败 · PRTS冷却','<b>v11.59</b> 时装回廊动态角标 · 功能体检','<b>v11.58</b> 限定归类修正 · 兑换计入统计','<b>v11.57</b> 代理链扩充至8重 · 皮肤注释清理','<b>v11.56</b> 模拟等价消耗 · 详情皮肤数','<b>v11.55</b> 立绘画廊职业筛选 · 计数','<b>v11.54</b> 井兑换规则修正 · 联动文案','<b>v11.53</b> 成就扩充（联动/井中月/六星军团）','<b>v11.52</b> 关于面板更新 · 时装回廊统计','<b>v11.51</b> Wiki连通性检测 · 关于面板优化','<b>v11.50</b> 养成材料逐项推荐 · 皮肤泄漏/范围修复','<b>v11.49</b> 材料刷取查询重做 · 真图标','<b>v11.48</b> Wiki同步六重回退 · 进度提示','<b>v11.47</b> Wiki返回按钮 · 材料PRTS链接','<b>v11.46</b> 材料图标彩色兜底','<b>v11.45</b> 材料入口去重 · 图标重试','<b>v11.44</b> 皮肤懒加载缓存 · 时装角标','<b>v11.43</b> 特性行 · 时装列表','<b>v11.42</b> 联动池300井','<b>v11.41</b> 手机端卡池列表可滑动','<b>v11.40</b> Wiki整页获取 · 五重回退','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
+    var logTxt=['<b>v11.95</b> 模组数据修复 · 头像缓存 · 类型徽章','<b>v11.94</b> 无障碍标签 · 动画暂停 · 抽卡按钮焕新','<b>v11.93</b> 上限提示 · 低数据模式 · 成就描边','<b>v11.92</b> 刘海安全区 · 键盘省绘制 · 按压反馈','<b>v11.91</b> 长按防误触 · 预加载限量 · 底栏渐变','<b>v11.90</b> 大图双击缩放 · 合成层收敛 · OLED深色','<b>v11.89</b> 回弹控制 · 翻牌加速 · 高对比模式','<b>v11.88</b> 防电话误识别 · 列表离屏渲染 · 横屏适配','<b>v11.87</b> 抽屉滚动记忆 · 模态绘制隔离 · 章节吸附','<b>v11.86</b> 视口声明完善 · 抽屉合成层 · 超窄屏两列','<b>v11.85</b> 减少动画降级 · 44px热区 · 网格离屏','<b>v11.84</b> 键盘弹起避让 · 离屏渲染 · 六星横幅横滚','<b>v11.83</b> 保底浮标避让 · 动画合成层 · 触控尺寸','<b>v11.82</b> 手机端防缩放 · 触摸优化 · 安全区适配','<b>v11.81</b> 战绩即时刷新 · 自选缓存 · 抽卡按钮光晕','<b>v11.80</b> 对比chip语义 · 稀有度分组 · 自选标题强调','<b>v11.79</b> 对比同名拦截 · 建议索引缓存 · 职业标签','<b>v11.78</b> 预加载单次请求 · 井选择分页 · 统计数字渐变','<b>v11.77</b> 统计页单遍聚合 · 井兑换快照校验 · 图表行悬停','<b>v11.76</b> 抽到6★顺序修正 · 图鉴排序提速 · 成就悬停','<b>v11.75</b> 历史筛选零污染 · 筛选结果缓存 · 日期胶囊','<b>v11.74</b> 皮肤图片失败占位 · 滑动窗口统计 · 热力图悬停','<b>v11.73</b> 跨期新干员修正 · 卡池状态缓存 · 语音美化','<b>v11.72</b> 历史标签 · 列表缓存 · 行悬停','<b>v11.71</b> 开启倒计时小时 · 关卡缓存 · Wiki美化','<b>v11.70</b> 模拟自选池拦截 · 空池防护 · 当前池高亮','<b>v11.69</b> 概率提示可见 · jsonp超时 · 输入聚焦','<b>v11.68</b> 运势每日固定 · 章节缓存 · 标题渐变','<b>v11.67</b> 清空重置领取 · 批量性能 · 卡片美化','<b>v11.66</b> 倒计时小时 · 皮肤缓存 · 美化','<b>v11.65</b> 删除动态皮肤数量显示','<b>v11.64</b> 真实掉率比值 · 删除真实记录','<b>v11.63</b> 删除不存在材料','<b>v11.62</b> 材料列表清理 · 兜底两字','<b>v11.61</b> 材料图标本地嵌入 · 离线可用','<b>v11.60</b> 材料实时快速失败 · PRTS冷却','<b>v11.59</b> 时装回廊动态角标 · 功能体检','<b>v11.58</b> 限定归类修正 · 兑换计入统计','<b>v11.57</b> 代理链扩充至8重 · 皮肤注释清理','<b>v11.56</b> 模拟等价消耗 · 详情皮肤数','<b>v11.55</b> 立绘画廊职业筛选 · 计数','<b>v11.54</b> 井兑换规则修正 · 联动文案','<b>v11.53</b> 成就扩充（联动/井中月/六星军团）','<b>v11.52</b> 关于面板更新 · 时装回廊统计','<b>v11.51</b> Wiki连通性检测 · 关于面板优化','<b>v11.50</b> 养成材料逐项推荐 · 皮肤泄漏/范围修复','<b>v11.49</b> 材料刷取查询重做 · 真图标','<b>v11.48</b> Wiki同步六重回退 · 进度提示','<b>v11.47</b> Wiki返回按钮 · 材料PRTS链接','<b>v11.46</b> 材料图标彩色兜底','<b>v11.45</b> 材料入口去重 · 图标重试','<b>v11.44</b> 皮肤懒加载缓存 · 时装角标','<b>v11.43</b> 特性行 · 时装列表','<b>v11.42</b> 联动池300井','<b>v11.41</b> 手机端卡池列表可滑动','<b>v11.40</b> Wiki整页获取 · 五重回退','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
     al.innerHTML=logTxt;
   }
   openModalBox();
