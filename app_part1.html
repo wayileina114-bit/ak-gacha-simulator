@@ -750,6 +750,11 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   /* ㉒ OLED 深色微调（v11.90） */
   body{background:#06090f}
   .mbox{background:linear-gradient(160deg,#0f1826,#080d16)}
+  /* ㉓ 长按防放大镜/选中（v11.91） */
+  button, .bcard, .cop, .rup-card, .hitem, .mat-item, .wish-item, .ach, .gal-item, .skin-item, .fhall-item, .pitymap-card, .cmp-chip, .wikisuggest-item, .selop, .hcell{-webkit-touch-callout:none; -webkit-user-select:none; user-select:none}
+  /* ㉔ 底栏卡池名渐变 + 记录行触控（v11.91） */
+  .barName{background:linear-gradient(90deg,#eaf4ff,var(--acc2)); -webkit-background-clip:text; background-clip:text; color:transparent}
+  .hitem{padding:7px 8px; font-size:13px}
 }
 @media(max-width:720px) and (prefers-contrast:more){
   :root{--txt:#ffffff; --dim:#c3cee2; --line:#3a4a6a}
