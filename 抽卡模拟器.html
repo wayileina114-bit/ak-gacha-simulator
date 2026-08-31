@@ -201,6 +201,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 #bannerInfo .dates{font-size:12px; color:var(--dim)}
 .rateup{display:flex; gap:10px; margin-top:10px; flex-wrap:wrap}
 .pool-prog{margin:10px 0 4px; padding:8px 12px; background:var(--bg2); border:1px solid var(--line); border-radius:10px}
+.pool-sum{display:inline-block; font-size:13px; color:var(--txt); background:var(--bg2); border:1px solid var(--line); border-radius:8px; padding:4px 10px; margin:4px 8px 6px 0}
 .pp-bar{height:8px; border-radius:4px; background:rgba(255,255,255,.08); overflow:hidden}
 .pp-bar i{display:block; height:100%; border-radius:4px; background:linear-gradient(90deg,var(--acc),var(--gold)); transition:width .3s}
 .pp-txt{display:flex; justify-content:space-between; font-size:12px; color:var(--dim); margin-top:6px; gap:8px; flex-wrap:wrap}
@@ -3802,7 +3803,7 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.23</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.24</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 存档导入导出 · 四主题</div>');
   h.push('</div>');
@@ -4245,15 +4246,17 @@ function doUntil6(){
   checkNewAch(achBefore);
   setFortune();
 }
-var POOL_N=36, POOL_Q='';
+var POOL_N=36, POOL_Q='', POOL_MISS=false;
 var BL_N=60;
 function openPoolModal(){
   var b=bannerById(state.cur); if(!b)return;
   var pool=getPool(b);
   var h=['<h4 class="sect" style="margin-top:0">'+esc(b.full)+' 完整卡池</h4><input id="poolSearch" placeholder="搜索池内干员..." value="'+esc(POOL_Q)+'"/>'];
-  var i,o,q=POOL_Q,p6l=[],p5l=[];
-  for(i=0;i<pool.p6.length;i++){ o=opOf(pool.p6[i]); if(o&&(!q||o.name.indexOf(q)>=0))p6l.push(pool.p6[i]); }
-  for(i=0;i<pool.p5.length;i++){ o=opOf(pool.p5[i]); if(o&&(!q||o.name.indexOf(q)>=0))p5l.push(pool.p5[i]); }
+  var i,o,q=POOL_Q,p6l=[],p5l=[],ownN=0,totN=pool.p6.length+pool.p5.length, colSetP={}, csiP;
+  for(csiP=0;csiP<state.collection.length;csiP++)colSetP[state.collection[csiP]]=1;
+  for(i=0;i<pool.p6.length;i++){ o=opOf(pool.p6[i]); if(!o)continue; if(colSetP[pool.p6[i]])ownN++; if((!q||o.name.indexOf(q)>=0)&&(!POOL_MISS||!colSetP[pool.p6[i]]))p6l.push(pool.p6[i]); }
+  for(i=0;i<pool.p5.length;i++){ o=opOf(pool.p5[i]); if(!o)continue; if(colSetP[pool.p5[i]])ownN++; if((!q||o.name.indexOf(q)>=0)&&(!POOL_MISS||!colSetP[pool.p5[i]]))p5l.push(pool.p5[i]); }
+  h.push('<div class="pool-sum">已拥有 <b style="color:var(--acc)">'+ownN+'</b> / '+totN+(POOL_MISS?' · 只看未拥有':'')+'</div><button class="mini-btn'+(POOL_MISS?' on':'')+'" id="btnPoolMiss" style="margin-bottom:6px">'+(POOL_MISS?'🙈 显示全部':'🙈 只看未拥有')+'</button>');
   if(q)h.push('<div class="notice">搜索「'+esc(q)+'」命中：<b>6★×'+p6l.length+'</b> · <b>5★×'+p5l.length+'</b></div>');
   if(p6l.length){
     h.push('<div class="notice">6★干员（'+(q?p6l.length+'/'+pool.p6.length:pool.p6.length)+'）</div><div class="rateup">');
@@ -4274,12 +4277,13 @@ function openPoolModal(){
     h.push('</div>');
   }
   if(!p6l.length&&!p5l.length)h.push('<div class="notice">没有匹配「'+esc(q)+'」的干员，换个关键词试试</div>');
-  if(p6l.length>POOL_N||p5l.length>POOL_N)h.push('<button class="mini-btn" id="poolMore" style="margin:8px auto;display:block">加载更多卡池干员</button>');
+  if(p6l.length>POOL_N||p5l.length>POOL_N){ var moreN=(p6l.length>POOL_N?p6l.length-POOL_N:0)+(p5l.length>POOL_N?p5l.length-POOL_N:0); h.push('<button class="mini-btn" id="poolMore" style="margin:8px auto;display:block">加载更多（还有 '+moreN+' 名）</button>'); }
   $('mBody').innerHTML=h.join('');
   openModalBox();
   var cards=$('mBody').querySelectorAll('.rup-card');
   for(i=0;i<cards.length;i++){ cards[i].onclick=function(){ openModal(this.getAttribute('data-op')); }; }
   var pm=$('poolMore'); if(pm)pm.onclick=function(){ POOL_N+=36; openPoolModal(); };
+  var bpm=$('btnPoolMiss'); if(bpm)bpm.onclick=function(){ POOL_MISS=!POOL_MISS; POOL_N=36; openPoolModal(); };
   var ps=$('poolSearch'); if(ps){ var pst=null; ps.oninput=function(){ POOL_Q=this.value.trim(); POOL_N=36; clearTimeout(pst); pst=setTimeout(function(){ openPoolModal(); },180); }; }
 }
 var galF='all', galV=2, galMode='art', galSearch='', galProf='all';
