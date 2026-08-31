@@ -1163,12 +1163,21 @@ function matStagesHtml(mn){
     h.push('<div class="mat-live-cat"><b>'+cats[ci][1]+'</b><span>');
     var pairs=[], pI;
     for(pI=0;pI<list.length;pI++)pairs.push({st:list[pI], ap:matApInfo(list[pI], mn)});
-    pairs.sort(function(a,b){ if(a.ap===undefined&&b.ap===undefined)return 0; if(a.ap===undefined)return 1; if(b.ap===undefined)return -1; return a.ap-b.ap; });
-    var lastCh=null;
+    pairs.sort(function(a,b){
+      var ca2=chapterOf(a.st)||'', cb2=chapterOf(b.st)||'';
+      if(ca2!==cb2)return ca2.localeCompare(cb2,'zh');
+      if(a.ap===undefined&&b.ap===undefined)return 0;
+      if(a.ap===undefined)return 1;
+      if(b.ap===undefined)return -1;
+      return a.ap-b.ap;
+    });
+    var lastCh=null, grpFirst=false;
     for(pI=0;pI<pairs.length;pI++){
       var st=pairs[pI].st, apV=pairs[pI].ap, ch=chapterOf(st);
-      if(ch!==lastCh){ if(pI>0)h.push('<br/>'); h.push('<em class="mat-ch">'+(ch?esc(ch):'未分类')+'</em>'); lastCh=ch; }
-      h.push('<span class="mat-live-stage'+(pI===0&&apV!==undefined?' best':'')+'">'+(pI===0&&apV!==undefined?'<b class="mat-best">🏆</b>':'')+esc(st)+(ch?' · '+esc(ch):'')+apTxt(apV)+'</span>');
+      if(ch!==lastCh){ if(pI>0)h.push('<br/>'); h.push('<em class="mat-ch">'+(ch?esc(ch):'未分类')+'</em>'); lastCh=ch; grpFirst=true; }
+      var isBest=grpFirst&&apV!==undefined;
+      if(grpFirst&&apV!==undefined)grpFirst=false;
+      h.push('<span class="mat-live-stage'+(isBest?' best':'')+'">'+(isBest?'<b class="mat-best">🏆</b>':'')+esc(st)+(ch?' · '+esc(ch):'')+apTxt(apV)+'</span>');
     }
     h.push('</span></div>');
   }
@@ -1700,12 +1709,14 @@ function renderCollection(){
     if(colSort==='got'){ var ia2=colPos2[a]; if(ia2===undefined)ia2=999999; var ib2=colPos2[b]; if(ib2===undefined)ib2=999999; if(ia2!==ib2)return ia2-ib2; }
     if(colSort==='cnt'){ var ca2=(state.opCnt&&state.opCnt[a])||0, cb2=(state.opCnt&&state.opCnt[b])||0; if(ca2!==cb2)return cb2-ca2; }
     if(colSort==='name')return a.localeCompare(b,'zh');
+    if(colSort==='natgrp'){ var na2g=(opByName[a]&&(NATION_CN[opByName[a].nation]||opByName[a].nation))||'未知', nb2g=(opByName[b]&&(NATION_CN[opByName[b].nation]||opByName[b].nation))||'未知'; if(na2g!==nb2g)return na2g.localeCompare(nb2g,'zh'); return opByName[b].rarity-opByName[a].rarity||a.localeCompare(b,'zh'); }
     if(colSort==='prof'){ var pa=(opByName[a]&&opByName[a].prof)||'', pb=(opByName[b]&&opByName[b].prof)||''; return pa.localeCompare(pb,'zh')||opByName[b].rarity-opByName[a].rarity; }
     return opByName[b].rarity-opByName[a].rarity||a.localeCompare(b,'zh');
   });
     COL_SORT_KEY=colCacheKey; COL_SORT_CACHE=names;
   }
   var h=[],i,o;
+  var grpOpen=false, lastNat=null;
   var colSet={}, csi;
   for(csi=0;csi<state.collection.length;csi++)colSet[state.collection[csi]]=1;
   var wishSet={}, wsi2;
@@ -1722,10 +1733,15 @@ function renderCollection(){
     if(colP!=='all'&&o.prof!==colP)continue;
     if(colNation!=='all'){ var natName=NATION_CN[o.nation]||o.nation||'未知'; if(natName!==colNation)continue; }
     if(colSearch&&o.name.indexOf(colSearch)<0)continue;
+    if(colSort==='natgrp'){
+      var natNow2=o.nation?(NATION_CN[o.nation]||o.nation):'未知';
+      if(natNow2!==lastNat){ if(grpOpen)h.push('</div>'); h.push('<div class="colgrp">'+esc(natNow2)+'</div><div class="colgrid">'); grpOpen=true; lastNat=natNow2; }
+    }
     var pul=(newPulse[names[i]]&&(nowCol-newPulse[names[i]])<20000);
     var ocnt=(state.opCnt||{})[names[i]]||0;
     h.push('<div class="cop'+(got?'':' miss')+(pul?' new':'')+(wishSet[names[i]]?' wished':'')+(colBatch?(colSel[names[i]]?' bsel':''):'')+'" data-op="'+esc(names[i])+'">'+(colBatch&&colSel[names[i]]?'<div class="col-selmark">✓</div>':'')+'<img loading="lazy" decoding="async" src="'+esc(avUrl(o))+'" alt=""/>'+(state.favOps&&state.favOps[names[i]]?'<div class="favstar">★</div>':'')+(wishSet[names[i]]?'<div class="wishmark">💝</div>':'')+(!got&&!wishSet[names[i]]?'<button class="quickwish" data-op="'+esc(names[i])+'" title="加入心愿单">💝</button>':'')+'<div class="cs">'+esc(o.name)+'</div>'+(ocnt>1?'<div class="cdup">×'+ocnt+'</div>':'')+'<div class="nb"></div></div>');
   }
+  if(grpOpen)h.push('</div>');
   if(colBatch){
     var selN=0, sk2;
     for(sk2 in colSel)selN++;
@@ -2815,7 +2831,7 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.22</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.23</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 存档导入导出 · 四主题</div>');
   h.push('</div>');

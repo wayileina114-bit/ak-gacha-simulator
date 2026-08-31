@@ -504,6 +504,8 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .hitem.r6 .star{color:var(--r6); font-weight:800}
 .hitem.r5 .star{color:var(--r5)}
 #collection{display:grid; grid-template-columns:repeat(auto-fill,minmax(54px,1fr)); gap:6px; max-height:280px; overflow-y:auto}
+.colgrp{grid-column:1/-1; font-size:13px; font-weight:800; color:var(--acc); margin:6px 0 2px; padding:4px 6px; background:rgba(74,179,255,.06); border-radius:6px; letter-spacing:.5px}
+.colgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(54px,1fr)); gap:6px; margin-bottom:8px}
 .cop{position:relative; border-radius:8px; overflow:hidden; border:1px solid var(--line); cursor:pointer; transition:transform .15s, border-color .15s, box-shadow .15s content-visibility:auto; contain-intrinsic-size:auto 96px}
 .cop:hover{transform:translateY(-2px); border-color:var(--acc2); box-shadow:0 4px 14px rgba(74,179,255,.18)}
 .cop .favstar{position:absolute; top:1px; right:1px; font-size:9px; color:var(--gold); text-shadow:0 0 4px rgba(0,0,0,.8); z-index:2}
@@ -946,7 +948,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
       <div class="filters" id="histTypeChips"></div>
       <div class="filters" id="histTimeChips"></div>
       <div id="history"></div>
-      <div class="sectbar"><h4>干员图鉴</h4><span class="notice" id="colCount" style="margin-left:4px"></span><select id="colSortSel"><option value="fav">收藏置顶</option><option value="got">按获得顺序</option><option value="cnt">按抽到次数</option><option value="rarity">按稀有度</option><option value="name">按名称</option><option value="prof">按职业</option></select><select id="colNationSel"><option value="all">阵营:全部</option><option value="罗德岛">罗德岛</option><option value="龙门">龙门</option><option value="乌萨斯">乌萨斯</option><option value="维多利亚">维多利亚</option><option value="炎国">炎国</option><option value="哥伦比亚">哥伦比亚</option><option value="莱塔尼亚">莱塔尼亚</option><option value="萨尔贡">萨尔贡</option><option value="谢拉格">谢拉格</option><option value="叙拉古">叙拉古</option><option value="玻利瓦尔">玻利瓦尔</option><option value="雷姆必拓">雷姆必拓</option><option value="拉特兰">拉特兰</option><option value="伊比利亚">伊比利亚</option><option value="米诺斯">米诺斯</option><option value="阿戈尔">阿戈尔</option><option value="东国">东国</option><option value="卡西米尔">卡西米尔</option><option value="深海猎人">深海猎人</option><option value="岁">岁</option><option value="未知">未知/其他</option></select><button class="mini-btn" id="btnGallery">立绘画廊</button><button class="mini-btn" id="btnColBatch">🖇 批量</button><button class="mini-btn" id="btnWishList">💝 心愿单</button><button class="mini-btn" id="btnRandOp">🎲 随机干员</button></div>
+      <div class="sectbar"><h4>干员图鉴</h4><span class="notice" id="colCount" style="margin-left:4px"></span><select id="colSortSel"><option value="fav">收藏置顶</option><option value="got">按获得顺序</option><option value="cnt">按抽到次数</option><option value="rarity">按稀有度</option><option value="name">按名称</option><option value="prof">按职业</option><option value="natgrp">按阵营分组</option></select><select id="colNationSel"><option value="all">阵营:全部</option><option value="罗德岛">罗德岛</option><option value="龙门">龙门</option><option value="乌萨斯">乌萨斯</option><option value="维多利亚">维多利亚</option><option value="炎国">炎国</option><option value="哥伦比亚">哥伦比亚</option><option value="莱塔尼亚">莱塔尼亚</option><option value="萨尔贡">萨尔贡</option><option value="谢拉格">谢拉格</option><option value="叙拉古">叙拉古</option><option value="玻利瓦尔">玻利瓦尔</option><option value="雷姆必拓">雷姆必拓</option><option value="拉特兰">拉特兰</option><option value="伊比利亚">伊比利亚</option><option value="米诺斯">米诺斯</option><option value="阿戈尔">阿戈尔</option><option value="东国">东国</option><option value="卡西米尔">卡西米尔</option><option value="深海猎人">深海猎人</option><option value="岁">岁</option><option value="未知">未知/其他</option></select><button class="mini-btn" id="btnGallery">立绘画廊</button><button class="mini-btn" id="btnColBatch">🖇 批量</button><button class="mini-btn" id="btnWishList">💝 心愿单</button><button class="mini-btn" id="btnRandOp">🎲 随机干员</button></div>
       <div class="colbar" id="colBar"></div>
       <div id="colRarity"></div>
       <div class="filters" id="colChips"></div>
@@ -2132,12 +2134,21 @@ function matStagesHtml(mn){
     h.push('<div class="mat-live-cat"><b>'+cats[ci][1]+'</b><span>');
     var pairs=[], pI;
     for(pI=0;pI<list.length;pI++)pairs.push({st:list[pI], ap:matApInfo(list[pI], mn)});
-    pairs.sort(function(a,b){ if(a.ap===undefined&&b.ap===undefined)return 0; if(a.ap===undefined)return 1; if(b.ap===undefined)return -1; return a.ap-b.ap; });
-    var lastCh=null;
+    pairs.sort(function(a,b){
+      var ca2=chapterOf(a.st)||'', cb2=chapterOf(b.st)||'';
+      if(ca2!==cb2)return ca2.localeCompare(cb2,'zh');
+      if(a.ap===undefined&&b.ap===undefined)return 0;
+      if(a.ap===undefined)return 1;
+      if(b.ap===undefined)return -1;
+      return a.ap-b.ap;
+    });
+    var lastCh=null, grpFirst=false;
     for(pI=0;pI<pairs.length;pI++){
       var st=pairs[pI].st, apV=pairs[pI].ap, ch=chapterOf(st);
-      if(ch!==lastCh){ if(pI>0)h.push('<br/>'); h.push('<em class="mat-ch">'+(ch?esc(ch):'未分类')+'</em>'); lastCh=ch; }
-      h.push('<span class="mat-live-stage'+(pI===0&&apV!==undefined?' best':'')+'">'+(pI===0&&apV!==undefined?'<b class="mat-best">🏆</b>':'')+esc(st)+(ch?' · '+esc(ch):'')+apTxt(apV)+'</span>');
+      if(ch!==lastCh){ if(pI>0)h.push('<br/>'); h.push('<em class="mat-ch">'+(ch?esc(ch):'未分类')+'</em>'); lastCh=ch; grpFirst=true; }
+      var isBest=grpFirst&&apV!==undefined;
+      if(grpFirst&&apV!==undefined)grpFirst=false;
+      h.push('<span class="mat-live-stage'+(isBest?' best':'')+'">'+(isBest?'<b class="mat-best">🏆</b>':'')+esc(st)+(ch?' · '+esc(ch):'')+apTxt(apV)+'</span>');
     }
     h.push('</span></div>');
   }
@@ -2669,12 +2680,14 @@ function renderCollection(){
     if(colSort==='got'){ var ia2=colPos2[a]; if(ia2===undefined)ia2=999999; var ib2=colPos2[b]; if(ib2===undefined)ib2=999999; if(ia2!==ib2)return ia2-ib2; }
     if(colSort==='cnt'){ var ca2=(state.opCnt&&state.opCnt[a])||0, cb2=(state.opCnt&&state.opCnt[b])||0; if(ca2!==cb2)return cb2-ca2; }
     if(colSort==='name')return a.localeCompare(b,'zh');
+    if(colSort==='natgrp'){ var na2g=(opByName[a]&&(NATION_CN[opByName[a].nation]||opByName[a].nation))||'未知', nb2g=(opByName[b]&&(NATION_CN[opByName[b].nation]||opByName[b].nation))||'未知'; if(na2g!==nb2g)return na2g.localeCompare(nb2g,'zh'); return opByName[b].rarity-opByName[a].rarity||a.localeCompare(b,'zh'); }
     if(colSort==='prof'){ var pa=(opByName[a]&&opByName[a].prof)||'', pb=(opByName[b]&&opByName[b].prof)||''; return pa.localeCompare(pb,'zh')||opByName[b].rarity-opByName[a].rarity; }
     return opByName[b].rarity-opByName[a].rarity||a.localeCompare(b,'zh');
   });
     COL_SORT_KEY=colCacheKey; COL_SORT_CACHE=names;
   }
   var h=[],i,o;
+  var grpOpen=false, lastNat=null;
   var colSet={}, csi;
   for(csi=0;csi<state.collection.length;csi++)colSet[state.collection[csi]]=1;
   var wishSet={}, wsi2;
@@ -2691,10 +2704,15 @@ function renderCollection(){
     if(colP!=='all'&&o.prof!==colP)continue;
     if(colNation!=='all'){ var natName=NATION_CN[o.nation]||o.nation||'未知'; if(natName!==colNation)continue; }
     if(colSearch&&o.name.indexOf(colSearch)<0)continue;
+    if(colSort==='natgrp'){
+      var natNow2=o.nation?(NATION_CN[o.nation]||o.nation):'未知';
+      if(natNow2!==lastNat){ if(grpOpen)h.push('</div>'); h.push('<div class="colgrp">'+esc(natNow2)+'</div><div class="colgrid">'); grpOpen=true; lastNat=natNow2; }
+    }
     var pul=(newPulse[names[i]]&&(nowCol-newPulse[names[i]])<20000);
     var ocnt=(state.opCnt||{})[names[i]]||0;
     h.push('<div class="cop'+(got?'':' miss')+(pul?' new':'')+(wishSet[names[i]]?' wished':'')+(colBatch?(colSel[names[i]]?' bsel':''):'')+'" data-op="'+esc(names[i])+'">'+(colBatch&&colSel[names[i]]?'<div class="col-selmark">✓</div>':'')+'<img loading="lazy" decoding="async" src="'+esc(avUrl(o))+'" alt=""/>'+(state.favOps&&state.favOps[names[i]]?'<div class="favstar">★</div>':'')+(wishSet[names[i]]?'<div class="wishmark">💝</div>':'')+(!got&&!wishSet[names[i]]?'<button class="quickwish" data-op="'+esc(names[i])+'" title="加入心愿单">💝</button>':'')+'<div class="cs">'+esc(o.name)+'</div>'+(ocnt>1?'<div class="cdup">×'+ocnt+'</div>':'')+'<div class="nb"></div></div>');
   }
+  if(grpOpen)h.push('</div>');
   if(colBatch){
     var selN=0, sk2;
     for(sk2 in colSel)selN++;
@@ -3784,7 +3802,7 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.22</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.23</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 存档导入导出 · 四主题</div>');
   h.push('</div>');
