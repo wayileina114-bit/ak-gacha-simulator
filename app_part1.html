@@ -589,6 +589,9 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .rules-i{padding-left:14px; opacity:.94}
 .rules-t{text-align:center; font-size:14px; font-weight:700; color:var(--acc); margin-bottom:10px; letter-spacing:1px; border-bottom:1px dashed var(--line); padding-bottom:8px}
 .toast{
+.slotbar{display:flex; align-items:center; gap:6px; flex-wrap:wrap; padding:8px 10px; margin:2px 0 6px; background:var(--bg2); border:1px solid var(--line); border-radius:10px}
+.slotbar .slot-label{font-size:12px; color:var(--dim); margin-right:2px}
+.slotbtn.on{background:var(--acc2); color:#fff; border-color:var(--acc2)}
   position:fixed; top:70px; left:50%; transform:translateX(-50%); z-index:60;
   background:rgba(20,30,50,.95); border:1px solid var(--gold); color:var(--gold);
   padding:10px 22px; border-radius:10px; font-size:14px; display:none;
@@ -840,6 +843,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
       <button class="mini-btn" id="btnAbout">ℹ️ 关于</button>
       <button class="mini-btn" id="btnSound">音效: 开</button>
       <button class="mini-btn" id="btnSpeed">动画: 慢速</button>
+      <div class="slotbar"><span class="slot-label">💾 存档槽位</span><button class="mini-btn slotbtn" id="slot1">槽位1</button><button class="mini-btn slotbtn" id="slot2">槽位2</button><button class="mini-btn slotbtn" id="slot3">槽位3</button></div>
       <button class="mini-btn" id="btnExport">💾 导出存档(文件)</button>
       <button class="mini-btn" id="btnImport">📥 导入存档</button>
       <button class="mini-btn warn" id="btnReset">重置存档</button>
