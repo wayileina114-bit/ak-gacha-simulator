@@ -575,7 +575,11 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .ach.miss{opacity:.55}
 .ach.miss .ast{color:var(--dim)}
 #allResList{max-height:60vh; overflow-y:auto}
-.rules{background:var(--bg2); border:1px solid var(--line); border-radius:10px; padding:14px; font-size:13px; line-height:1.9; color:var(--txt); white-space:pre-wrap; font-family:inherit; overflow:auto; max-height:70vh}
+.rules{background:linear-gradient(180deg,var(--bg2),rgba(0,0,0,.18)); border:1px solid var(--line); border-radius:12px; padding:16px 18px; font-size:13px; line-height:1.8; color:var(--txt); font-family:inherit; overflow:auto; max-height:70vh; box-shadow:0 4px 18px rgba(0,0,0,.25); scrollbar-width:thin}
+.rules-h{color:var(--gold); font-weight:700; margin:12px 0 4px; font-size:14px; letter-spacing:.5px}
+.rules-h:first-child{margin-top:0}
+.rules-i{padding-left:14px; opacity:.94}
+.rules-t{text-align:center; font-size:14px; font-weight:700; color:var(--acc); margin-bottom:10px; letter-spacing:1px; border-bottom:1px dashed var(--line); padding-bottom:8px}
 .toast{
   position:fixed; top:70px; left:50%; transform:translateX(-50%); z-index:60;
   background:rgba(20,30,50,.95); border:1px solid var(--gold); color:var(--gold);
