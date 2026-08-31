@@ -697,8 +697,9 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   .sidebar{padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom)}
   /* ⑥ 保底浮标避让底部栏（v11.83） */
   .pityCount{bottom:calc(86px + env(safe-area-inset-bottom))}
-  /* ⑦ 抽卡动画合成层优化（v11.83） */
-  #cards .card{will-change:transform}
+  /* ⑦ 抽卡动画合成层优化（v11.83；v11.90 改为仅翻转时占层） */
+  #cards .card{will-change:auto}
+  #cards .card.flip{will-change:transform}
   #cards{contain:layout paint}
   #gacha .row{-webkit-backdrop-filter:blur(10px) saturate(1.2); backdrop-filter:blur(10px) saturate(1.2)}
   /* ⑧ 触控尺寸提升（v11.83） */
@@ -742,6 +743,13 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   /* ⑳ 低端机翻牌加速（v11.89） */
   #cards .card{transition:transform .35s}
   .card.flip{transition:transform .3s cubic-bezier(.2,.8,.25,1.1)}
+  /* ㉑ 大图双击缩放（v11.90） */
+  #lightbox img{max-width:100vw; max-height:100vh; touch-action:pan-y; transition:transform .15s}
+  #lightbox.zoomed{overflow:auto; -webkit-overflow-scrolling:touch}
+  #lightbox.zoomed img{transform:scale(2)}
+  /* ㉒ OLED 深色微调（v11.90） */
+  body{background:#06090f}
+  .mbox{background:linear-gradient(160deg,#0f1826,#080d16)}
 }
 @media(max-width:720px) and (prefers-contrast:more){
   :root{--txt:#ffffff; --dim:#c3cee2; --line:#3a4a6a}
