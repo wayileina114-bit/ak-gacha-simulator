@@ -711,8 +711,8 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   .sixstrip{flex-wrap:nowrap; justify-content:flex-start; overflow-x:auto; -webkit-overflow-scrolling:touch; padding:4px 2px 6px; scroll-snap-type:x proximity}
   .sixcard{flex-shrink:0; scroll-snap-align:start}
   #resultMsg{font-size:13px}
-  /* ⑩ 键盘弹起时隐藏底部抽卡栏（v11.84） */
-  #gacha.kbd-hide{transform:translateY(110%)}
+  /* ⑩ 键盘弹起时隐藏底部抽卡栏（v11.84；v11.92 改为不可见省绘制） */
+  #gacha.kbd-hide{transform:translateY(110%); visibility:hidden}
   /* ⑪ 卡池列表离屏跳过渲染（v11.84） */
   #bannerList .bcard{content-visibility:auto; contain-intrinsic-size:auto 62px}
   /* ⑫ 关闭/抽屉按钮 44px 触控热区（v11.85） */
@@ -755,6 +755,11 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   /* ㉔ 底栏卡池名渐变 + 记录行触控（v11.91） */
   .barName{background:linear-gradient(90deg,#eaf4ff,var(--acc2)); -webkit-background-clip:text; background-clip:text; color:transparent}
   .hitem{padding:7px 8px; font-size:13px}
+  /* ㉕ 横屏刘海安全区 + 按钮按压反馈（v11.92） */
+  #gacha .row{padding-left:calc(10px + env(safe-area-inset-left)); padding-right:calc(10px + env(safe-area-inset-right))}
+  .pull-btn:active{transform:scale(.96)}
+  .mini-btn:active{transform:scale(.94)}
+  .mhead h2{font-size:18px}
 }
 @media(max-width:720px) and (prefers-contrast:more){
   :root{--txt:#ffffff; --dim:#c3cee2; --line:#3a4a6a}
