@@ -475,6 +475,10 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .statbar{height:5px; background:var(--bg); border-radius:3px; overflow:hidden; margin-top:6px}
 .statbar i{display:block; height:100%; background:linear-gradient(90deg,#ff6ec7,#c96ab6); border-radius:3px}
 .stat{background:var(--bg2); border:1px solid var(--line); border-radius:10px; padding:10px; text-align:center; transition:transform .15s, border-color .15s, box-shadow .15s}
+.stat:hover{transform:translateY(-2px); border-color:var(--acc2); box-shadow:0 4px 12px rgba(74,179,255,.12)}
+.hitem.r6{border-left:2px solid var(--gold); background:rgba(255,215,0,.04)}
+.hitem.r6:hover{background:rgba(255,215,0,.09)}
+.hitem.r5{border-left:2px solid var(--r5)}
 .stat:hover{transform:translateY(-2px); border-color:var(--acc2); box-shadow:0 6px 16px rgba(74,179,255,.18)}
 .stat .v{font-size:22px; font-weight:800; color:var(--acc2); background:linear-gradient(180deg,#eaf4ff 0%,var(--acc2) 100%); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-fill-color:transparent; transition:transform .15s}
 .stat:hover .v{transform:scale(1.12)}
@@ -2327,13 +2331,14 @@ function runSim(b, n, startFails){
 }
 function runSimMulti(b, n, times, startFails){
   times=Math.min(50,Math.max(2,times||10));
-  var c6s=[], trigs=0, gapsAll=[], upAll=0, t2, g2;
+  var c6s=[], trigs=0, gapsAll=[], upAll=0, pos6All=[], t2, g2;
   for(t2=0;t2<times;t2++){
     var rr=simRunOnce(b,n,startFails);
     c6s.push(rr.c6);
     trigs+=rr.trig;
     upAll+=rr.up6;
     for(g2=0;g2<rr.gaps.length;g2++)gapsAll.push(rr.gaps[g2]);
+    for(g2=0;g2<rr.pos6.length;g2++)pos6All.push((t2*n)+rr.pos6[g2]);
   }
   var sum=0, mx=0, mn=9999, i2;
   for(i2=0;i2<c6s.length;i2++){ sum+=c6s[i2]; if(c6s[i2]>mx)mx=c6s[i2]; if(c6s[i2]<mn)mn=c6s[i2]; }
@@ -2368,6 +2373,11 @@ function runSimMulti(b, n, times, startFails){
     for(gbi=0;gbi<10;gbi++){ h.push('<div class="crow"><span class="cl">'+(gbi*10)+'-'+(gbi*10+9)+'</span><div class="cbar"><i style="width:'+Math.max(2,Math.round(gbk[gbi]/gbm*100))+'%"></i></div><span class="cv">'+gbk[gbi]+'</span></div>'); }
     h.push('</div>');
   } else h.push('<div class="notice">'+times+' 次模拟均未出6★，无间隔数据</div>');
+  h.push('<h4 class="sect">合并出货点阵（'+times+' 次模拟 · '+totalPulls+' 抽）</h4><div class="dotstrip">');
+  var mdotN=Math.min(500,totalPulls), mdstep=totalPulls>500?Math.ceil(totalPulls/mdotN):1, mdarr=[], mdi;
+  for(mdi=0;mdi<pos6All.length;mdi++){ var mdpos=Math.floor((pos6All[mdi]-1)/mdstep); if(mdpos<mdotN)mdarr[mdpos]=1; }
+  for(mdi=0;mdi<mdotN;mdi++){ var mcls='d'+(mdarr[mdi]?' s6':'')+(mdi>0&&mdi%Math.max(1,Math.round(100/mdstep))===0?' h':''); h.push('<i class="'+mcls+'"'+(mdarr[mdi]?' title="第 '+((mdi*mdstep)+1)+'~'+Math.min(totalPulls,(mdi+1)*mdstep)+' 抽出6★"':'')+'></i>'); }
+  h.push('</div><div class="dotlegend"><span><i class="d s6"></i> 6★</span><span>合并 '+times+' 次模拟 · 竖线为每100抽</span></div>');
   h.push('<div class="notice">多次模拟展示随机波动：即使期望约 2.89%，单次结果也会在平均附近起伏 · 模拟不写入存档</div>');
   h.push('<button class="mini-btn" id="simMultiAgain" style="margin:6px auto;display:block">🔁 再模拟'+times+'次</button>');
   $('simOut').innerHTML=h.join('');
@@ -2376,13 +2386,13 @@ function runSimMulti(b, n, times, startFails){
 function openWishList(){
   var wish=state.wish||[];
   var wishOrd=wish.slice().sort(function(a,b){ var oa=opOf(a), ob=opOf(b); var ra=oa?oa.rarity:0, rb=ob?ob.rarity:0; var ga=state.collection.indexOf(a)>=0?1:0, gb=state.collection.indexOf(b)>=0?1:0; if(ga!==gb)return ga-gb; return rb-ra||a.localeCompare(b,'zh'); });
-  var h=['<h4 class="sect" style="margin-top:0">💝 心愿单（'+wish.length+'）</h4>'];
-  if(!wish.length){
+  var visWish=0, gotN=0, wvI, wvO, i, o;
+  for(wvI=0;wvI<wish.length;wvI++){ wvO=opOf(wish[wvI]); if(!wvO)continue; visWish++; if(state.collection.indexOf(wish[wvI])>=0)gotN++; }
+  var h=['<h4 class="sect" style="margin-top:0">💝 心愿单（'+visWish+'）</h4>'];
+  if(!visWish){
     h.push('<div class="notice">心愿单为空 · 在干员详情点击「💝 心愿单」加入想抽的干员，抽到会自动移出</div>');
   } else {
-    var gotN=0, i, o;
-    for(i=0;i<wish.length;i++){ if(state.collection.indexOf(wish[i])>=0)gotN++; }
-    h.push('<div class="notice">已拥有 <b>'+gotN+'</b> / '+wish.length+' · 点击干员查看详情，点击 📌 卡池快速跳转</div>');
+    h.push('<div class="notice">已拥有 <b>'+gotN+'</b> / '+visWish+' · 点击干员查看详情，点击 📌 卡池快速跳转</div>');
     h.push('<div class="wishgrid">');
     for(i=0;i<wishOrd.length;i++){
       o=opOf(wishOrd[i]); if(!o)continue;
@@ -3725,7 +3735,7 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.16</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.17</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 存档导入导出 · 四主题</div>');
   h.push('</div>');
