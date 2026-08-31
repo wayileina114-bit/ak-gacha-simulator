@@ -598,6 +598,10 @@ function bannerInfoHtml(b){
   }
   var poolB=getPool(b);
   h.push('<button class="mini-btn" id="btnPool">查看完整卡池（6★ '+poolB.p6.length+' · 5★ '+poolB.p5.length+'）</button>');
+  var gapMiss=[], gapI;
+  for(gapI=0;gapI<poolB.p6.length;gapI++){ if(!colSet3[poolB.p6[gapI]])gapMiss.push('<b>'+esc(opOf(poolB.p6[gapI])?opOf(poolB.p6[gapI]).name:poolB.p6[gapI])+'</b>'); }
+  for(gapI=0;gapI<poolB.p5.length;gapI++){ if(!colSet3[poolB.p5[gapI]])gapMiss.push(esc(opOf(poolB.p5[gapI])?opOf(poolB.p5[gapI]).name:poolB.p5[gapI])); }
+  if(gapMiss.length)h.push('<div class="pool-gap">本池还差 <b>'+gapMiss.length+'</b> 名未拥有：'+gapMiss.slice(0,8).join('、')+(gapMiss.length>8?' 等':'')+'</div>');
   var bkCnt=(state.cnt||{})[b.id]||0, bk6=B_STAT&&B_STAT[b.id]?B_STAT[b.id].s6:0;
   if(isSelect(b)){
     var sKey2=selKey(b), ss2=(B_SEL_CACHE&&B_SEL_CACHE[b.id+'|'+sKey2])||{n:0,s6:0};
@@ -1790,12 +1794,13 @@ function openModal(opName){
     var sc4=loadSkinCache(opName);
     if(sc4&&sc4.length){ var skn4=0; for(var sk4i=0;sk4i<sc4.length;sk4i++){ if(!(sc4[sk4i].no==='0'||sc4[sk4i].no===0))skn4++; } if(skn4)h.push('<div class="kv"><b>皮肤</b>'+skn4+' 套（点击上方 🎨 皮肤 查看）</div>'); }
   }catch(e){}
-  h.push('<div class="kv"><b>获取</b>'+(state.collection.indexOf(opName)>=0?'已拥有':'未获得')+(limitedOps[opName]?' · <span style="color:#ff6ec7">👑 限定干员</span>':'')+(o.gift?' · <span style="color:#ff9a2e">🎁 活动赠送干员</span>':'')+(o.collabOp?' · <span style="color:#c96ab6">🔗 联动限定</span>':'')+'</div>');
+  var ownedNow=state.collection.indexOf(opName)>=0;
+  h.push('<div class="kv"><b>获取</b>'+(ownedNow?'已拥有':'未获得')+(limitedOps[opName]?' · <span style="color:#ff6ec7">👑 限定干员</span>':'')+(o.gift?' · <span style="color:#ff9a2e">🎁 活动赠送干员</span>':'')+(o.collabOp?' · <span style="color:#c96ab6">🔗 联动限定</span>':'')+'</div>');
   var opC=(state.opCnt&&state.opCnt[opName])||0;
   var pullsOfOp=0, firstT=null, lastT=null, pi9;
   for(pi9=0;pi9<state.history.length;pi9++){ if(state.history[pi9].op===opName){ pullsOfOp++; if(lastT===null)lastT=state.history[pi9].t; firstT=state.history[pi9].t; } }
   h.push('<div class="kv"><b>已获得</b>'+opC+' 次（含抽卡/兑换/免费领取）'+(pullsOfOp>0?(' · 其中抽卡 '+pullsOfOp+' 次'):'')+'</div>');
-  var gotIdx=state.collection.indexOf(opName);
+  var gotIdx=ownedNow?state.collection.indexOf(opName):-1;
   if(gotIdx>=0)h.push('<div class="kv"><b>获得顺序</b>第 '+(gotIdx+1)+' 个</div>');
   if(firstT){ var fdt=new Date(firstT); h.push('<div class="kv"><b>首次获得</b>'+fdt.getFullYear()+'年'+(fdt.getMonth()+1)+'月'+fdt.getDate()+'日</div>'); }
   if(lastT&&lastT!==firstT){ var ldt=new Date(lastT); h.push('<div class="kv"><b>最近获得</b>'+ldt.getFullYear()+'年'+(ldt.getMonth()+1)+'月'+ldt.getDate()+'日</div>'); }
@@ -2831,7 +2836,7 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.25</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.26</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 存档导入导出 · 四主题</div>');
   h.push('</div>');
@@ -4026,8 +4031,8 @@ function copyStats(){
   for(i=0;i<gaps.length;i++){ if(gaps[i]>maxG)maxG=gaps[i]; }
   var curFails=(state.pity[pityKey(bannerById(state.cur))]||{fails:0}).fails;
   var s6=hist.filter(function(x){return x.rar===6;}).slice(0,5).map(function(x){var o=opOf(x.op);return o?o.name:x.op;});
-  var topOp='', topN=0;
-  for(var k2 in (state.opCnt||{})){ if(state.opCnt[k2]>topN){ topN=state.opCnt[k2]; topOp=k2; } }
+  var topOp='', topN=0, topCnt={}, tk3;
+  for(tk3=0;tk3<hist.length;tk3++){ var topK=hist[tk3].op; topCnt[topK]=(topCnt[topK]||0)+1; if(topCnt[topK]>topN){ topN=topCnt[topK]; topOp=topK; } }
   var topName=topOp?(opOf(topOp)?opOf(topOp).name:topOp):'';
   var NL=String.fromCharCode(10);
   var rangeTxt=statRange==='week'?'近7天':statRange==='month'?'近30天':'全部';
