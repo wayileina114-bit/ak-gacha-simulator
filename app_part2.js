@@ -1314,7 +1314,7 @@ function simRunOnce(b, n, startFails){
   var sb={col:state.collection.slice(), got6:false, sel:{}};
   var realSel=state.sel[b.id];
   if(isSelect(b)&&realSel){ sb.sel[b.id]={six:(realSel.six||[]).slice(), five:(realSel.five||[]).slice()}; }
-  var st={fails:Math.min(99,Math.max(0,startFails||0)),batch:[]}, c6=0,c5=0,gaps=[],trig=0,up6=0,up5=0,i,j2,rar,op;
+  var st={fails:Math.min(99,Math.max(0,startFails||0)),batch:[]}, c6=0,c5=0,gaps=[],trig=0,up6=0,up5=0,pos6=[],i,j2,rar,op;
   for(i=0;i<n;i++){
     var p6=Math.min(0.02+Math.max(0,st.fails-49)*0.02,1);
     if(st.batch.length===9){
@@ -1322,16 +1322,16 @@ function simRunOnce(b, n, startFails){
       for(j2=0;j2<st.batch.length;j2++){ if(st.batch[j2]>=5)has5=true; }
       rar=has5?rollRar(p6):(Math.random()<p6?6:5);
     }else rar=rollRar(p6);
-    if(rar===6){ c6++; if(st.fails>=99)trig++; gaps.push(st.fails+1); st.fails=0; op=simPick6(b,sb); if(isUp6SB(b,op,sb))up6++; }
+    if(rar===6){ c6++; if(st.fails>=99)trig++; gaps.push(st.fails+1); pos6.push(i+1); st.fails=0; op=simPick6(b,sb); if(isUp6SB(b,op,sb))up6++; }
     else if(rar===5){ c5++; op=simPick5(b,sb); if(isUp5SB(b,op,sb))up5++; }
     else st.fails++;
     st.batch.push(rar);
     if(st.batch.length===10)st.batch=[];
   }
-  return {c6:c6,c5:c5,gaps:gaps,trig:trig,up6:up6,up5:up5};
+  return {c6:c6,c5:c5,gaps:gaps,trig:trig,up6:up6,up5:up5,pos6:pos6};
 }
 function runSim(b, n, startFails){
-  var r=simRunOnce(b,n,startFails), c6=r.c6, c5=r.c5, gaps=r.gaps, trig=r.trig, up6=r.up6, up5=r.up5;
+  var r=simRunOnce(b,n,startFails), c6=r.c6, c5=r.c5, gaps=r.gaps, trig=r.trig, up6=r.up6, up5=r.up5, pos6=r.pos6;
   var i;
   var rate6=n?(c6/n*100):0, sumG=0, avgG=0, maxG=0, minG=9999;
   for(i=0;i<gaps.length;i++){ sumG+=gaps[i]; if(gaps[i]>maxG)maxG=gaps[i]; if(gaps[i]<minG)minG=gaps[i]; }
@@ -1355,6 +1355,11 @@ function runSim(b, n, startFails){
     for(i=0;i<10;i++){ h.push('<div class="crow"><span class="cl">'+(i*10)+'-'+(i*10+9)+'</span><div class="cbar"><i style="width:'+Math.max(2,Math.round(bk2[i]/bm2*100))+'%"></i></div><span class="cv">'+bk2[i]+'</span></div>'); }
     h.push('</div>');
   } else h.push('<div class="notice">本次模拟未出6★，无间隔数据</div>');
+  h.push('<h4 class="sect">出货点阵（6★位置）</h4><div class="dotstrip">');
+  var dotN=Math.min(500,n), dstep=n>500?Math.ceil(n/dotN):1, darr=[], di6;
+  for(di6=0;di6<pos6.length;di6++){ var dpos=Math.floor((pos6[di6]-1)/dstep); if(dpos<dotN)darr[dpos]=1; }
+  for(var di7=0;di7<dotN;di7++){ var cls='d'+(darr[di7]?' s6':'')+(di7>0&&di7%Math.max(1,Math.round(100/dstep))===0?' h':''); h.push('<i class="'+cls+'"'+(darr[di7]?' title="第 '+((di7*dstep)+1)+'~'+Math.min(n,(di7+1)*dstep)+' 抽出6★"':'')+'></i>'); }
+  h.push('</div><div class="dotlegend"><span><i class="d s6"></i> 6★</span><span>每 '+(dstep>1?dstep+' 抽':'1')+' 格 · 竖线为每100抽</span></div>');
   h.push('<div class="notice">💰 本次模拟 '+n+' 抽 ≈ <b>'+n*600+'</b> 合成玉（约 '+(Math.round(n*600/180*10)/10)+' 源石，按 180 合成玉/源石计）</div>');
   var diffTxt=rate6>=2.89?('高于期望 '+(n?(c6-Math.round(n*0.0289)):0)+' 只'):('低于期望 '+(n?Math.round(n*0.0289)-c6:0)+' 只');
   var upShareN=upShare(b,isSelect(b)?selUps(b,6):b.six);
@@ -2331,16 +2336,20 @@ function parseMatsItems(line){
   }
   return out;
 }
+var MAT_REC_CACHE={};
 function matFarmRec(mn){
+  if(MAT_REC_CACHE[mn]!==undefined)return MAT_REC_CACHE[mn];
   var stagesArr=matStagesOf(mn);
   var best=null, fi;
   for(fi=0;fi<stagesArr.length;fi++){
     var v=matApInfo(stagesArr[fi], mn);
     if(v!==undefined&&(!best||v<best.v))best={stage:stagesArr[fi], v:v};
   }
-  if(!best)return '';
+  if(!best){ MAT_REC_CACHE[mn]=''; return ''; }
   var ap=best.v<1?'（效率极高）':('（约'+best.v.toFixed(1)+'理智/个）');
-  return ' <em class="farm mat-rec">📌 推荐 <b>'+esc(best.stage)+'</b>'+ap+'</em>';
+  var rec=' <em class="farm mat-rec">📌 推荐 <b>'+esc(best.stage)+'</b>'+ap+'</em>';
+  MAT_REC_CACHE[mn]=rec;
+  return rec;
 }
 function matConsSpans(items){
   var sp=[];
@@ -2769,7 +2778,7 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.13</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.14</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 存档导入导出 · 四主题</div>');
   h.push('</div>');
@@ -3139,6 +3148,7 @@ function navBanner(dir){
 }
 function resetFilters(){
   var sb=$('searchBox'); if(sb)sb.value='';
+  BL_N=60;
   initFilters();
   renderBannerList();
   toast('筛选已重置');
