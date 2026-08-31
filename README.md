@@ -1,6 +1,6 @@
 # 明日方舟抽卡模拟器（Arknights Gacha Simulator）
 
-![version](https://img.shields.io/badge/version-v11.83-blue) ![banners](https://img.shields.io/badge/卡池-442-orange) ![ops](https://img.shields.io/badge/干员-409-brightgreen) ![license](https://img.shields.io/badge/license-MIT-lightgrey)
+![version](https://img.shields.io/badge/version-v11.84-blue) ![banners](https://img.shields.io/badge/卡池-442-orange) ![ops](https://img.shields.io/badge/干员-409-brightgreen) ![license](https://img.shields.io/badge/license-MIT-lightgrey)
 
 > 单文件 HTML 的明日方舟抽卡模拟器 · 自选历史卡池 · 干员立绘 · 抽卡统计 · 皮肤图鉴
 

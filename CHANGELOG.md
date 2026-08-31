@@ -1,6 +1,13 @@
 # 更新日志（CHANGELOG）
 
-## v11.83（当前 · 手机端专项）
+## v11.84（当前 · 手机端专项）
+- 🐛 **软键盘弹起时底部抽卡栏避让**：新增 visualViewport 监听（resize/scroll），键盘弹起（可视高度收缩 >160px）时底部栏隐藏，输入不再被遮挡；仅 isMobile() 分支生效，PC 无此逻辑
+- ⚡ **卡池列表离屏渲染跳过**：#bannerList 的 442 张卡池卡加 content-visibility:auto + contain-intrinsic-size——离屏卡片跳过布局/绘制，抽屉滚动更流畅
+- 🎨 **六星横幅窄屏横向滚动**：sixstrip 改为不换行 + 横向滚动 + scroll-snap 对齐；抽卡结果文本 14px→13px 适配窄屏
+- ✅ **PC 端零改动**：CSS 全部位于 ≤720px media query 内，JS 均以 isMobile() 守卫，回归 280 项全通过
+- 🧪 综合回归 280 项全通过
+
+## v11.83
 - 🐛 **保底浮标避让底部栏**：pityCount 固定定位 bottom:76px 与底部抽卡栏（约 76px+safe-area）存在重叠风险——移动端改为 bottom:calc(86px + env(safe-area-inset-bottom))
 - ⚡ **抽卡动画合成层优化**：抽卡翻转卡片加 will-change:transform + 结果区 contain:layout paint（减少低端机动画卡顿与重排）；底部抽卡栏加 backdrop-filter 毛玻璃（内容透过更清晰）
 - 🎨 **触控尺寸提升**：筛选 chips、卡池卡内边距与字号加大（更大热区）；抽卡按钮圆角 14px

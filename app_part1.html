@@ -705,6 +705,14 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   .bcard{padding:10px 12px}
   .bcard .name{font-size:14px}
   .pull-btn{border-radius:14px}
+  /* ⑨ 六星横幅窄屏横向滚动（v11.84） */
+  .sixstrip{flex-wrap:nowrap; justify-content:flex-start; overflow-x:auto; -webkit-overflow-scrolling:touch; padding:4px 2px 6px; scroll-snap-type:x proximity}
+  .sixcard{flex-shrink:0; scroll-snap-align:start}
+  #resultMsg{font-size:13px}
+  /* ⑩ 键盘弹起时隐藏底部抽卡栏（v11.84） */
+  #gacha.kbd-hide{transform:translateY(110%)}
+  /* ⑪ 卡池列表离屏跳过渲染（v11.84） */
+  #bannerList .bcard{content-visibility:auto; contain-intrinsic-size:auto 62px}
 }
 </style>
 </head>
