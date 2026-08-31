@@ -412,6 +412,9 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .mat-live-cat{font-size:11px; line-height:2}
 .mat-live-cat b{color:var(--gold); display:inline-block; background:rgba(255,215,0,.1); border:1px solid rgba(255,215,0,.3); border-radius:6px; padding:0 7px; line-height:1.9; margin-right:4px}
 .mat-live-stage{display:inline-block; background:var(--panel2); border:1px solid var(--line); border-radius:6px; padding:1px 6px; margin:2px 3px 2px 0}
+.mat-ch{display:block; font-size:11px; color:var(--dim); font-style:normal; margin:4px 0 2px; letter-spacing:.5px}
+.mat-live-stage.best{outline:1px solid rgba(255,215,106,.45); background:rgba(255,215,106,.07); border-radius:6px; padding:1px 5px; margin:-1px 2px 1px 0}
+.mat-live-stage .mat-best{color:var(--gold); margin-right:2px; font-size:11px}
 .mat-live-cat > span > .mat-live-stage:first-child{color:var(--acc); border-color:rgba(74,179,255,.45); background:rgba(74,179,255,.08); font-weight:700}
 .sk-card{background:linear-gradient(135deg,var(--panel2),var(--bg2)); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin:6px 0}
 .sk-head{display:flex; align-items:center; gap:10px}
@@ -2110,16 +2113,21 @@ function matStagesHtml(mn){
     any=true;
     if(!h.length)h.push('<div class="wikisec"><h4>📦 掉落来源（bilibili Wiki 本地数据 · 理智/个为企鹅物流实测）</h4>');
     h.push('<div class="mat-live-cat"><b>'+cats[ci][1]+'</b><span>');
-    var sorted=list.slice().sort(function(a,b){ var aa=matApInfo(a,mn), bb=matApInfo(b,mn); if(aa===undefined&&bb===undefined)return 0; if(aa===undefined)return 1; if(bb===undefined)return -1; return aa-bb; });
-    for(si=0;si<sorted.length;si++){
-      var st=sorted[si], ch=chapterOf(st);
-      h.push('<span class="mat-live-stage">'+esc(st)+(ch?' · '+esc(ch):'')+apTxt(matApInfo(st, mn))+'</span>');
+    var pairs=[], pI;
+    for(pI=0;pI<list.length;pI++)pairs.push({st:list[pI], ap:matApInfo(list[pI], mn)});
+    pairs.sort(function(a,b){ if(a.ap===undefined&&b.ap===undefined)return 0; if(a.ap===undefined)return 1; if(b.ap===undefined)return -1; return a.ap-b.ap; });
+    var lastCh=null;
+    for(pI=0;pI<pairs.length;pI++){
+      var st=pairs[pI].st, apV=pairs[pI].ap, ch=chapterOf(st);
+      if(ch!==lastCh){ if(pI>0)h.push('<br/>'); h.push('<em class="mat-ch">'+(ch?esc(ch):'未分类')+'</em>'); lastCh=ch; }
+      h.push('<span class="mat-live-stage'+(pI===0&&apV!==undefined?' best':'')+'">'+(pI===0&&apV!==undefined?'<b class="mat-best">🏆</b>':'')+esc(st)+(ch?' · '+esc(ch):'')+apTxt(apV)+'</span>');
     }
     h.push('</span></div>');
   }
   if(b.build){
     if(!h.length)h.push('<div class="wikisec"><h4>🏭 基建生产</h4>');
     h.push('<div class="mat-live-cat"><b>🏭 基建生产</b><span>'+esc(b.build)+'</span></div>');
+    any=true;
   }
   if(any||h.length)h.push('</div>');
   if(!any){
@@ -3759,7 +3767,7 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.20</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.21</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 存档导入导出 · 四主题</div>');
   h.push('</div>');
