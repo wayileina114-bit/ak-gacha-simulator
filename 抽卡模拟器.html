@@ -600,6 +600,10 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .apbar{height:6px; background:var(--bg); border:1px solid var(--line); border-radius:4px; overflow:hidden; margin:4px 0 6px}
 .apbar i{display:block; height:100%; background:linear-gradient(90deg,var(--acc2),var(--acc)); border-radius:4px; transition:width .4s}
 .ach.miss .apbar i{background:linear-gradient(90deg,#3a4a6a,#5a6c8e)}
+.ach{position:relative}
+.ach:not(.miss){border-color:rgba(255,215,106,.4); box-shadow:0 0 12px rgba(255,215,106,.1)}
+.ach:not(.miss) .aic{filter:drop-shadow(0 0 6px rgba(255,215,106,.5))}
+.ach-ok{position:absolute; top:6px; right:9px; color:var(--gold); font-weight:700; font-size:13px; text-shadow:0 0 6px rgba(255,215,106,.6)}
 .ach .ast{font-size:11px; color:var(--gold)}
 .ach.miss{opacity:.55}
 .ach.miss .ast{color:var(--dim)}
@@ -2486,8 +2490,7 @@ function histFilteredList(){
       if(hay.indexOf(histSearch)<0)continue;
     }
     list.push(hh);
-    try{ Object.defineProperty(list[list.length-1],'_gap',{value:gapArr[i],enumerable:false,writable:true,configurable:true}); }
-    catch(e){ list[list.length-1]._gap=gapArr[i]; }
+    Object.defineProperty(list[list.length-1],'_gap',{value:gapArr[i],enumerable:false,writable:true,configurable:true});
   }
   // 间隔筛选
   if(histGap!=='all'){
@@ -3722,7 +3725,7 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.15</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.16</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 存档导入导出 · 四主题</div>');
   h.push('</div>');
@@ -4501,7 +4504,7 @@ function calcLuck(histIn){
 var ACH_CACHE=null, ACH_KEY='';
 function calcAch(){
   var hist=state.history, i, last6=-1, maxG=0;
-  var first=hist.length>0, first6=false, double6=false, triple6=false, extreme=false, bigDrought=false, early6=false, night6=false, c5all=0;
+  var first=hist.length>0, first6=false, double6=false, triple6=false, extreme=false, bigDrought=false, early6=false, night6=false, c5all=0, pityTrigN=0;
   var lastH=hist[0], lastKey=lastH?(lastH.op+':'+lastH.rar+':'+lastH.t):'';
   var key=hist.length+':'+state.collection.length+':'+limitedTotal+':'+lastKey;
   if(ACH_CACHE&&ACH_KEY===key)return ACH_CACHE;
@@ -4513,13 +4516,16 @@ function calcAch(){
       if(cnt>=2)double6=true;
       if(cnt>=3)triple6=true;
       if(hist[i].t){ var nh2=new Date(hist[i].t).getHours(); if(nh2>=23||nh2<5)night6=true; }
-      if(last6>=0){ var g=i-last6-1; if(g>maxG)maxG=g; if(g>=90)extreme=true; }
+      if(last6>=0){ var g=i-last6-1; if(g>maxG)maxG=g; if(g>=90)extreme=true; if(g>=99)pityTrigN++; }
       last6=i;
     }
   }
   var tail=hist.slice(Math.max(0,hist.length-10));
   for(i=0;i<tail.length;i++){ if(tail[i].rar===6)early6=true; }
   if(maxG>=70)bigDrought=true;
+  var luck85=calcLuck().luckIdx>=85;
+  var old90=false;
+  if(hist.length){ for(i=hist.length-1;i>=0;i--){ if(hist[i].t){ old90=(Date.now()-hist[i].t)>=90*86400000; break; } } }
   var limCol=0, lk2, colSet2={}, csi2, col5N=0, col4N=0, col6N=0, collabN=0;
   for(csi2=0;csi2<state.collection.length;csi2++){
     var co=opByName[state.collection[csi2]];
@@ -4556,6 +4562,9 @@ function calcAch(){
     {name:'早鸟玄学',desc:'凌晨5-8点出过6★',icon:'🌅',done:bird6,prog:''},
     {name:'联动干员',desc:'获得任一联动干员（含活动赠送）',icon:'🔗',done:collabN>=1,prog:collabN+' / 1'},
     {name:'六星军团',desc:'拥有不同6★干员≥30',icon:'💪',done:col6N>=30,prog:col6N+' / 30'},
+    {name:'保底战士',desc:'累计触发保底（≥99抽出6★）3次',icon:'🛡️',done:pityTrigN>=3,prog:pityTrigN+' / 3'},
+    {name:'欧皇认证',desc:'欧气指数达到85',icon:'🏆',done:luck85,prog:''},
+    {name:'老玩家',desc:'最早抽卡记录距今≥90天',icon:'🗓️',done:old90,prog:''},
     {name:'井中月',desc:'在限定/联动池完成一次300契约兑换',icon:'🌙',done:(state.sparkEx||0)>=1,prog:(state.sparkEx||0)+' / 1'},
     {name:'全图鉴',desc:'拥有全部干员（'+totalOpsN+'）',icon:'🏅',done:state.collection.length>=totalOpsN,prog:state.collection.length+' / '+totalOpsN}
   ]};
@@ -4592,7 +4601,7 @@ function openAch(){
       var pw=Math.min(100,Math.round(pv/pt*100));
       bar='<div class="ap">'+a.prog+'</div><div class="apbar"><i style="width:'+pw+'%"></i></div>';
     }
-    h.push('<div class="ach'+(a.done?'':' miss')+'"><div class="aic">'+a.icon+'</div><div class="an">'+a.name+'</div><div class="ad">'+a.desc+'</div>'+bar+'<div class="ast">'+(a.done?'✓ 已达成':'未达成')+'</div></div>');
+    h.push('<div class="ach'+(a.done?'':' miss')+'">'+(a.done?'<div class="ach-ok">✓</div>':'')+'<div class="aic">'+a.icon+'</div><div class="an">'+a.name+'</div><div class="ad">'+a.desc+'</div>'+bar+'<div class="ast">'+(a.done?'✓ 已达成':'未达成')+'</div></div>');
   }
   h.push('</div>');
   $('mBody').innerHTML=h.join('');

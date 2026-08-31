@@ -600,6 +600,10 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .apbar{height:6px; background:var(--bg); border:1px solid var(--line); border-radius:4px; overflow:hidden; margin:4px 0 6px}
 .apbar i{display:block; height:100%; background:linear-gradient(90deg,var(--acc2),var(--acc)); border-radius:4px; transition:width .4s}
 .ach.miss .apbar i{background:linear-gradient(90deg,#3a4a6a,#5a6c8e)}
+.ach{position:relative}
+.ach:not(.miss){border-color:rgba(255,215,106,.4); box-shadow:0 0 12px rgba(255,215,106,.1)}
+.ach:not(.miss) .aic{filter:drop-shadow(0 0 6px rgba(255,215,106,.5))}
+.ach-ok{position:absolute; top:6px; right:9px; color:var(--gold); font-weight:700; font-size:13px; text-shadow:0 0 6px rgba(255,215,106,.6)}
 .ach .ast{font-size:11px; color:var(--gold)}
 .ach.miss{opacity:.55}
 .ach.miss .ast{color:var(--dim)}
