@@ -15,6 +15,16 @@ for (const b of banners) {
   }
 }
 
+// 干员首次进池时间（YYYY-MM-DD）：历史卡池按开启时间过滤池底，避免抽到尚未实装的干员
+const sinceMap = {};
+for (const b of banners) {
+  if (!b.start) continue;
+  const t0 = b.start.slice(0, 10);
+  for (const s of [...b.six, ...b.five]) {
+    const n = ALIAS[s.name] || s.name;
+    if (!sinceMap[n] || t0 < sinceMap[n]) sinceMap[n] = t0;
+  }
+}
 const opMap = {};
 for (const o of ops) {
   opMap[o.name] = {
@@ -24,14 +34,18 @@ for (const o of ops) {
     art: o.art || '', artV: o.artV || 2,
     gift: COLLAB_GIFT_OPS.indexOf(o.name) >= 0,
     collabOp: collabOps.has(o.name),
+    since: sinceMap[o.name] || '',
   };
 }
 
 const limitedSet = new Set();
 for (const b of banners) for (const s of b.six) if (s.limited) limitedSet.add(ALIAS[s.name] || s.name);
 for (const b of banners) for (const s of b.five) if (s.limited) limitedSet.add(ALIAS[s.name] || s.name);
-const std6 = ops.filter(o => o.rarity === 6 && !limitedSet.has(o.name)).map(o => o.name);
-const std5 = ops.filter(o => o.rarity === 5 && !limitedSet.has(o.name)).map(o => o.name);
+// 可抽干员集合：仅在任一寻访池中出现过的干员（同步 PRTS 卡池一览；活动赠送/剧情赠送等未进池干员不可抽）
+const inPool = new Set();
+for (const b of banners) for (const s of [...b.six, ...b.five]) inPool.add(ALIAS[s.name] || s.name);
+const std6 = ops.filter(o => o.rarity === 6 && !limitedSet.has(o.name) && inPool.has(o.name)).map(o => o.name);
+const std5 = ops.filter(o => o.rarity === 5 && !limitedSet.has(o.name) && inPool.has(o.name)).map(o => o.name);
 
 const TYPE_LABEL = { limited: '限定寻访', event: '活动寻访', standard: '常驻标准', zhongjian: '中坚寻访', joint: '联合行动', direct: '定向甄选', zjselect: '中坚甄选', special: '特殊寻访' };
 const TYPE_COLOR = { limited: '#d64a4a', event: '#4a9bd6', standard: '#7a8aa0', zhongjian: '#8a7aa0', joint: '#3dbf8f', direct: '#c9a14a', zjselect: '#8a7aa0', special: '#c96ab6' };
@@ -42,10 +56,10 @@ for (const b of banners) {
   const fix = (n) => ALIAS[n] || n;
   const sixAll = b.six.map(s => ({ name: fix(s.name), limited: s.limited }));
   const fiveAll = b.five.map(s => ({ name: fix(s.name), limited: s.limited }));
-  const f6 = sixAll.filter(s => opMap[s.name] && opMap[s.name].rarity >= 6).map(s => s.name);
-  const f5 = fiveAll.filter(s => opMap[s.name] && opMap[s.name].rarity >= 5).map(s => s.name);
-  const f4 = [...sixAll.filter(s => opMap[s.name] && opMap[s.name].rarity < 6).map(s => s.name),
-             ...fiveAll.filter(s => opMap[s.name] && opMap[s.name].rarity < 5).map(s => s.name)];
+  const f6 = sixAll.filter(s => opMap[s.name] && opMap[s.name].rarity >= 6 && inPool.has(s.name)).map(s => s.name);
+  const f5 = fiveAll.filter(s => opMap[s.name] && opMap[s.name].rarity >= 5 && inPool.has(s.name)).map(s => s.name);
+  const f4 = [...sixAll.filter(s => opMap[s.name] && opMap[s.name].rarity < 6 && inPool.has(s.name)).map(s => s.name),
+             ...fiveAll.filter(s => opMap[s.name] && opMap[s.name].rarity < 5 && inPool.has(s.name)).map(s => s.name)];
   if (!f6.length && !f5.length && !f4.length) continue;
   const type = b.type;
   const isCollab = COLLAB_POOL_NAMES.indexOf(b.name) >= 0;
