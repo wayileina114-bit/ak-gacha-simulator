@@ -817,8 +817,7 @@ button:focus-visible, .chip:focus-visible, .bcard:focus-visible, .cop:focus-visi
   #resultMsg{font-size:13px}
   /* ⑩ 键盘弹起时隐藏底部抽卡栏（v11.84；v11.92 改为不可见省绘制） */
   #gacha.kbd-hide{transform:translateY(110%); visibility:hidden}
-  /* ⑪ 卡池列表离屏跳过渲染（v11.84） */
-  #bannerList .bcard{content-visibility:auto; contain-intrinsic-size:auto 62px}
+  /* ⑪ 卡池列表离屏跳过渲染（v11.84；v12.39 移除：移动 WebView 下 content-visibility 导致卡片灰色不可点） */
   /* ⑫ 关闭/抽屉按钮 44px 触控热区（v11.85） */
   .mbox .close{width:44px; height:44px; display:flex; align-items:center; justify-content:center; top:6px; right:4px}
   .drawerClose{width:44px; height:44px; display:flex; align-items:center; justify-content:center}

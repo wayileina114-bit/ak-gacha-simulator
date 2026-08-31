@@ -206,8 +206,14 @@ function selUps(b,rar){
   var key=rar===6?'six':'five';
   return s[key]||[];
 }
-// 按卡池开启时间过滤池底：只保留该时间点已实装的干员（since=首次进池时间）
+// 按卡池开启时间过滤池底：since=实装时间，mo=移出标准寻访时间（中坚移出批次）
 function poolStd(b, list){
+  var t0=(b.start||'').slice(0,10);
+  if(!t0)return list;
+  return list.filter(function(n){ var o=opOf(n); if(!o)return true; if(o.since&&o.since>t0)return false; if(o.mo&&o.mo<=t0)return false; return true; });
+}
+// 中坚池底：仅按实装时间过滤（中坚干员不受移出规则影响）
+function poolStdZ(b, list){
   var t0=(b.start||'').slice(0,10);
   if(!t0)return list;
   return list.filter(function(n){ var o=opOf(n); return !o||!o.since||o.since<=t0; });
@@ -220,12 +226,14 @@ function getPool(b){
       p5=selUps(b,5).slice();
     }else if(b.type==='zhongjian'){
       // six≥8 视为全量池（如跨年欢庆·中坚列出中坚全部6★），不加 zj6 池底
-      p6=b.six.length>=8?b.six.slice():uniq(b.six.concat(poolStd(b, DATA.zj6||DATA.std6)));
-      p5=uniq(b.five.concat(poolStd(b, DATA.zj5||DATA.std5)));
+      p6=b.six.length>=8?b.six.slice():uniq(b.six.concat(poolStdZ(b, DATA.zj6||DATA.std6)));
+      p5=uniq(b.five.concat(poolStdZ(b, DATA.zj5||DATA.std5)));
     }else{
-      // restricted 池未列出 5★/6★ 时（如跨年欢庆系列），池底按开启时间过滤的标准池底
-      p6=restricted?(b.six.length?b.six.slice():poolStd(b, DATA.std6)):uniq(b.six.concat(poolStd(b, DATA.std6)));
-      p5=restricted?(b.five.length?b.five.slice():poolStd(b, DATA.std5)):uniq(b.five.concat(poolStd(b, DATA.std5)));
+      // 池底 = 标准范围(std6) + 中坚(zj6，按移出时间过滤)：历史池可抽当时未移出的中坚干员
+      var s6=DATA.std6.concat(DATA.zj6||[]), s5=DATA.std5.concat(DATA.zj5||[]);
+      // restricted 池未列出 5★/6★ 时（如跨年欢庆系列），池底按开启时间过滤
+      p6=restricted?(b.six.length?b.six.slice():poolStd(b, s6)):uniq(b.six.concat(poolStd(b, s6)));
+      p5=restricted?(b.five.length?b.five.slice():poolStd(b, s5)):uniq(b.five.concat(poolStd(b, s5)));
     }
     b._pool={p6:p6,p5:p5};
   }
@@ -268,7 +276,7 @@ function simPick6(b, sb){
   var pool=simPool(b,sb), ups=isSelect(b)?selUpsSB(b,6,sb):b.six, r=Math.random()*100;
   var share=upShare(b,ups);
   if(ups.length&&r<share)return rnd(ups);
-  var p6list=pool.p6.length?pool.p6:(ups.length?ups:poolStd(b, DATA.std6));
+  var p6list=pool.p6.length?pool.p6:(ups.length?ups:poolStd(b, DATA.std6.concat(DATA.zj6||[])));
   if(b.type==='special'){
     if(!sb.got6){
       var unowned=p6list.filter(function(n){ return sb.col.indexOf(n)<0; });
@@ -283,7 +291,7 @@ function simPick6(b, sb){
 function simPick5(b, sb){
   var pool=simPool(b,sb), ups=isSelect(b)?selUpsSB(b,5,sb):b.five;
   if(ups.length&&Math.random()<0.5)return rnd(ups);
-  var p5list=pool.p5.length?pool.p5:(ups.length?ups:poolStd(b, DATA.std5));
+  var p5list=pool.p5.length?pool.p5:(ups.length?ups:poolStd(b, DATA.std5.concat(DATA.zj5||[])));
   var others=simOthers(b,5,sb);
   if(!others.length)return rnd(p5list);
   return rnd(others);
@@ -292,7 +300,7 @@ function pick6(b){
   var pool=getPool(b), ups=isSelect(b)?selUps(b,6):b.six, r=Math.random()*100;
   var share=upShare(b,ups);
   if(ups.length&&r<share)return rnd(ups);
-  var p6list=pool.p6.length?pool.p6:(ups.length?ups:poolStd(b, DATA.std6));
+  var p6list=pool.p6.length?pool.p6:(ups.length?ups:poolStd(b, DATA.std6.concat(DATA.zj6||[])));
   if(b.type==='special'){
     var st6=state.pity[pityKey(b)]||(state.pity[pityKey(b)]={fails:0,batch:[]});
     if(!st6.got6){
@@ -308,7 +316,7 @@ function pick6(b){
 function pick5(b){
   var pool=getPool(b), ups=isSelect(b)?selUps(b,5):b.five;
   if(ups.length&&Math.random()<0.5)return rnd(ups);
-  var p5list=pool.p5.length?pool.p5:(ups.length?ups:poolStd(b, DATA.std5));
+  var p5list=pool.p5.length?pool.p5:(ups.length?ups:poolStd(b, DATA.std5.concat(DATA.zj5||[])));
   var others=poolOthers(b,5);
   if(!others.length)return rnd(p5list);
   return rnd(others);
@@ -1827,7 +1835,9 @@ function openModal(opName){
     if(sc4&&sc4.length){ var skn4=0; for(var sk4i=0;sk4i<sc4.length;sk4i++){ if(!(sc4[sk4i].no==='0'||sc4[sk4i].no===0))skn4++; } if(skn4)h.push('<div class="kv"><b>皮肤</b>'+skn4+' 套（点击上方 🎨 皮肤 查看）</div>'); }
   }catch(e){}
   var ownedNow=state.collection.indexOf(opName)>=0;
-  h.push('<div class="kv"><b>获取</b>'+(ownedNow?'已拥有':'未获得')+(limitedOps[opName]?' · <span style="color:#ff6ec7">👑 限定干员</span>':'')+(o.gift?' · <span style="color:#ff9a2e">🎁 活动赠送干员</span>':'')+(o.collabOp?' · <span style="color:#c96ab6">🔗 联动限定</span>':'')+'</div>');
+  var gainTxt=o.gain||'';
+  var giftTag=(o.gift||(gainTxt.indexOf('活动获得')>=0&&gainTxt.indexOf('寻访')<0))?' · <span style="color:#ff9a2e">🎁 活动赠送干员</span>':'';
+  h.push('<div class="kv"><b>获取</b>'+(ownedNow?'已拥有':'未获得')+(limitedOps[opName]?' · <span style="color:#ff6ec7">👑 限定干员</span>':'')+giftTag+(o.collabOp?' · <span style="color:#c96ab6">🔗 联动限定</span>':'')+(gainTxt?' · <span style="color:var(--dim)">'+esc(gainTxt)+'</span>':'')+'</div>');
   var opC=(state.opCnt&&state.opCnt[opName])||0;
   var pullsOfOp=0, firstT=null, lastT=null, pi9;
   for(pi9=0;pi9<state.history.length;pi9++){ if(state.history[pi9].op===opName){ pullsOfOp++; if(lastT===null)lastT=state.history[pi9].t; firstT=state.history[pi9].t; } }
@@ -2907,7 +2917,7 @@ function openAbout(){
   var cu=$('btnChkUpd'); if(cu)cu.onclick=function(){ checkUpdate($('chkUpdOut')); };
   var al=$('aboutLog');
   if(al){
-    var logTxt=['<b>v12.38</b> 全池20万抽验证 · 修复UP概率与受限池池底','<b>v12.37</b> 卡池同步PRTS · 活动赠送干员不可抽','<b>v12.36</b> 模拟保底计数修复 · 抽屉不弹键盘 · 切换反馈','<b>v12.35</b> 复制卡池信息 · About功能一览完善','<b>v12.34</b> 对比技能天赋 · 数据日期修复 · 正则预编译','<b>v12.33</b> 无障碍aria标签 · chips选中态 · 焦点环','<b>v12.32</b> 成就扩充4项 · 成就缓存键修复 · 已完成置顶','<b>v12.31</b> 材料综合最优 · About版本动态 · 保底键体检','<b>v12.30</b> 成就卡直达 · 保底键体检 · 悬停样式','<b>v12.29</b> 保底一览状态徽章 · 更新日志补齐','<b>v12.28</b> 技能材料合计 · 再来按钮修复 · 估算缓存','<b>v12.27</b> 抽卡后进度刷新 · 最近出货 · 成就摘要缓存','<b>v12.26</b> 本池缺卡汇总 · 复制范围一致 · 拥有判定缓存','<b>v12.25</b> 检查更新 · 版本比较修复 · 绯红主题','<b>v12.24</b> 卡池未拥有筛选 · 汇总 · 拥有判定优化','<b>v12.23</b> 图鉴阵营分组 · 掉落章节内排序 · 章节最优徽章','<b>v12.22</b> 跳过抽卡动画 · 定时器裁剪 · 脉冲按钮','<b>v12.21</b> 基建误报修复 · 掉落章节分组 · 最优徽章','<b>v12.20</b> 随机卡池跟随筛选 · 活动进度条 · 预测防抖','<b>v12.19</b> 理智估算 · 筛选CSV间隔修复 · 估算徽章','<b>v12.18</b> 存档体检 · 心愿单清理 · 体检样式','<b>v12.17</b> 多模拟合并点阵 · 心愿单计数修复 · 稀有度行样式','<b>v12.16</b> 成就扩充 · 历史过滤提速 · 成就辉光','<b>v12.15</b> 导出本地日期 · 详情单循环 · 未抽角标','<b>v12.14</b> 出货点阵图 · 筛选重置修复 · 材料推荐缓存','<b>v12.13</b> 主题槽位污染修复 · 出货日历 · 图鉴离屏渲染','<b>v12.12</b> 卡池进行中过滤 · 模拟次数选择 · 更新日志卡片化','<b>v12.11</b> 存档多槽位 · 统计聚合缓存 · 心愿单排序','<b>v12.10</b> 统计欧气范围一致 · 多模拟间隔分布 · 卡池进度条','<b>v12.09</b> 图鉴批量心愿单 · 掉落分段解析 · 图片异步解码','<b>v12.08</b> 模拟保底分布图 · 复制范围标注 · 规则卡片化','<b>v12.07</b> 统计范围切换 · 走势标注修正 · 选中态按钮','<b>v12.06</b> 详情出生年月身高编号 · ?快捷键 · Wiki标题渐变','<b>v12.05</b> 详情种族画师声优 · 类型空提示 · 标题渐变','<b>v12.04</b> 复制筛选记录 · 主题持久化 · 心愿清理','<b>v12.03</b> 限定图鉴进度 · 预加载去重','<b>v12.02</b> 紫夜主题 · 主题归一化 · 图标缓存','<b>v12.01</b> 报告出货时段 · 图表卡片化','<b>v12.00</b> 报告保底间隔分布 · 保底触发统计 · 图表动画','<b>v11.99</b> 材料配方全链分解 · 循环防护 · 紧凑节点','<b>v11.98</b> 配方表清理 · 成就计算合并 · 掉落分类徽章','<b>v11.97</b> 每日自动备份 · 批量保存提速 · 分数渐变','<b>v11.96</b> 编号子节兼容 · 掉落排序 · 最优高亮','<b>v11.95</b> 模组数据修复 · 头像缓存 · 类型徽章','<b>v11.94</b> 无障碍标签 · 动画暂停 · 抽卡按钮焕新','<b>v11.93</b> 上限提示 · 低数据模式 · 成就描边','<b>v11.92</b> 刘海安全区 · 键盘省绘制 · 按压反馈','<b>v11.91</b> 长按防误触 · 预加载限量 · 底栏渐变','<b>v11.90</b> 大图双击缩放 · 合成层收敛 · OLED深色','<b>v11.89</b> 回弹控制 · 翻牌加速 · 高对比模式','<b>v11.88</b> 防电话误识别 · 列表离屏渲染 · 横屏适配','<b>v11.87</b> 抽屉滚动记忆 · 模态绘制隔离 · 章节吸附','<b>v11.86</b> 视口声明完善 · 抽屉合成层 · 超窄屏两列','<b>v11.85</b> 减少动画降级 · 44px热区 · 网格离屏','<b>v11.84</b> 键盘弹起避让 · 离屏渲染 · 六星横幅横滚','<b>v11.83</b> 保底浮标避让 · 动画合成层 · 触控尺寸','<b>v11.82</b> 手机端防缩放 · 触摸优化 · 安全区适配','<b>v11.81</b> 战绩即时刷新 · 自选缓存 · 抽卡按钮光晕','<b>v11.80</b> 对比chip语义 · 稀有度分组 · 自选标题强调','<b>v11.79</b> 对比同名拦截 · 建议索引缓存 · 职业标签','<b>v11.78</b> 预加载单次请求 · 井选择分页 · 统计数字渐变','<b>v11.77</b> 统计页单遍聚合 · 井兑换快照校验 · 图表行悬停','<b>v11.76</b> 抽到6★顺序修正 · 图鉴排序提速 · 成就悬停','<b>v11.75</b> 历史筛选零污染 · 筛选结果缓存 · 日期胶囊','<b>v11.74</b> 皮肤图片失败占位 · 滑动窗口统计 · 热力图悬停','<b>v11.73</b> 跨期新干员修正 · 卡池状态缓存 · 语音美化','<b>v11.72</b> 历史标签 · 列表缓存 · 行悬停','<b>v11.71</b> 开启倒计时小时 · 关卡缓存 · Wiki美化','<b>v11.70</b> 模拟自选池拦截 · 空池防护 · 当前池高亮','<b>v11.69</b> 概率提示可见 · jsonp超时 · 输入聚焦','<b>v11.68</b> 运势每日固定 · 章节缓存 · 标题渐变','<b>v11.67</b> 清空重置领取 · 批量性能 · 卡片美化','<b>v11.66</b> 倒计时小时 · 皮肤缓存 · 美化','<b>v11.65</b> 删除动态皮肤数量显示','<b>v11.64</b> 真实掉率比值 · 删除真实记录','<b>v11.63</b> 删除不存在材料','<b>v11.62</b> 材料列表清理 · 兜底两字','<b>v11.61</b> 材料图标本地嵌入 · 离线可用','<b>v11.60</b> 材料实时快速失败 · PRTS冷却','<b>v11.59</b> 时装回廊动态角标 · 功能体检','<b>v11.58</b> 限定归类修正 · 兑换计入统计','<b>v11.57</b> 代理链扩充至8重 · 皮肤注释清理','<b>v11.56</b> 模拟等价消耗 · 详情皮肤数','<b>v11.55</b> 立绘画廊职业筛选 · 计数','<b>v11.54</b> 井兑换规则修正 · 联动文案','<b>v11.53</b> 成就扩充（联动/井中月/六星军团）','<b>v11.52</b> 关于面板更新 · 时装回廊统计','<b>v11.51</b> Wiki连通性检测 · 关于面板优化','<b>v11.50</b> 养成材料逐项推荐 · 皮肤泄漏/范围修复','<b>v11.49</b> 材料刷取查询重做 · 真图标','<b>v11.48</b> Wiki同步六重回退 · 进度提示','<b>v11.47</b> Wiki返回按钮 · 材料PRTS链接','<b>v11.46</b> 材料图标彩色兜底','<b>v11.45</b> 材料入口去重 · 图标重试','<b>v11.44</b> 皮肤懒加载缓存 · 时装角标','<b>v11.43</b> 特性行 · 时装列表','<b>v11.42</b> 联动池300井','<b>v11.41</b> 手机端卡池列表可滑动','<b>v11.40</b> Wiki整页获取 · 五重回退','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
+    var logTxt=['<b>v12.39</b> 同步PRTS干员上线/获取方式 · 修复手机端卡池列表','<b>v12.37</b> 卡池同步PRTS · 活动赠送干员不可抽','<b>v12.36</b> 模拟保底计数修复 · 抽屉不弹键盘 · 切换反馈','<b>v12.35</b> 复制卡池信息 · About功能一览完善','<b>v12.34</b> 对比技能天赋 · 数据日期修复 · 正则预编译','<b>v12.33</b> 无障碍aria标签 · chips选中态 · 焦点环','<b>v12.32</b> 成就扩充4项 · 成就缓存键修复 · 已完成置顶','<b>v12.31</b> 材料综合最优 · About版本动态 · 保底键体检','<b>v12.30</b> 成就卡直达 · 保底键体检 · 悬停样式','<b>v12.29</b> 保底一览状态徽章 · 更新日志补齐','<b>v12.28</b> 技能材料合计 · 再来按钮修复 · 估算缓存','<b>v12.27</b> 抽卡后进度刷新 · 最近出货 · 成就摘要缓存','<b>v12.26</b> 本池缺卡汇总 · 复制范围一致 · 拥有判定缓存','<b>v12.25</b> 检查更新 · 版本比较修复 · 绯红主题','<b>v12.24</b> 卡池未拥有筛选 · 汇总 · 拥有判定优化','<b>v12.23</b> 图鉴阵营分组 · 掉落章节内排序 · 章节最优徽章','<b>v12.22</b> 跳过抽卡动画 · 定时器裁剪 · 脉冲按钮','<b>v12.21</b> 基建误报修复 · 掉落章节分组 · 最优徽章','<b>v12.20</b> 随机卡池跟随筛选 · 活动进度条 · 预测防抖','<b>v12.19</b> 理智估算 · 筛选CSV间隔修复 · 估算徽章','<b>v12.18</b> 存档体检 · 心愿单清理 · 体检样式','<b>v12.17</b> 多模拟合并点阵 · 心愿单计数修复 · 稀有度行样式','<b>v12.16</b> 成就扩充 · 历史过滤提速 · 成就辉光','<b>v12.15</b> 导出本地日期 · 详情单循环 · 未抽角标','<b>v12.14</b> 出货点阵图 · 筛选重置修复 · 材料推荐缓存','<b>v12.13</b> 主题槽位污染修复 · 出货日历 · 图鉴离屏渲染','<b>v12.12</b> 卡池进行中过滤 · 模拟次数选择 · 更新日志卡片化','<b>v12.11</b> 存档多槽位 · 统计聚合缓存 · 心愿单排序','<b>v12.10</b> 统计欧气范围一致 · 多模拟间隔分布 · 卡池进度条','<b>v12.09</b> 图鉴批量心愿单 · 掉落分段解析 · 图片异步解码','<b>v12.08</b> 模拟保底分布图 · 复制范围标注 · 规则卡片化','<b>v12.07</b> 统计范围切换 · 走势标注修正 · 选中态按钮','<b>v12.06</b> 详情出生年月身高编号 · ?快捷键 · Wiki标题渐变','<b>v12.05</b> 详情种族画师声优 · 类型空提示 · 标题渐变','<b>v12.04</b> 复制筛选记录 · 主题持久化 · 心愿清理','<b>v12.03</b> 限定图鉴进度 · 预加载去重','<b>v12.02</b> 紫夜主题 · 主题归一化 · 图标缓存','<b>v12.01</b> 报告出货时段 · 图表卡片化','<b>v12.00</b> 报告保底间隔分布 · 保底触发统计 · 图表动画','<b>v11.99</b> 材料配方全链分解 · 循环防护 · 紧凑节点','<b>v11.98</b> 配方表清理 · 成就计算合并 · 掉落分类徽章','<b>v11.97</b> 每日自动备份 · 批量保存提速 · 分数渐变','<b>v11.96</b> 编号子节兼容 · 掉落排序 · 最优高亮','<b>v11.95</b> 模组数据修复 · 头像缓存 · 类型徽章','<b>v11.94</b> 无障碍标签 · 动画暂停 · 抽卡按钮焕新','<b>v11.93</b> 上限提示 · 低数据模式 · 成就描边','<b>v11.92</b> 刘海安全区 · 键盘省绘制 · 按压反馈','<b>v11.91</b> 长按防误触 · 预加载限量 · 底栏渐变','<b>v11.90</b> 大图双击缩放 · 合成层收敛 · OLED深色','<b>v11.89</b> 回弹控制 · 翻牌加速 · 高对比模式','<b>v11.88</b> 防电话误识别 · 列表离屏渲染 · 横屏适配','<b>v11.87</b> 抽屉滚动记忆 · 模态绘制隔离 · 章节吸附','<b>v11.86</b> 视口声明完善 · 抽屉合成层 · 超窄屏两列','<b>v11.85</b> 减少动画降级 · 44px热区 · 网格离屏','<b>v11.84</b> 键盘弹起避让 · 离屏渲染 · 六星横幅横滚','<b>v11.83</b> 保底浮标避让 · 动画合成层 · 触控尺寸','<b>v11.82</b> 手机端防缩放 · 触摸优化 · 安全区适配','<b>v11.81</b> 战绩即时刷新 · 自选缓存 · 抽卡按钮光晕','<b>v11.80</b> 对比chip语义 · 稀有度分组 · 自选标题强调','<b>v11.79</b> 对比同名拦截 · 建议索引缓存 · 职业标签','<b>v11.78</b> 预加载单次请求 · 井选择分页 · 统计数字渐变','<b>v11.77</b> 统计页单遍聚合 · 井兑换快照校验 · 图表行悬停','<b>v11.76</b> 抽到6★顺序修正 · 图鉴排序提速 · 成就悬停','<b>v11.75</b> 历史筛选零污染 · 筛选结果缓存 · 日期胶囊','<b>v11.74</b> 皮肤图片失败占位 · 滑动窗口统计 · 热力图悬停','<b>v11.73</b> 跨期新干员修正 · 卡池状态缓存 · 语音美化','<b>v11.72</b> 历史标签 · 列表缓存 · 行悬停','<b>v11.71</b> 开启倒计时小时 · 关卡缓存 · Wiki美化','<b>v11.70</b> 模拟自选池拦截 · 空池防护 · 当前池高亮','<b>v11.69</b> 概率提示可见 · jsonp超时 · 输入聚焦','<b>v11.68</b> 运势每日固定 · 章节缓存 · 标题渐变','<b>v11.67</b> 清空重置领取 · 批量性能 · 卡片美化','<b>v11.66</b> 倒计时小时 · 皮肤缓存 · 美化','<b>v11.65</b> 删除动态皮肤数量显示','<b>v11.64</b> 真实掉率比值 · 删除真实记录','<b>v11.63</b> 删除不存在材料','<b>v11.62</b> 材料列表清理 · 兜底两字','<b>v11.61</b> 材料图标本地嵌入 · 离线可用','<b>v11.60</b> 材料实时快速失败 · PRTS冷却','<b>v11.59</b> 时装回廊动态角标 · 功能体检','<b>v11.58</b> 限定归类修正 · 兑换计入统计','<b>v11.57</b> 代理链扩充至8重 · 皮肤注释清理','<b>v11.56</b> 模拟等价消耗 · 详情皮肤数','<b>v11.55</b> 立绘画廊职业筛选 · 计数','<b>v11.54</b> 井兑换规则修正 · 联动文案','<b>v11.53</b> 成就扩充（联动/井中月/六星军团）','<b>v11.52</b> 关于面板更新 · 时装回廊统计','<b>v11.51</b> Wiki连通性检测 · 关于面板优化','<b>v11.50</b> 养成材料逐项推荐 · 皮肤泄漏/范围修复','<b>v11.49</b> 材料刷取查询重做 · 真图标','<b>v11.48</b> Wiki同步六重回退 · 进度提示','<b>v11.47</b> Wiki返回按钮 · 材料PRTS链接','<b>v11.46</b> 材料图标彩色兜底','<b>v11.45</b> 材料入口去重 · 图标重试','<b>v11.44</b> 皮肤懒加载缓存 · 时装角标','<b>v11.43</b> 特性行 · 时装列表','<b>v11.42</b> 联动池300井','<b>v11.41</b> 手机端卡池列表可滑动','<b>v11.40</b> Wiki整页获取 · 五重回退','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
     var logHtml2=[];
     var entries9=String(logTxt).split('<br/>');
     for(var lg=0;lg<entries9.length;lg++){ var mm9=entries9[lg].match(/<b>(v[0-9.]+)<\/b>\s*([\s\S]*)/); var ver9=mm9?mm9[1]:''; var desc9=mm9?mm9[2]:entries9[lg]; if(!desc9)continue; logHtml2.push('<div class="log-row"><span class="log-ver">'+ver9+'</span><span class="log-desc">'+desc9+'</span></div>'); }
@@ -3828,7 +3838,7 @@ function statHist(){
   if(statRange==='month'){ var mth=Date.now()-30*86400000; return hh.filter(function(x){ return x.t&&x.t>=mth; }); }
   return hh;
 }
-var APP_VER='12.38';
+var APP_VER='12.39';
 function verCmp(a, b){
   a=String(a||'0').split('.').map(function(x){return parseInt(x,10)||0;});
   b=String(b||'0').split('.').map(function(x){return parseInt(x,10)||0;});

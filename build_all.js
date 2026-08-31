@@ -15,7 +15,19 @@ for (const b of banners) {
   }
 }
 
-// 干员首次进池时间（YYYY-MM-DD）：历史卡池按开启时间过滤池底，避免抽到尚未实装的干员
+// PRTS 干员数据（获得方式 + 上线时间，2026-08 抓取）
+let prtsOps = {};
+try { prtsOps = JSON.parse(fs.readFileSync('data/prts_ops.json', 'utf8')); } catch (e) {}
+// 中坚移出批次（PRTS 寻访规则）：标准寻访范围内按批次移出干员加入中坚
+const MOVED_OUT = {
+  '2023-03-30': ['能天使','推进之王','伊芙利特','艾雅法拉','安洁莉娜','闪灵','夜莺','星熊','塞雷娅','银灰','斯卡蒂','陈','黑','赫拉格','麦哲伦','莫斯提马','煌','阿','刻俄柏','风笛','傀影','白面鸮','凛冬','德克萨斯','芙兰卡','拉普兰德','幽灵鲨','蓝毒','白金','陨星','天火','梅尔','赫默','华法琳','临光','红','雷蛇','可颂','普罗旺斯','守林人','崖心','初雪','真理','空','狮蝎','食铁兽','夜魔','诗怀雅','格劳克斯','星极','送葬人','槐琥','苇草','布洛卡','灰喉','吽','惊蛰','慑砂','巫恋'],
+  '2024-04-11': ['温蒂','早露','铃兰','棘刺','森蚺','史尔特尔','瑕光','泥岩','山','空弦','嵯峨','异客','极境','石棉','月禾','莱恩哈特','断崖','贾维','蜜蜡','安哲拉','燧石','四月','奥斯塔','絮雨','卡夫卡','爱丽丝','乌有','熔泉'],
+  '2025-03-27': ['凯尔希','卡涅利安','帕拉斯','水月','琴柳','远牙','焰尾','灵知','赤冬','绮良','羽毛笔','桑葚','灰毫','蚀清','极光'],
+  '2026-03-26': ['老鲤','澄闪','菲亚梅塔','号角','艾丽妮','黑键','多萝西','夜半','夏栎','风丸','洛洛','掠风','濯尘芙蓉','承曦格雷伊'],
+};
+const moMap = {};
+for (const t of Object.keys(MOVED_OUT)) for (const n of MOVED_OUT[t]) moMap[n] = t;
+// 干员首次进池时间（YYYY-MM-DD）：兜底用；优先取 PRTS 上线时间
 const sinceMap = {};
 for (const b of banners) {
   if (!b.start) continue;
@@ -27,6 +39,7 @@ for (const b of banners) {
 }
 const opMap = {};
 for (const o of ops) {
+  const po = prtsOps[o.name] || {};
   opMap[o.name] = {
     name: o.name, rarity: o.rarity, prof: o.profZh,
     nation: o.nationId || '', tag: (o.tag || '').slice(0, 60),
@@ -34,7 +47,9 @@ for (const o of ops) {
     art: o.art || '', artV: o.artV || 2,
     gift: COLLAB_GIFT_OPS.indexOf(o.name) >= 0,
     collabOp: collabOps.has(o.name),
-    since: sinceMap[o.name] || '',
+    since: (po.launch && po.launch.slice(0, 10)) || sinceMap[o.name] || '',
+    gain: po.gain || '',
+    mo: moMap[o.name] || '',
   };
 }
 
