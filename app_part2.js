@@ -463,6 +463,7 @@ function renderBannerList(){
     var bs2=B_STAT&&B_STAT[b.id];
     var bst3=bannerStatus(b);
     html.push('<div class="sub">'+esc(b.start)+' ~ '+esc(b.end)+(bst3.txt?' · <span class="bst '+bst3.s+'">'+esc(bst3.txt)+'</span>':'')+(cnt>0?' · 已抽 <b style="color:var(--gold)">'+cnt+'</b> 抽':'<span class="np-badge">未抽</span>')+(bs2&&bs2.n>0&&bs2.s6>0?' · 6★率 <b style="color:#ff6e6e">'+(bs2.s6/bs2.n*100).toFixed(1)+'%</b>':'')+'</div></div>');
+        if(b.start<=todayStrB&&b.end>=todayStrB&&b.end>b.start){ var pN2=Date.now(), pS2=new Date(b.start+'T04:00:00').getTime(), pE2=new Date(b.end+'T03:59:59').getTime(); if(pE2>pS2){ var pp2=Math.max(3,Math.min(100,Math.round((pN2-pS2)/(pE2-pS2)*100))); html.push('<div class="bc-prog"><i style="width:'+pp2+'%"></i></div>'); } }
     html.push('</div>');
   }
   if(!matched.length)html.push('<div class="notice" style="padding:16px;text-align:center">没有符合条件的卡池，试试其他筛选或搜索</div>');
@@ -700,7 +701,9 @@ function renderBannerInfo(){
       var cp=$('calcP'); if(cp)cp.textContent=rr.prob.toFixed(1)+'%';
       var cno=$('calcNote'); if(cno)cno.textContent='期望约 '+rr.exp.toFixed(1)+' 只6★';
     };
-    cn.oninput=doCalc;
+    var cnDl=null;
+    cn.oninput=function(){ clearTimeout(cnDl); cnDl=setTimeout(doCalc,150); };
+    cn.onkeydown=function(e){ if(e&&(e.key==='Enter'||e.keyCode===13)){ clearTimeout(cnDl); doCalc(); } };
     doCalc();
     var gos=$('bannerInfo').querySelectorAll('.calcgo');
     for(var gi=0;gi<gos.length;gi++){ gos[gi].onclick=function(){ cn.value=this.getAttribute('data-n'); doCalc(); }; }
@@ -2793,7 +2796,7 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.19</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.20</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 存档导入导出 · 四主题</div>');
   h.push('</div>');
@@ -3171,7 +3174,19 @@ function resetFilters(){
 function randomBanner(){
   var bs=DATA.banners;
   if(!bs.length)return;
-  var good=bs.filter(function(x){return x.six&&x.six.length;}).filter(function(x){return x.id!==state.cur;});
+  var yf0=$('yearChips')&&$('yearChips')._v?$('yearChips')._v:'all';
+  var tf0=$('typeChips')&&$('typeChips')._v?$('typeChips')._v:'all';
+  var q0=($('searchBox')&&$('searchBox').value||'').trim();
+  var good=bs.filter(function(x){
+    if(!(x.six&&x.six.length))return false;
+    if(yf0!=='all'&&x.year!==yf0)return false;
+    if(tf0==='fav'){ if(!state.fav[x.id])return false; }
+    else if(tf0!=='all'&&x.type!==tf0)return false;
+    if(q0&&(x.name+' '+(x.full||'')).indexOf(q0)<0)return false;
+    return x.id!==state.cur;
+  });
+  if(!good.length)good=bs.filter(function(x){return x.six&&x.six.length;}).filter(function(x){return x.id!==state.cur;});
+  if(!good.length)good=bs.filter(function(x){return x.six&&x.six.length;});
   if(!good.length)good=bs;
   var r=good[Math.floor(Math.random()*good.length)];
   state.cur=r.id; save();
