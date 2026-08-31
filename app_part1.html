@@ -648,6 +648,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .rules-i{padding-left:14px; opacity:.94}
 .rules-t{text-align:center; font-size:14px; font-weight:700; color:var(--acc); margin-bottom:10px; letter-spacing:1px; border-bottom:1px dashed var(--line); padding-bottom:8px}
 .toast{
+button:focus-visible, .chip:focus-visible, .bcard:focus-visible, .cop:focus-visible, .rup-card:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{outline:2px solid var(--acc2); outline-offset:2px}
 .log-row{display:flex; gap:8px; padding:6px 8px; border-bottom:1px dashed var(--line); font-size:13px; align-items:baseline}
 .log-row:last-child{border-bottom:none}
 .log-ver{color:var(--gold); font-weight:700; white-space:nowrap; font-size:12px; min-width:52px}
@@ -948,7 +949,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
         <button class="pull-btn single" id="btn1">单抽<span class="cost">快捷键 1</span></button>
         <button class="pull-btn ten" id="btn10">十连寻访<span class="cost">快捷键 2</span></button>
         <button class="pull-btn single" id="btnUntil6">抽到6★<span class="cost">连抽至出货 · 快捷键 3</span></button>
-        <button class="mini-btn" id="btnSkip" title="立即显示抽卡结果并跳过翻转动画">⏭ 跳过动画</button>
+        <button class="mini-btn" id="btnSkip" title="立即显示抽卡结果并跳过翻转动画" aria-label="跳过抽卡动画">⏭ 跳过动画</button>
         <span class="notice" id="rateNote"></span>
       </div>
       <div id="cards"></div>
@@ -959,7 +960,7 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
       <div class="stats-grid" id="statsGrid"></div>
       <div id="recent6"></div>
       <div class="sectbar"><h4>寻访记录</h4><button class="mini-btn" id="btnExportHist">导出记录</button></div>
-      <div class="histsearch"><input id="histSearch" placeholder="搜索干员/卡池..."/><button class="mini-btn" id="histClearSearch">✕</button></div>
+      <div class="histsearch"><input id="histSearch" placeholder="搜索干员/卡池..."/><button class="mini-btn" id="histClearSearch" aria-label="清除搜索">✕</button></div>
       <div class="histquery">
         <span class="hq-label">距上次6★：</span>
         <select id="histGapSel"><option value="all">全部</option><option value="gap1">0-20抽</option><option value="gap2">21-49抽</option><option value="gap3">50-89抽</option><option value="gap4">90-99抽</option><option value="gap5">100抽+</option></select>
