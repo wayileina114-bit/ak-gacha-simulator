@@ -2831,16 +2831,18 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.24</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.25</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 存档导入导出 · 四主题</div>');
   h.push('</div>');
   h.push('<div class="wikisec"><h4>⌨️ 快捷键</h4><div class="notice">1 单抽 · 2 十连 · 3 抽到6★ · ←/→ 切卡池 · F 收藏卡池 · G 画廊 · S 统计 · H 寻访记录 · W 心愿单 · P 保底一览</div></div>');
   h.push('<div class="wikisec"><h4>🗂 数据来源</h4><div class="notice">PRTS Wiki（卡池/干员/Wiki数据，更新至 2026-08-29）· bilibili Wiki（精二立绘· 皮肤 · 材料图标与掉落数据）· 图片在线加载，需联网；语音提供台词文本与 PRTS 试听链接</div></div>');
   h.push('<div class="wikisec"><h4>🌐 Wiki 连通性检测</h4><div class="notice">检测本机到 PRTS Wiki 各获取方式（JSONP/CORS/多级代理）的连通性，Wiki 同步失败时可用于排查原因。</div><div style="text-align:center;margin-top:6px"><button class="mini-btn" id="btnWikiProbe">🔍 开始检测</button></div><div id="wikiProbeOut"></div></div>');
+  h.push('<div class="wikisec"><h4>🔄 版本检查</h4><button class="mini-btn" id="btnChkUpd">检查更新</button><div id="chkUpdOut"></div></div>');
   h.push('<div class="wikisec"><h4>📜 最近更新</h4><div id="aboutLog"><div class="notice">加载中…</div></div></div>');
   $('mBody').innerHTML=h.join('');
   var pb=$('btnWikiProbe'); if(pb)pb.onclick=function(){ var po=$('wikiProbeOut'); if(po)wikiProbe(po); };
+  var cu=$('btnChkUpd'); if(cu)cu.onclick=function(){ checkUpdate($('chkUpdOut')); };
   var al=$('aboutLog');
   if(al){
     var logTxt=['<b>v12.12</b> 卡池进行中过滤 · 模拟次数选择 · 更新日志卡片化','<b>v12.11</b> 存档多槽位 · 统计聚合缓存 · 心愿单排序','<b>v12.10</b> 统计欧气范围一致 · 多模拟间隔分布 · 卡池进度条','<b>v12.09</b> 图鉴批量心愿单 · 掉落分段解析 · 图片异步解码','<b>v12.08</b> 模拟保底分布图 · 复制范围标注 · 规则卡片化','<b>v12.07</b> 统计范围切换 · 走势标注修正 · 选中态按钮','<b>v12.06</b> 详情出生年月身高编号 · ?快捷键 · Wiki标题渐变','<b>v12.05</b> 详情种族画师声优 · 类型空提示 · 标题渐变','<b>v12.04</b> 复制筛选记录 · 主题持久化 · 心愿清理','<b>v12.03</b> 限定图鉴进度 · 预加载去重','<b>v12.02</b> 紫夜主题 · 主题归一化 · 图标缓存','<b>v12.01</b> 报告出货时段 · 图表卡片化','<b>v12.00</b> 报告保底间隔分布 · 保底触发统计 · 图表动画','<b>v11.99</b> 材料配方全链分解 · 循环防护 · 紧凑节点','<b>v11.98</b> 配方表清理 · 成就计算合并 · 掉落分类徽章','<b>v11.97</b> 每日自动备份 · 批量保存提速 · 分数渐变','<b>v11.96</b> 编号子节兼容 · 掉落排序 · 最优高亮','<b>v11.95</b> 模组数据修复 · 头像缓存 · 类型徽章','<b>v11.94</b> 无障碍标签 · 动画暂停 · 抽卡按钮焕新','<b>v11.93</b> 上限提示 · 低数据模式 · 成就描边','<b>v11.92</b> 刘海安全区 · 键盘省绘制 · 按压反馈','<b>v11.91</b> 长按防误触 · 预加载限量 · 底栏渐变','<b>v11.90</b> 大图双击缩放 · 合成层收敛 · OLED深色','<b>v11.89</b> 回弹控制 · 翻牌加速 · 高对比模式','<b>v11.88</b> 防电话误识别 · 列表离屏渲染 · 横屏适配','<b>v11.87</b> 抽屉滚动记忆 · 模态绘制隔离 · 章节吸附','<b>v11.86</b> 视口声明完善 · 抽屉合成层 · 超窄屏两列','<b>v11.85</b> 减少动画降级 · 44px热区 · 网格离屏','<b>v11.84</b> 键盘弹起避让 · 离屏渲染 · 六星横幅横滚','<b>v11.83</b> 保底浮标避让 · 动画合成层 · 触控尺寸','<b>v11.82</b> 手机端防缩放 · 触摸优化 · 安全区适配','<b>v11.81</b> 战绩即时刷新 · 自选缓存 · 抽卡按钮光晕','<b>v11.80</b> 对比chip语义 · 稀有度分组 · 自选标题强调','<b>v11.79</b> 对比同名拦截 · 建议索引缓存 · 职业标签','<b>v11.78</b> 预加载单次请求 · 井选择分页 · 统计数字渐变','<b>v11.77</b> 统计页单遍聚合 · 井兑换快照校验 · 图表行悬停','<b>v11.76</b> 抽到6★顺序修正 · 图鉴排序提速 · 成就悬停','<b>v11.75</b> 历史筛选零污染 · 筛选结果缓存 · 日期胶囊','<b>v11.74</b> 皮肤图片失败占位 · 滑动窗口统计 · 热力图悬停','<b>v11.73</b> 跨期新干员修正 · 卡池状态缓存 · 语音美化','<b>v11.72</b> 历史标签 · 列表缓存 · 行悬停','<b>v11.71</b> 开启倒计时小时 · 关卡缓存 · Wiki美化','<b>v11.70</b> 模拟自选池拦截 · 空池防护 · 当前池高亮','<b>v11.69</b> 概率提示可见 · jsonp超时 · 输入聚焦','<b>v11.68</b> 运势每日固定 · 章节缓存 · 标题渐变','<b>v11.67</b> 清空重置领取 · 批量性能 · 卡片美化','<b>v11.66</b> 倒计时小时 · 皮肤缓存 · 美化','<b>v11.65</b> 删除动态皮肤数量显示','<b>v11.64</b> 真实掉率比值 · 删除真实记录','<b>v11.63</b> 删除不存在材料','<b>v11.62</b> 材料列表清理 · 兜底两字','<b>v11.61</b> 材料图标本地嵌入 · 离线可用','<b>v11.60</b> 材料实时快速失败 · PRTS冷却','<b>v11.59</b> 时装回廊动态角标 · 功能体检','<b>v11.58</b> 限定归类修正 · 兑换计入统计','<b>v11.57</b> 代理链扩充至8重 · 皮肤注释清理','<b>v11.56</b> 模拟等价消耗 · 详情皮肤数','<b>v11.55</b> 立绘画廊职业筛选 · 计数','<b>v11.54</b> 井兑换规则修正 · 联动文案','<b>v11.53</b> 成就扩充（联动/井中月/六星军团）','<b>v11.52</b> 关于面板更新 · 时装回廊统计','<b>v11.51</b> Wiki连通性检测 · 关于面板优化','<b>v11.50</b> 养成材料逐项推荐 · 皮肤泄漏/范围修复','<b>v11.49</b> 材料刷取查询重做 · 真图标','<b>v11.48</b> Wiki同步六重回退 · 进度提示','<b>v11.47</b> Wiki返回按钮 · 材料PRTS链接','<b>v11.46</b> 材料图标彩色兜底','<b>v11.45</b> 材料入口去重 · 图标重试','<b>v11.44</b> 皮肤懒加载缓存 · 时装角标','<b>v11.43</b> 特性行 · 时装列表','<b>v11.42</b> 联动池300井','<b>v11.41</b> 手机端卡池列表可滑动','<b>v11.40</b> Wiki整页获取 · 五重回退','<b>v11.37</b> 各卡池6★率排行 · 模拟vs真实对比','<b>v11.36</b> 历史筛选导出 · 手机端优化','<b>v11.35</b> 报告环比对比 · 异常干员防护','<b>v11.34</b> 模拟存档隔离修复 · 垫刀模拟','<b>v11.33</b> 模拟UP命中统计','<b>v11.32</b> 图鉴排序增强 · 快捷键扩充','<b>v11.31</b> 存档导入升级（文件拖拽+备份恢复）','<b>v11.30</b> 模拟10次统计 · 源石绿主题','<b>v11.29</b> 卡池倒计时 · 成就扩充至22项','<b>v11.28</b> 干员对比工具 · 皮肤图鉴缓存','<b>v11.27</b> 档案解析修复 · 搜索候选 · 并行预加载','<b>v11.26</b> Wiki引用重构（队列+分节缓存）'].join('<br/>');
@@ -3731,7 +3733,7 @@ function openAch(){
 }
 function openRules(){
   var NL=String.fromCharCode(10);
-  var txt=['【明日方舟干员寻访模拟器 · 规则说明】','','★ 出率（按官方规则模拟）','6★：2%（51抽起每抽+2%，100抽必出）','5★：8%（每次十连内必出5★以上）','4★：50% · 3★：40%','','★ 保底','· 常驻标准寻访之间保底共享；中坚寻访之间共享','· 限定/活动/联合行动/定向甄选各自独立','','★ UP 概率','· 单UP池：当期6★占6★出率的50%','· 双UP池（限定/标准轮换）：各占35%','· 定向甄选：只含选中的干员，等概率','· 中坚甄选：选2位各占35%','· 联合行动/跨年欢庆：池内等概率','','★ 限定寻访','· 每抽获得1张寻访数据契约','· 300契约可兑换限定干员，200契约兑换当期非限定6★','· 跨年欢庆池首次6★必为未拥有干员','','★ 工具功能','· 🛡 保底一览：所有卡池保底进度总览','· 🧪 模拟抽卡：独立保底模拟 N 抽，不污染存档','· 📊 抽卡报告：7天周报 / 30天月报 + 一键复制','· 💝 心愿单：集中查看心愿干员，抽到自动移出','· 🎨 主题切换：5套主题（黑金 / 深空蓝 / 龙门暖 / 翡翠 / 紫夜）','· 📖 Wiki数据：干员属性/技能/材料实时同步 PRTS','','★ 其他','· 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · G 画廊 · S 统计 · H 寻访记录 · F 收藏卡池 · ? 规则','· 存档保存在浏览器本地，可导出/导入','· 干员立绘/头像为在线加载，需联网'].join(NL);
+  var txt=['【明日方舟干员寻访模拟器 · 规则说明】','','★ 出率（按官方规则模拟）','6★：2%（51抽起每抽+2%，100抽必出）','5★：8%（每次十连内必出5★以上）','4★：50% · 3★：40%','','★ 保底','· 常驻标准寻访之间保底共享；中坚寻访之间共享','· 限定/活动/联合行动/定向甄选各自独立','','★ UP 概率','· 单UP池：当期6★占6★出率的50%','· 双UP池（限定/标准轮换）：各占35%','· 定向甄选：只含选中的干员，等概率','· 中坚甄选：选2位各占35%','· 联合行动/跨年欢庆：池内等概率','','★ 限定寻访','· 每抽获得1张寻访数据契约','· 300契约可兑换限定干员，200契约兑换当期非限定6★','· 跨年欢庆池首次6★必为未拥有干员','','★ 工具功能','· 🛡 保底一览：所有卡池保底进度总览','· 🧪 模拟抽卡：独立保底模拟 N 抽，不污染存档','· 📊 抽卡报告：7天周报 / 30天月报 + 一键复制','· 💝 心愿单：集中查看心愿干员，抽到自动移出','· 🎨 主题切换：6套主题（黑金 / 深空蓝 / 龙门暖 / 源石绿 / 紫夜 / 绯红）','· 📖 Wiki数据：干员属性/技能/材料实时同步 PRTS','','★ 其他','· 快捷键：1 单抽 · 2 十连 · 3 抽到6★ · G 画廊 · S 统计 · H 寻访记录 · F 收藏卡池 · ? 规则','· 存档保存在浏览器本地，可导出/导入','· 干员立绘/头像为在线加载，需联网'].join(NL);
   var ls=txt.split(NL), rh=[];
   for(var i2=0;i2<ls.length;i2++){
     var ln2=ls[i2]; if(!ln2)continue;
@@ -3750,6 +3752,30 @@ function statHist(){
   if(statRange==='week'){ var wk=Date.now()-7*86400000; return hh.filter(function(x){ return x.t&&x.t>=wk; }); }
   if(statRange==='month'){ var mth=Date.now()-30*86400000; return hh.filter(function(x){ return x.t&&x.t>=mth; }); }
   return hh;
+}
+var APP_VER='12.25';
+function verCmp(a, b){
+  a=String(a||'0').split('.').map(function(x){return parseInt(x,10)||0;});
+  b=String(b||'0').split('.').map(function(x){return parseInt(x,10)||0;});
+  for(var i=0;i<Math.max(a.length,b.length);i++){ var av=a[i]||0, bv=b[i]||0; if(av!==bv)return av-bv; }
+  return 0;
+}
+function checkUpdate(out){
+  if(out)out.innerHTML='<div class="notice">正在检查 GitHub Release…</div>';
+  var done=function(ok, msg){ if(out)out.innerHTML='<div class="notice" style="color:'+(ok?'var(--acc)':'var(--dim)')+'">'+msg+'</div>'; };
+  try{
+    if(typeof fetch==='undefined'){ done(false,'当前环境不支持联网检查'); return; }
+    fetch('https://api.github.com/repos/wayileina114-bit/ak-gacha-simulator/releases/latest')
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        var tag=String(j.tag_name||'').replace(/^v/,'');
+        var cur=APP_VER;
+        if(!tag){ done(false,'未获取到版本信息'); return; }
+        if(verCmp(tag, cur)<=0)done(true,'✅ 已是最新版本 v'+cur);
+        else done(false,'📦 发现新版本 <b>v'+esc(tag)+'</b> · <a href="'+esc(j.html_url||'#')+'" target="_blank" rel="noopener">前往下载</a>');
+      })
+      .catch(function(){ done(false,'网络错误，请稍后重试'); });
+  }catch(e){ done(false,'检查失败'); }
 }
 var STAT_AGG_CACHE=null, STAT_AGG_KEY='';
 function statAgg(){
@@ -4181,7 +4207,7 @@ function updateSlotUI(){
   for(var si=1;si<=3;si++){ var sb=$('slot'+si); if(sb){ if(si===parseInt(SAVE_SLOT,10))sb.classList.add('on'); else sb.classList.remove('on'); } }
 }
 function toggleSound(){ SOUND=!SOUND; try{ localStorage.setItem('akgacha_snd',SOUND?'1':'0'); }catch(e){} var b=$('btnSound'); if(b){ b.textContent=SOUND?'音效: 开':'音效: 关'; b.classList.toggle('on',SOUND); } }
-var THEME_NAMES={default:'默认黑金',blue:'深空蓝',amber:'龙门暖',green:'源石绿',purple:'紫夜'};
+var THEME_NAMES={default:'默认黑金',blue:'深空蓝',amber:'龙门暖',green:'源石绿',purple:'紫夜',crimson:'绯红'};
 function applyTheme(){
   var t=state.theme||'default';
   if(!THEME_NAMES[t]){ t='default'; state.theme=t; try{ localStorage.setItem(slotKey(),JSON.stringify(state)); }catch(e){} }
@@ -4189,7 +4215,7 @@ function applyTheme(){
   var b=$('btnTheme'); if(b)b.textContent='🎨 '+THEME_NAMES[t];
 }
 function nextTheme(){
-  var keys=['default','blue','amber','green','purple'];
+  var keys=['default','blue','amber','green','purple','crimson'];
   var cur=keys.indexOf(state.theme||'default');
   state.theme=keys[(cur+1)%keys.length];
   save(); applyTheme(); toast('已切换主题：'+THEME_NAMES[state.theme]);
