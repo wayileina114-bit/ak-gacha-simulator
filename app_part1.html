@@ -827,8 +827,10 @@ button:focus-visible, .chip:focus-visible, .bcard:focus-visible, .cop:focus-visi
   #modal .mbox .achgrid .ach{content-visibility:auto; contain-intrinsic-size:auto 120px}
   /* ⑭ 抽屉高度弹性（v11.85） */
   .sidebar{height:100dvh; max-height:100dvh}
-  /* ⑮ 抽屉滑入合成层 + 隐藏滚动条（v11.86） */
-  .sidebar{will-change:transform; contain:layout paint}
+  /* ⑮ 抽屉滑入合成层 + 隐藏滚动条（v11.86；v12.44 移除 will-change/contain：移动 WebView 下可致点击命中异常） */
+  .sidebar{will-change:auto; contain:none}
+  #bannerList{position:relative; z-index:2}
+  .bcard{position:relative; z-index:1}
   #bannerList::-webkit-scrollbar{display:none}
   #modal .mbox{scrollbar-width:none}
   #modal .mbox::-webkit-scrollbar{display:none}
