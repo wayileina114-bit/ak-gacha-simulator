@@ -666,6 +666,11 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .wikitbl th,.wikitbl td{border:1px solid var(--line); padding:4px 8px; text-align:center; white-space:nowrap}
 .wikitbl th{background:rgba(74,179,255,.1); color:var(--acc)}
 .imp-drop{border:2px dashed var(--line); border-radius:10px; padding:22px 12px; text-align:center; color:var(--dim); font-size:13px; cursor:pointer; margin-bottom:8px; transition:.15s; background:var(--bg2)}
+.imp-hl{padding:8px 12px; border-radius:8px; font-size:13px; margin:8px 0 4px}
+.imp-hl.ok{color:var(--acc); background:rgba(74,179,255,.08); border:1px solid rgba(74,179,255,.25)}
+.imp-hl.err{color:var(--red); background:rgba(255,110,110,.08); border:1px solid rgba(255,110,110,.25)}
+.imp-hl.warn{color:var(--gold); background:rgba(255,215,106,.08); border:1px solid rgba(255,215,106,.25)}
+.imp-issue{font-size:12px; color:var(--txt); opacity:.92; padding:2px 4px 2px 12px}
 .imp-drop:hover,.imp-drop.over{border-color:var(--acc2); color:var(--acc2); background:rgba(74,179,255,.06)}
 .wikisuggest{display:flex; flex-direction:column; gap:3px; margin:-4px 0 8px}
 .wikisuggest-item{display:flex; align-items:center; gap:8px; background:var(--bg2); border:1px solid var(--line); border-radius:8px; padding:6px 10px; cursor:pointer; font-size:12px; transition:.12s}

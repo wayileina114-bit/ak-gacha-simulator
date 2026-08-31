@@ -1436,6 +1436,7 @@ function openWishList(){
   var h=['<h4 class="sect" style="margin-top:0">💝 心愿单（'+visWish+'）</h4>'];
   if(!visWish){
     h.push('<div class="notice">心愿单为空 · 在干员详情点击「💝 心愿单」加入想抽的干员，抽到会自动移出</div>');
+    if(wish.length)h.push('<button class="mini-btn warn" id="btnWishPurge" style="margin:8px auto;display:block">🗑 清理无效心愿条目（'+wish.length+'）</button>');
   } else {
     h.push('<div class="notice">已拥有 <b>'+gotN+'</b> / '+visWish+' · 点击干员查看详情，点击 📌 卡池快速跳转</div>');
     h.push('<div class="wishgrid">');
@@ -1458,6 +1459,7 @@ function openWishList(){
   $('mBody').innerHTML=h.join('');
   openModalBox();
   var wc=$('btnWishClear'); if(wc)wc.onclick=function(){ if(confirm('确定清空心愿单吗？')){ state.wish=[]; save(); openWishList(); } };
+  var wp2=$('btnWishPurge'); if(wp2)wp2.onclick=function(){ state.wish=[]; save(); openWishList(); toast('已清理无效心愿条目'); };
   var wg=$('btnWishGot'); if(wg)wg.onclick=function(){ var ns2=(state.wish||[]).filter(function(w){ return state.collection.indexOf(w)<0; }); state.wish=ns2; save(); toast('已移除 '+gotN+' 名已拥有干员'); openWishList(); };;
   var items=$('mBody').querySelectorAll('.wish-item');
   for(var wi7=0;wi7<items.length;wi7++){ (function(el){ el.onclick=function(){ openModal(el.getAttribute('data-op')); }; })(items[wi7]); }
@@ -2780,7 +2782,7 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.17</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.18</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 存档导入导出 · 四主题</div>');
   h.push('</div>');
@@ -3972,6 +3974,49 @@ function exportSave(){
     ta.remove();
   }
 }
+function stateHealth(){
+  var issues=[], badHist=[], badCol=[], badWish=[], badCnt=[], i2h;
+  for(i2h=0;i2h<state.history.length;i2h++){
+    var h2h=state.history[i2h];
+    if(!h2h||typeof h2h!=='object'){ badHist.push(i2h); continue; }
+    var okOp=typeof h2h.op==='string'&&!!opByName[h2h.op];
+    var okRar=h2h.rar===6||h2h.rar===5||h2h.rar===4||h2h.rar===3;
+    var okT=typeof h2h.t==='number'&&h2h.t>0;
+    if(!okOp||!okRar||!okT)badHist.push(i2h);
+  }
+  for(i2h=0;i2h<state.collection.length;i2h++){ if(!opByName[state.collection[i2h]])badCol.push(state.collection[i2h]); }
+  if(state.wish)for(i2h=0;i2h<state.wish.length;i2h++){ if(!opByName[state.wish[i2h]])badWish.push(state.wish[i2h]); }
+  for(var k2h in (state.opCnt||{})){ if(!opByName[k2h])badCnt.push(k2h); }
+  if(badHist.length)issues.push({level:'err',msg:'历史记录 '+badHist.length+' 条无效（干员/稀有度/时间缺失）'});
+  if(badCol.length)issues.push({level:'err',msg:'图鉴含 '+badCol.length+' 个未知干员'});
+  if(badWish.length)issues.push({level:'warn',msg:'心愿单含 '+badWish.length+' 个未知干员'});
+  if(badCnt.length)issues.push({level:'warn',msg:'抽卡计数含 '+badCnt.length+' 个未知干员'});
+  return {ok:issues.length===0, issues:issues, badHist:badHist, badCol:badCol, badWish:badWish, badCnt:badCnt};
+}
+function fixStateHealth(){
+  var h2f=stateHealth(), i2f;
+  if(h2f.badHist.length){
+    var badMap={}, nh2f=[];
+    for(i2f=0;i2f<h2f.badHist.length;i2f++)badMap[h2f.badHist[i2f]]=1;
+    for(i2f=0;i2f<state.history.length;i2f++){ if(!badMap[i2f])nh2f.push(state.history[i2f]); }
+    state.history=nh2f;
+  }
+  if(h2f.badCol.length){
+    var bm2f={}, nc2f=[];
+    for(i2f=0;i2f<h2f.badCol.length;i2f++)bm2f[h2f.badCol[i2f]]=1;
+    for(i2f=0;i2f<state.collection.length;i2f++){ if(!bm2f[state.collection[i2f]])nc2f.push(state.collection[i2f]); }
+    state.collection=nc2f;
+  }
+  if(h2f.badWish.length&&state.wish){
+    var bm3f={}, nw2f=[];
+    for(i2f=0;i2f<h2f.badWish.length;i2f++)bm3f[h2f.badWish[i2f]]=1;
+    for(i2f=0;i2f<state.wish.length;i2f++){ if(!bm3f[state.wish[i2f]])nw2f.push(state.wish[i2f]); }
+    state.wish=nw2f;
+  }
+  if(h2f.badCnt.length){ for(i2f=0;i2f<h2f.badCnt.length;i2f++)delete state.opCnt[h2f.badCnt[i2f]]; }
+  save();
+  return stateHealth();
+}
 function importSave(){
   var hasBk=false;
   try{ hasBk=!!localStorage.getItem(bkKey()); }catch(e){}
@@ -3980,7 +4025,7 @@ function importSave(){
   h.push('<div id="impDrop" class="imp-drop">📂 点击选择文件 · 或将 .json 拖拽到此处</div>');
   h.push('<input type="file" id="impFile" accept=".json,application/json" style="display:none"/>');
   h.push('<textarea id="impText" placeholder="或直接粘贴存档 JSON 文本…" style="min-height:90px"></textarea>');
-  h.push('<div class="wikisearch"><button class="mini-btn" id="impGo">✅ 导入</button><button class="mini-btn" id="impBk"'+(hasBk?'':' disabled')+'>↩️ 恢复上次备份</button></div>');
+  h.push('<div class="wikisearch"><button class="mini-btn" id="impGo">✅ 导入</button><button class="mini-btn" id="impBk"'+(hasBk?'':' disabled')+'>↩️ 恢复上次备份</button><button class="mini-btn" id="impHealth">🔍 存档体检</button></div>');
   h.push('<div id="impOut"></div>');
   $('mBody').innerHTML=h.join('');
   openModalBox();
@@ -4015,6 +4060,22 @@ function importSave(){
   }catch(e){}
   var go=$('impGo');
   if(go)go.onclick=function(){ doImport(txt?txt.value:''); };
+  var ih2=$('impHealth');
+  if(ih2)ih2.onclick=function(){
+    var h2h=stateHealth(), o2h=$('impOut');
+    if(!o2h)return;
+    if(h2h.ok){ o2h.innerHTML='<div class="imp-hl ok">✅ 存档体检通过：未发现异常数据</div>'; return; }
+    var html='<div class="imp-hl'+(h2h.issues.some(function(x){return x.level==='err';})?' err':' warn')+'">🔍 发现 '+h2h.issues.length+' 项问题：</div>';
+    for(var hi3=0;hi3<h2h.issues.length;hi3++)html+='<div class="imp-issue">• '+esc(h2h.issues[hi3].msg)+'</div>';
+    html+='<button class="mini-btn" id="impFix" style="margin:6px auto;display:block">🔧 一键修复并保存</button>';
+    o2h.innerHTML=html;
+    var fx2=$('impFix');
+    if(fx2)fx2.onclick=function(){
+      var h3=fixStateHealth();
+      var o3=$('impOut');
+      if(o3)o3.innerHTML='<div class="imp-hl '+(h3.ok?'ok':'err')+'">'+(h3.ok?'✅ 修复完成，存档已保存':'修复后仍有 '+h3.issues.length+' 项异常')+'</div>';
+    };
+  };
   var bk=$('impBk');
   if(bk&&hasBk)bk.onclick=function(){
     try{
