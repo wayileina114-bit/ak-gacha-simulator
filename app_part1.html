@@ -578,7 +578,8 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .crow:hover{background:rgba(74,179,255,.06)}
 .cl{width:44px; color:var(--dim); text-align:right; flex-shrink:0}
 .cbar{flex:1; height:14px; background:#0a1220; border-radius:4px; overflow:hidden}
-.cbar i{display:block; height:100%; background:linear-gradient(90deg,var(--acc2),var(--acc)); border-radius:4px; min-width:2px; transition:filter .2s}
+.cbar i{display:block; height:100%; background:linear-gradient(90deg,var(--acc2),var(--acc)); border-radius:4px; min-width:2px; transition:filter .2s, width .4s ease}
+.crow .cl{min-width:58px}
 .crow:hover .cbar i{filter:brightness(1.35)}
 .cv{width:46px; color:var(--txt); flex-shrink:0}
 .customrow{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px}
