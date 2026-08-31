@@ -1,6 +1,13 @@
 # 更新日志（CHANGELOG）
 
-## v11.86（当前 · 手机端专项）
+## v11.87（当前 · 手机端专项）
+- 🐛 **抽屉滚动位置记忆**：renderBannerList 重新渲染会重置卡池列表滚动位置（移动端每次切池/抽卡后抽屉跳回顶部）——移动端渲染前保存 scrollTop、渲染后恢复；PC 端行为不变（不保存不恢复）
+- ⚡ **模态绘制隔离**：#modal .mbox 加 contain:layout paint——长模态（统计/材料/对比）滚动时绘制隔离，减少整页重绘
+- 🎨 **模态章节标题吸附**：统计/材料等长模态内的 .sect 标题在滚动时吸附顶部（sticky + 背景底），长列表浏览有方位感
+- ✅ **PC 端零改动**：CSS 全部位于 ≤720px media query 内，JS 以 isMobile() 守卫，回归 304 项全通过
+- 🧪 综合回归 304 项全通过
+
+## v11.86
 - 🐛 **视口声明完善**：viewport 增加 viewport-fit=cover（iPhone 刘海/底部横条环境 safe-area 真正生效——此前 env(safe-area-inset-bottom) 在 iOS 上实际为 0）+ interactive-widget=resizes-content（Android 键盘弹起时布局视口联动收缩，配合 visualViewport 避让更稳）
 - ⚡ **抽屉合成层与滚动条**：抽屉加 will-change:transform + contain:layout paint（滑入滑出走独立合成层）；移动端隐藏抽屉/模态滚动条（减少绘制开销、界面更干净）
 - 🎨 **超窄屏（≤380px）适配**：抽卡结果卡两列（92px）、六星横幅卡缩至 96px、抽卡按钮收紧——小屏不挤压

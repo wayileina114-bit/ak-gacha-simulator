@@ -728,6 +728,9 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   #modal .mbox{scrollbar-width:none}
   #modal .mbox::-webkit-scrollbar{display:none}
   /* ⑯ 超窄屏抽卡卡两列（v11.86） */
+  /* ⑰ 模态绘制隔离 + 章节标题吸附（v11.87） */
+  #modal .mbox{contain:layout paint}
+  #modal .mbox .sect{position:sticky; top:-14px; margin:0 -14px 8px; padding:8px 14px; background:rgba(16,26,43,.97); border-bottom:1px solid var(--line); z-index:2; font-size:13px; color:var(--acc2); letter-spacing:1px}
 }
 @media(max-width:380px){
   #cards{grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); gap:6px; min-height:132px}
