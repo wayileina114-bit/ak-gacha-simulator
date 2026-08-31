@@ -704,6 +704,8 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
 .wikisuggest-item .ws-prof{margin-left:auto; color:var(--acc2); font-size:10px; background:rgba(74,179,255,.1); border:1px solid rgba(74,179,255,.25); border-radius:6px; padding:0 6px; line-height:1.7; white-space:nowrap}
 .wikirows{display:flex; flex-wrap:wrap; gap:8px; margin-top:6px}
 .wrow{background:var(--bg2); border:1px solid var(--line); border-radius:6px; padding:3px 10px; font-size:12px; transition:background .15s, border-color .15s, transform .15s}
+.wrow.total{border-top:1px dashed var(--line); margin-top:5px; padding-top:6px}
+.wrow.total b{color:var(--gold)}
 .wrow:hover{background:rgba(74,179,255,.08); border-color:var(--acc2); transform:translateX(2px)}
 .wrow b{color:var(--dim); margin-right:6px}
 .wskill{border-left:3px solid var(--acc2); padding:6px 10px; margin:8px 0; background:rgba(74,179,255,.05); border-radius:0 8px 8px 0; transition:transform .15s, box-shadow .15s, background .15s; box-shadow:0 2px 8px rgba(0,0,0,.12)}
@@ -1829,7 +1831,7 @@ function renderCards(results,msg,has6,names6,has5){
     $('resultMsg').innerHTML=msg||'';
     if(has6&&names6&&names6.length){ toast('恭喜！获得六星干员：'+names6.join('、')); sixBurst(names6); var first6=wrap.querySelector('.card.r6'); if(first6&&first6.scrollIntoView){ try{ first6.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){ first6.scrollIntoView(); } } }
     if(has5&&!has6){ var f5=$('flash'); if(f5){ f5.style.background='radial-gradient(ellipse at center, rgba(245,185,74,.32), transparent 70%)'; f5.style.transition='opacity .8s'; f5.style.opacity='1'; setTimeout(function(){ f5.style.opacity='0'; f5.style.background=''; }, 750); } try{ if(typeof navigator!=='undefined'&&navigator.vibrate)navigator.vibrate(50); }catch(e){} }
-    if(lastBatch.length>10){ var ab=$('btnAllRes'); if(ab)ab.onclick=openAllResults; msg+='<br/><button class="mini-btn" id="btnAgain">🔁 再来'+(lastPullN||10)+'抽</button>'; $('resultMsg').innerHTML=msg; var ab2=$('btnAgain'); if(ab2)ab2.onclick=function(){ doPull(lastPullN||10); }; }
+    if(lastBatch.length>10){ var ab=$('btnAllRes'); if(ab)ab.onclick=openAllResults; msg+='<br/><button class="mini-btn" id="btnAgain">🔁 再来'+(lastPullN||10)+'抽</button>'; $('resultMsg').innerHTML=msg; var ba2=$('btnAgain'); if(ba2)ba2.onclick=function(){ doPull(lastPullN||10); }; }
     var sal=$('sixAllLink'); if(sal)sal.onclick=function(){ openAllResults(); };
     var sixcards=$('resultMsg').querySelectorAll('.sixcard');
     for(var si6=0;si6<sixcards.length;si6++){ (function(sc){ sc.onclick=function(){ openModal(sc.getAttribute('data-op')); }; })(sixcards[si6]); }
@@ -3399,16 +3401,21 @@ function matFarmRec(mn){
   MAT_REC_CACHE[mn]=rec;
   return rec;
 }
+var MAT_EST_CACHE={};
 function matEstimate(mn, n){
   n=n||1;
+  var ek=mn+':'+n;
+  if(MAT_EST_CACHE[ek]!==undefined)return MAT_EST_CACHE[ek];
   var best=null, stagesArr=matStagesOf(mn), fi2m;
   for(fi2m=0;fi2m<stagesArr.length;fi2m++){
     var v2m=matApInfo(stagesArr[fi2m], mn);
     if(v2m!==undefined&&(!best||v2m<best.v))best={stage:stagesArr[fi2m], v:v2m};
   }
-  if(!best)return '';
+  if(!best){ MAT_EST_CACHE[ek]=''; return ''; }
   var tot=Math.ceil(n*best.v);
-  return '<em class="mat-est">≈ '+tot+' 理智</em>';
+  var est='<em class="mat-est">≈ '+tot+' 理智</em>';
+  MAT_EST_CACHE[ek]=est;
+  return est;
 }
 function matConsSpans(items){
   var sp=[];
@@ -3440,15 +3447,26 @@ function wikiMatTab(name,data){
     h.push('<div class="wikisec"><h4>📚 技能升级材料</h4><div class="wikirows">');
     var smTxt=String(data.skillMats||'');
     var sml=smTxt.split('\n');
-    var smAny=false;
+    var smAny=false, totMats={}, totOrd=[];
     for(var smi=0;smi<sml.length;smi++){
       var sl2=sml[smi].trim();
       if(sl2.indexOf('|')===0&&sl2.indexOf('=')>=0){
         var kv3=sl2.slice(1).split('=');
         var lvName=kv3[0];
         var items2=parseMatsItems(kv3[1]||'');
-        if(items2.length){ smAny=true; h.push('<div class="wrow"><b>'+esc(lvName.replace(/^一/,'专精'))+'</b><span>'+matConsSpans(items2)+'</span></div>'); }
+        if(items2.length){
+          smAny=true;
+          h.push('<div class="wrow"><b>'+esc(lvName.replace(/^一/,'专精'))+'</b><span>'+matConsSpans(items2)+'</span></div>');
+          for(var ti2=0;ti2<items2.length;ti2++){
+            var tm=items2[ti2].name;
+            if(!totMats[tm]){ totMats[tm]=0; totOrd.push(tm); }
+            totMats[tm]+=items2[ti2].n||1;
+          }
+        }
       }
+    }
+    if(smAny&&totOrd.length){
+      h.push('<div class="wrow total"><b>全部技能合计</b><span>'+totOrd.map(function(m){ return '<span class="mat-cons">'+esc(m)+(totMats[m]>1?'×'+totMats[m]:'')+matEstimate(m, totMats[m])+'</span>'; }).join(' + ')+'</span></div>');
     }
     if(!smAny)h.push('<div class="notice">暂无技能升级材料数据</div>');
     h.push('</div></div>');
@@ -3837,7 +3855,7 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.27</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.28</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 存档导入导出 · 四主题</div>');
   h.push('</div>');
