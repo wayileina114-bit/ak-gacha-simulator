@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"/>
+<meta name="format-detection" content="telephone=no"/>
 <title>明日方舟 干员寻访模拟器</title>
 <style>
 :root{
@@ -731,6 +732,17 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   /* ⑰ 模态绘制隔离 + 章节标题吸附（v11.87） */
   #modal .mbox{contain:layout paint}
   #modal .mbox .sect{position:sticky; top:-14px; margin:0 -14px 8px; padding:8px 14px; background:rgba(16,26,43,.97); border-bottom:1px solid var(--line); z-index:2; font-size:13px; color:var(--acc2); letter-spacing:1px}
+  /* ⑱ 更多长列表离屏渲染（v11.88） */
+  #modal .mbox .optable-row{content-visibility:auto; contain-intrinsic-size:auto 46px}
+  #modal .mbox .gallery .gal-item{content-visibility:auto; contain-intrinsic-size:auto 160px}
+  #modal .mbox .skingrid .skin-item{content-visibility:auto; contain-intrinsic-size:auto 210px}
+  #modal .mbox .hitem{content-visibility:auto; contain-intrinsic-size:auto 26px}
+}
+@media(max-width:900px) and (orientation:landscape){
+  .pull-btn{padding:9px 8px; font-size:13px; min-height:40px}
+  body{padding-bottom:64px}
+  .sixcard{width:88px}
+  .sixcard img{height:104px}
 }
 @media(max-width:380px){
   #cards{grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); gap:6px; min-height:132px}
