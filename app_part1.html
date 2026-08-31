@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"/>
 <title>明日方舟 干员寻访模拟器</title>
 <style>
 :root{
@@ -722,6 +722,19 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   #modal .mbox .achgrid .ach{content-visibility:auto; contain-intrinsic-size:auto 120px}
   /* ⑭ 抽屉高度弹性（v11.85） */
   .sidebar{height:100dvh; max-height:100dvh}
+  /* ⑮ 抽屉滑入合成层 + 隐藏滚动条（v11.86） */
+  .sidebar{will-change:transform; contain:layout paint}
+  #bannerList::-webkit-scrollbar{display:none}
+  #modal .mbox{scrollbar-width:none}
+  #modal .mbox::-webkit-scrollbar{display:none}
+  /* ⑯ 超窄屏抽卡卡两列（v11.86） */
+}
+@media(max-width:380px){
+  #cards{grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); gap:6px; min-height:132px}
+  .card{height:132px}
+  .sixcard{width:96px}
+  .sixcard img{height:116px}
+  .pull-btn{padding:12px 8px; font-size:14px}
 }
 @media(max-width:720px) and (prefers-reduced-motion:reduce){
   .card, .card.flip, .rup-card, .bcard, .cop, .wish-item, .ach, .stat, .skin-item, .fhall-item, .sixcard{transition:none!important; animation:none!important}

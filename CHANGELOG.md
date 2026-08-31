@@ -1,6 +1,13 @@
 # 更新日志（CHANGELOG）
 
-## v11.85（当前 · 手机端专项）
+## v11.86（当前 · 手机端专项）
+- 🐛 **视口声明完善**：viewport 增加 viewport-fit=cover（iPhone 刘海/底部横条环境 safe-area 真正生效——此前 env(safe-area-inset-bottom) 在 iOS 上实际为 0）+ interactive-widget=resizes-content（Android 键盘弹起时布局视口联动收缩，配合 visualViewport 避让更稳）
+- ⚡ **抽屉合成层与滚动条**：抽屉加 will-change:transform + contain:layout paint（滑入滑出走独立合成层）；移动端隐藏抽屉/模态滚动条（减少绘制开销、界面更干净）
+- 🎨 **超窄屏（≤380px）适配**：抽卡结果卡两列（92px）、六星横幅卡缩至 96px、抽卡按钮收紧——小屏不挤压
+- ✅ **PC 端零改动**：meta 仅移动端生效，CSS 全部位于 ≤720/≤380 media query 内，回归 296 项全通过
+- 🧪 综合回归 296 项全通过
+
+## v11.85
 - 🐛 **系统「减少动态效果」降级适配**：新增 @media (prefers-reduced-motion: reduce) 移动端规则——翻牌动画立即完成、脉冲/光晕动画停止、卡片过渡禁用，低端机与无障碍用户不再被动画卡顿困扰
 - ⚡ **模态内网格离屏渲染**：完整卡池/成就面板的卡片加 content-visibility:auto——UP 池 100+ 卡片、成就网格离屏跳过渲染
 - 🎨 **触控热区与抽屉适配**：模态关闭按钮、抽屉关闭按钮扩为 44×44px 热区（Apple 触控规范）；抽屉标题字号/行距适配；抽屉高度改用 100dvh 弹性
