@@ -2769,7 +2769,7 @@ function openFashionHall(){
 function openAbout(){
   __wikiBack=openAbout;
   var h=['<h4 class="sect" style="margin-top:0">ℹ️ 关于</h4>'];
-  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.12</b></h4>');
+  h.push('<div class="wikisec"><h4>📦 明日方舟 · 干员寻访模拟器 <b>v12.13</b></h4>');
   h.push('<div class="notice">单文件 HTML 应用，无需安装。按官方规则模拟抽卡：6★ 2%（51抽起每抽+2%，100抽必出）· 5★ 8% · 十连保底5★ · 限定池300井兑换。</div>');
   h.push('<div class="notice">✅ 功能一览：往期全部 442 个卡池（含倒计时）· 自选UP池 · 联动池300井 · 保底共享规则 · 抽卡统计/周月报/成就 · 模拟抽卡（垫刀/UP命中/多轮分布）· Wiki实时数据（属性/技能/材料/档案/语音，六重回退+连通性检测）· 双干员对比 · 皮肤图鉴（缓存秒开）· 材料刷取（内置bilibili掉落数据+逐项推荐刷取关卡）· 存档导入导出 · 四主题</div>');
   h.push('</div>');
@@ -3774,12 +3774,23 @@ function openStats(){
   for(di2=0;di2<days.length;di2++){ h.push('<div class="crow"><span class="cl">'+days[di2].key+'</span><div class="cbar"><i style="width:'+Math.max(2,Math.round(days[di2].c/dmax*100))+'%"></i></div><span class="cv">'+days[di2].c+'</span></div>'); }
   if(!hist.length)h.push('<div class="notice">暂无抽卡数据</div>');
   h.push('</div>');
-  h.push('<h4 class="sect">近30天出货热力图</h4><div class="heat">');
-  var hkk, maxH=1, hd2, cv2;
+  h.push('<h4 class="sect">出货日历（本月）</h4><div class="heatcal">');
+  var wdH=['一','二','三','四','五','六','日'], wdiC;
+  for(wdiC=0;wdiC<7;wdiC++)h.push('<div class="hc-wd">'+wdH[wdiC]+'</div>');
+  var nowC=new Date(), yC=nowC.getFullYear(), mC=nowC.getMonth();
+  var firstDow=(new Date(yC,mC,1).getDay()+6)%7, daysInM=new Date(yC,mC+1,0).getDate();
+  var hkk, maxH=1;
   for(hkk in heat){ if(heat[hkk]>maxH)maxH=heat[hkk]; }
-  for(hd2=29;hd2>=0;hd2--){ var dd=new Date(Date.now()-hd2*86400000); var key2=dd.getFullYear()+'-'+(dd.getMonth()+1)+'-'+dd.getDate(); cv2=heat[key2]||0; var lvl=cv2===0?0:(cv2/maxH>=0.66?3:(cv2/maxH>=0.33?2:1)); h.push('<div class="hcell l'+lvl+'" title="'+key2+'：'+cv2+'只6★"></div>'); }
+  for(var ciC=0;ciC<firstDow;ciC++){ var pdC=new Date(yC,mC,ciC-firstDow+1); var pkC=pdC.getFullYear()+'-'+(pdC.getMonth()+1)+'-'+pdC.getDate(); h.push('<div class="hc-cell dim" title="'+pkC+'">'+pdC.getDate()+'</div>'); }
+  for(var diC=1;diC<=daysInM;diC++){
+    var kC=yC+'-'+(mC+1)+'-'+diC;
+    var cC=heat[kC]||0;
+    var lvlC=cC===0?0:(cC/maxH>=0.66?3:(cC/maxH>=0.33?2:1));
+    var isT=(diC===nowC.getDate());
+    h.push('<div class="hc-cell lv'+lvlC+(isT?' today':'')+'" title="'+(mC+1)+'/'+diC+(cC?' · 出货 '+cC+' 只':'')+'">'+diC+(cC?'<b>'+cC+'</b>':'')+'</div>');
+  }
   h.push('</div>');
-  h.push('<div class="notice">颜色越深当日出货越多 · '+(maxH>1?'最多一日 '+maxH+' 只':'暂无出货记录')+'</div>');
+  h.push('<div class="notice">颜色越深当日出货越多 · '+(maxH>1?'本月最多一日 '+maxH+' 只':'暂无出货记录')+'</div>');
   h.push('<h4 class="sect">出货时段（6★按小时分布）</h4><div class="chart">');
   var hmax=1, hk, hv;
   for(hk=0;hk<24;hk++){ hv=hourMap[hk]||0; if(hv>hmax)hmax=hv; }
@@ -4030,7 +4041,7 @@ function toggleSound(){ SOUND=!SOUND; try{ localStorage.setItem('akgacha_snd',SO
 var THEME_NAMES={default:'默认黑金',blue:'深空蓝',amber:'龙门暖',green:'源石绿',purple:'紫夜'};
 function applyTheme(){
   var t=state.theme||'default';
-  if(!THEME_NAMES[t]){ t='default'; state.theme=t; try{ localStorage.setItem(LS_KEY,JSON.stringify(state)); }catch(e){} }
+  if(!THEME_NAMES[t]){ t='default'; state.theme=t; try{ localStorage.setItem(slotKey(),JSON.stringify(state)); }catch(e){} }
   try{ document.body.className=(t==='default')?'':'theme-'+t; }catch(e){}
   var b=$('btnTheme'); if(b)b.textContent='🎨 '+THEME_NAMES[t];
 }
