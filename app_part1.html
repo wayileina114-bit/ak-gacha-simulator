@@ -713,6 +713,20 @@ header::after{content:''; position:absolute; top:-40%; right:-10%; width:200px; 
   #gacha.kbd-hide{transform:translateY(110%)}
   /* ⑪ 卡池列表离屏跳过渲染（v11.84） */
   #bannerList .bcard{content-visibility:auto; contain-intrinsic-size:auto 62px}
+  /* ⑫ 关闭/抽屉按钮 44px 触控热区（v11.85） */
+  .mbox .close{width:44px; height:44px; display:flex; align-items:center; justify-content:center; top:6px; right:4px}
+  .drawerClose{width:44px; height:44px; display:flex; align-items:center; justify-content:center}
+  .sidehead h3{font-size:14px; line-height:1.4}
+  /* ⑬ 模态内卡片网格离屏渲染（v11.85） */
+  #modal .mbox .rateup .rup-card{content-visibility:auto; contain-intrinsic-size:auto 132px}
+  #modal .mbox .achgrid .ach{content-visibility:auto; contain-intrinsic-size:auto 120px}
+  /* ⑭ 抽屉高度弹性（v11.85） */
+  .sidebar{height:100dvh; max-height:100dvh}
+}
+@media(max-width:720px) and (prefers-reduced-motion:reduce){
+  .card, .card.flip, .rup-card, .bcard, .cop, .wish-item, .ach, .stat, .skin-item, .fhall-item, .sixcard{transition:none!important; animation:none!important}
+  .card.flip{transform:rotateY(180deg)}
+  .pityurgent, .pityCount, .skin-dyn{animation:none!important}
 }
 </style>
 </head>
